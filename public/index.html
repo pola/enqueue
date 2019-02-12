@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <!-- #region CDN Dependencies -->
+    <!-- CDN Dependencies requires a functioning internet connection to use -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundicons/3.0.0/foundation-icons.min.css">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/vue-router/dist/vue-router.js"></script>
+    <!-- #endregion -->
+
+    <link rel="stylesheet/css" type="text/css" href="style.css">
+    <title>Lab 4</title>
+</head>
+
+<body>
+    <div id="app">
+        <nav class="navbar navbar-default navbar-inverse navbar-static-top" role="navigation">
+            <div class="container">
+                <!-- Brand and toggle get grouped for better mobile display -->
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-brand-centered">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div v-on:click="redirect('/booking')" class="navbar-brand navbar-brand-centered" style="line-height: 1em; cursor: pointer;">Tidsluckor</div>
+                    <div v-on:click="redirect('/admin')" class="navbar-brand navbar-brand-centered" style="line-height: 1em; cursor: pointer;">För assistenter</div>
+                </div>
+            </div><!-- /.container-fluid -->
+        </nav>
+        <router-view></router-view>
+    </div>
+
+    <!-- This fetches the socket.io connection object from the server. -->
+    <script src = "/socket.io/socket.io.js"></script>
+
+    <!-- #region Import app -->
+    <script src="./views/booking.view.js"></script>
+    <script src="./views/confirm.view.js"></script>
+    <script src="./views/admin/login.view.js"></script>
+    <script src="./views/admin/booking.view.js"></script>
+    <script src="./views/admin/create.view.js"></script>
+    <script src="./app.js"></script>
+    <!-- #endregion -->
+</body>
+
+</html>
