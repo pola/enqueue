@@ -2,43 +2,90 @@ const model = require("../model.js");
 const express = require('express');
 const router = express.Router();
 
-// skickas tillbaka om man skriver /api/time_slots
-router.get('/time_slots', function (req, res) {
-	const assistants = model.get_assistants();
+router.get('/profile', function (req, res) {
+	if ('cas_user' in req.session) {
+		res.json({
+			id: req.session.cas_user,
+			user_name: req.session.cas_user,
+			name: req.session.cas_user,
+			teacher: req.session.teacher
+		});
+	} else {
+		res.json(null);
+	}
+});
 
-	console.log('time_slots is reporting');
-	console.log(req.session.cas_user);
+router.get('/admin/teachers', function (req, res) {
+	if (!('teacher' in req.session) || !req.session.teacher) {
+		res.status(401);
+		res.json([]);
+		return;
+	}
 
-	assistants.then(function(value) {
-		res.json(value);
+	model.get_teachers().then(teachers => {
+		res.json(teachers);
 	});
 });
 
+router.post('/admin/teachers', function (req, res) {
+	if (!('teacher' in req.session) || !req.session.teacher) {
+		res.status(401);
+		res.end();
+		return;
+	}
 
-// skickas tillbaka om man skriver /api/time_slots
-router.get('/time_slots/:id', function (req, res) {
-	const time_slots = model.get_assistant(req.params.id);
-
-	time_slots.then(function(value) {
-		res.json(value);
+	model.add_teacher(req.body.user_name).then(profile => {
+		res.status(201);
+		res.end();
+	}).catch(() => {
+		res.status(400);
+		res.end();
 	});
 });
 
+router.delete('/admin/teachers/:id', function (req, res) {
+	if (!('teacher' in req.session) || !req.session.teacher) {
+		res.status(401);
+		res.end();
+		return;
+	}
 
-// skickas tillbaka om man skriver /api/time_slots
-router.get('/admins', function (req, res) {
-	const admins = model.get_admins();
+	// man kan inte ta bort sig själv som lärare
+	if (req.params.id === req.session.cas_user) {
+		res.status(401);
+		res.end();
+		return;
+	}
 
-	admins.then(function(value) {
-		res.json(value);
+	model.remove_teacher(req.params.id).then(() => {
+		res.status(200);
+		res.end();
+	}).catch(() => {
+		res.status(400);
+		res.end();
 	});
 });
 
-
-// boka en tid givet ett ID i adressfältet och ett namn i PUT-datan
-router.put('/time_slots/:id', function (req, res) {
-	// TODO: skriv den här koden
+router.get('/queues', function (req, res) {
+	model.get_queues().then(queues => {
+		res.json(queues);
+	});
 });
 
+router.post('/queues', function (req, res) {
+	if (!('teacher' in req.session) || !req.session.teacher) {
+		res.status(401);
+		res.end();
+		return;
+	}
+
+	model.get_or_create_queue(req.body.name).then(queue => {
+		res.status(201);
+		res.json(queue);
+	}).catch(() => {
+		res.status(400);
+		res.end();
+	});
+});
 
 module.exports = router;

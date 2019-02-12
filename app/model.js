@@ -44,7 +44,8 @@ exports.setConnection = (connection2) => {
 
   Computer = connection.define('computer', {
     id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
-    name : Sequelize.STRING
+    name : Sequelize.STRING,
+    ip: Sequelize.STRING
   });
 
   // För att koppla datorer till rum
@@ -52,6 +53,7 @@ exports.setConnection = (connection2) => {
 
   Profile = connection.define('profile', {
     id: { type: Sequelize.STRING, primaryKey: true}, // u1-numret
+    user_name: Sequelize.STRING,
     name: Sequelize.STRING,
     teacher: Sequelize.BOOLEAN
   });
@@ -73,105 +75,91 @@ exports.setConnection = (connection2) => {
   connection.sync();
 };
 
-exports.get_assistants = () => {
-	return new Promise(function(resolve, reject) {
-    TimeSlot.findAll().then(time_slots => {
-      Assistant.findAll().then(assistants => {
-        var result = [];
-        var i = 1;
+exports.get_or_create_profile = function(id, user_name, name) {
+  return new Promise(function(resolve, reject) {
+    Profile.findOrCreate({
+      where: { id: id },
+      defaults: {
+        id: id,
+        user_name: user_name,
+        name: name,
+        teacher: false
+      }
+    }).spread((profile, created) => {
+       resolve(profile);
+    });
+	});
+};
 
-        for (var assistant of assistants) {
-          var assistant_time_slots = [];
+exports.get_teachers = function() {
+  return new Promise(function(resolve, reject) {
+    Profile.findAll({ where: { teacher: true } }).then(teachers => {
+      resolve(teachers);
+    });
+  });
+}
 
-          for (var time_slot of time_slots) {
-            if (time_slot.assistantId == assistant.id) {
-              assistant_time_slots.push(time_slot);
-            }
-          }
-
-          result.push({
-            id: assistant.id,
-            name: assistant.name,
-            time_slots: assistant_time_slots
+exports.add_teacher = function(user_name) {
+  return new Promise(function(resolve, reject) {
+    Profile.findOne({ where: {user_name: user_name} }).then(profile => {
+      if (profile === null) {
+        reject();
+      } else {
+        profile.teacher = true;
+        profile.save().then(() => {
+          Profile.findAll({ where: { teacher: true } }).then(teachers => {
+            io.sockets.emit('teachers', teachers);
           });
-        }
+        });
 
-        resolve(result);
-      });
+        resolve(profile);
+      }
     });
   });
 };
 
-exports.get_assistant = (id) => {
-	return new Promise(function(resolve, reject) {
-    Assistant.findAll( { where : { id : id } } ).then( assistant => {
-      TimeSlot.findAll( { where : { assistantId : id } } ).then( time_slots => {
-         resolve({
-           id: assistant[0].id,
-           name: assistant[0].name,
-           time_slots: time_slots
-         });
-      });
+exports.remove_teacher = function(id) {
+  return new Promise(function(resolve, reject) {
+    Profile.findOne({ where: { id: id } }).then(profile => {
+      if (profile === null) {
+        reject();
+      } else {
+        profile.teacher = false;
+        profile.save().then(() => {
+          Profile.findAll({ where: { teacher: true } }).then(teachers => {
+            io.sockets.emit('teachers', teachers);
+          });
+        });
+
+        resolve();
+      }
+    });
+  });
+};
+
+exports.get_queues = function() {
+  return new Promise(function(resolve, reject) {
+    Queue.findAll().then(queues => {
+      resolve(queues);
+    });
+  });
+};
+
+exports.get_or_create_queue = function(name) {
+  return new Promise(function(resolve, reject) {
+    Queue.findOrCreate({
+      where: { name: name },
+      defaults: {
+        name : name,
+        description: null,
+        open: false,
+        auto_open: null,
+        auto_purge: null,
+        force_comment: true,
+        queuing: []
+      }
+    }).spread((queue, created) => {
+       resolve(queue);
     });
 	});
 };
-
-exports.get_admins = () => {
-	return new Promise(function(resolve, reject) {
-    Assistant.findAll().then(assistants => {
-      resolve(assistants);
-    });
-	});
-};
-
-exports.remove_time_slot = (id) => {
-	exports.unlock_time_slot(id);
-
-	return new Promise(function(resolve, reject) {
-    TimeSlot.destroy({ where: {id: id }}).then(what_is_this => {
-      resolve(true);
-    });
-	});
-};
-
-exports.create_time_slot = (id, time) => {
-	return new Promise(function(resolve, reject) {
-    TimeSlot.create({
-      assistantId: id,
-      time: time
-    }).then(time_slot => {
-      resolve(time_slot);
-    });
-	});
-};
-
-var time_slot_expire = function(id) {
-	exports.unlock_time_slot(id);
-	io.sockets.emit('unlock', id);
-};
-
-exports.is_time_slot_locked = (id) => {
-	return id in locked_time_slots;
-};
-
-exports.lock_time_slot = (id) => {
-	id = parseInt(id);
-	if (!exports.is_time_slot_locked(id)) {
-		locked_time_slots[id] = setTimeout(time_slot_expire, 20000, id);
-	}
-};
-
-exports.unlock_time_slot = (id) => {
-	id = parseInt(id);
-
-	if (exports.is_time_slot_locked(id)) {
-		clearTimeout(locked_time_slots[id]);
-		delete locked_time_slots[id];
-	}
-};
-
-exports.book_time_slot = (id, name) => {
-	id = parseInt(id);
-	exports.unlock_time_slot(id);
-  TimeSlot.update({ booked_by: name }, { where: { id : id } });
-}

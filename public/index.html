@@ -3,21 +3,26 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width,initial-scale=1,minimal-ui" name="viewport">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
     <!-- #region CDN Dependencies -->
     <!-- CDN Dependencies requires a functioning internet connection to use -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundicons/3.0.0/foundation-icons.min.css">
+    <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundicons/3.0.0/foundation-icons.min.css">-->
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/vue"></script>
+    <script src="https://unpkg.com/vue-material@beta"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://unpkg.com/vue-router/dist/vue-router.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic|Material+Icons">
+    <link rel="stylesheet" href="https://unpkg.com/vue-material@beta/dist/vue-material.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/vue-material@beta/dist/theme/default.css">
     <!-- #endregion -->
 
-    <link rel="stylesheet/css" type="text/css" href="style.css">
-    <title>Lab 4</title>
+    <!--<link rel="stylesheet/css" type="text/css" href="style.css">-->
+    <title>Projekt</title>
 </head>
 
 <body>
@@ -32,8 +37,10 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <div v-on:click="redirect('/booking')" class="navbar-brand navbar-brand-centered" style="line-height: 1em; cursor: pointer;">Tidsluckor</div>
-                    <div v-on:click="redirect('/admin')" class="navbar-brand navbar-brand-centered" style="line-height: 1em; cursor: pointer;">För assistenter</div>
+                    <div v-on:click="redirect('/')" class="navbar-brand navbar-brand-centered" style="line-height: 1em; cursor: pointer;">Köer</div>
+                    <div v-on:click="redirect('/admin')" class="navbar-brand navbar-brand-centered" style="line-height: 1em; cursor: pointer;" v-if="profile !== null && profile.teacher">Administration</div>
+                    <div v-on:click="set_location('/login')" class="navbar-brand navbar-brand-centered" style="line-height: 1em; cursor: pointer;" v-if="profile == null">Logga in</div>
+                    <div v-on:click="set_location('/logout')" class="navbar-brand navbar-brand-centered" style="line-height: 1em; cursor: pointer;" v-else>Logga ut</div>
                 </div>
             </div><!-- /.container-fluid -->
         </nav>
@@ -44,11 +51,8 @@
     <script src = "/socket.io/socket.io.js"></script>
 
     <!-- #region Import app -->
-    <script src="./views/booking.view.js"></script>
-    <script src="./views/confirm.view.js"></script>
-    <script src="./views/admin/login.view.js"></script>
-    <script src="./views/admin/booking.view.js"></script>
-    <script src="./views/admin/create.view.js"></script>
+    <script src="./views/queues.view.js"></script>
+    <script src="./views/admin/dashboard.view.js"></script>
     <script src="./app.js"></script>
     <!-- #endregion -->
 </body>
