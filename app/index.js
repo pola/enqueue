@@ -13,7 +13,7 @@ app.use('/', controller_cas);
 // Registers socket.io controller
 const socketController = require('./controllers/socket.controller.js');
 io.on('connection', socket => {
-    socketController(socket, io);
+	socketController(socket, io);
 });
 
 // Demo calls to model
@@ -25,5 +25,5 @@ model.setConnection(sequelize);
 //model.connection = connection;
 
 listen(port, () => {
-  console.log("server listening on port", port);
+	console.log("server listening on port", port);
 });
