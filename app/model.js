@@ -30,6 +30,7 @@ exports.setConnection = (connection2) => {
 		auto_open: Sequelize.DATE,
 		auto_purge: Sequelize.STRING,
 		force_comment: Sequelize.BOOLEAN,
+		force_action: Sequelize.BOOLEAN,
 		queuing: Sequelize.JSON // lista av personerna i kön
 	});
 

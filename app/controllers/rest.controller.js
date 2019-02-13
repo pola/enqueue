@@ -68,7 +68,11 @@ router.delete('/admin/teachers/:id', function (req, res) {
 
 router.get('/queues', function (req, res) {
 	model.get_queues().then(queues => {
-		res.json(queues);
+		res.json(queues.map(queue => ({
+			name: queue.name,
+			open: queue.open,
+			queuing_count: queue.queuing.length
+		})));
 	});
 });
 
@@ -97,6 +101,7 @@ router.get('/queues/:name', function (req, res) {
 				description: queue.description,
 				open: queue.open,
 				force_comment: queue.force_comment,
+				force_action: queue.force_action,
 				queuing: queue.queuing,
 				actions: actions
 			});
