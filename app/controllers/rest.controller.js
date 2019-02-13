@@ -88,4 +88,13 @@ router.post('/queues', function (req, res) {
 	});
 });
 
+router.get('/queues/:name', function (req, res) {
+	model.get_queue(req.params.name).then(queue => {
+		res.json(queue);
+	}).catch(() => {
+		res.status(404);
+		res.end();
+	});
+});
+
 module.exports = router;

@@ -163,3 +163,15 @@ exports.get_or_create_queue = function(name) {
     });
 	});
 };
+
+exports.get_queue = function(name) {
+    return new Promise(function(resolve, reject) {
+      Queue.findOne({ where: { name: name } }).then(queue => {
+        if (queue === null) {
+          reject();
+        } else {
+          resolve(queue);
+        }
+      });
+    });
+};

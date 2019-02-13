@@ -6,7 +6,7 @@ const router = express.Router();
 
 var cas = new CASAuthentication({
 	cas_url: 'https://login.kth.se',
-	service_url: 'http://magenta-13.csc.kth.se:8989'
+	service_url: 'http://brown-21.csc.kth.se:8989'
 });
 
 router.get('/login', cas.bounce, function ( req, res ) {

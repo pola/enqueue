@@ -1,7 +1,8 @@
 const routes = [
 	{ path: '/', redirect: '/queues' },
 	{ path: '/queues', component: Vue.component('route-queues') },
-	{ path: '/admin', component: Vue.component('route-admin-dashboard') },
+	{ path: '/queues/:name', component: Vue.component('route-queue') },
+	{ path: '/admin', component: Vue.component('route-admin-dashboard') }
 ];
 
 // Create VueRouter
