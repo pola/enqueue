@@ -88,7 +88,7 @@ exports.get_or_create_profile = function(id, user_name, name) {
     }).spread((profile, created) => {
        resolve(profile);
     });
-	});
+  });
 };
 
 exports.get_teachers = function() {
@@ -161,17 +161,17 @@ exports.get_or_create_queue = function(name) {
     }).spread((queue, created) => {
        resolve(queue);
     });
-	});
+  });
 };
 
 exports.get_queue = function(name) {
-    return new Promise(function(resolve, reject) {
-      Queue.findOne({ where: { name: name } }).then(queue => {
-        if (queue === null) {
-          reject();
-        } else {
-          resolve(queue);
-        }
-      });
+  return new Promise(function(resolve, reject) {
+    Queue.findOne({ where: { name: name } }).then(queue => {
+      if (queue === null) {
+        reject();
+      } else {
+        resolve(queue);
+      }
     });
+  });
 };
