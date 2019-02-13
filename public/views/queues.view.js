@@ -24,7 +24,7 @@ Vue.component('route-queues', {
 
 	      <md-table-row @click.native="open_queue(queue)" v-for="queue in queues" :key="queue.id" :class="{ 'text-danger': queue.open === false }">
 	        <md-table-cell> <span v-if="! queue.open"  class="glyphicon glyphicon-lock"></span> {{ queue.name }}</md-table-cell>
-					<md-table-cell class="text-right"> <span class="glyphicon glyphicon-user"></span> {{ queue.queuing.length }}  </md-table-cell>
+					<md-table-cell class="text-right"> <span class="glyphicon glyphicon-user"></span> {{ queue.queuing_count }}  </md-table-cell>
 	      </md-table-row>
 	    </md-table>
 		</section>

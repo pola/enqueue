@@ -68,7 +68,11 @@ router.delete('/admin/teachers/:id', function (req, res) {
 
 router.get('/queues', function (req, res) {
 	model.get_queues().then(queues => {
-		res.json(queues);
+		res.json(queues.map(queue => ({
+			name: queue.name,
+			open: queue.open,
+			queuing_count: queue.queuing.length
+		})));
 	});
 });
 
@@ -89,6 +93,40 @@ router.post('/queues', function (req, res) {
 });
 
 router.get('/queues/:name', function (req, res) {
+	model.get_queue(req.params.name).then(queue => {
+		
+		model.get_actions(queue).then(actions => {
+			res.json({
+				name: queue.name,
+				description: queue.description,
+				open: queue.open,
+				force_comment: queue.force_comment,
+				force_action: queue.force_action,
+				queuing: queue.queuing,
+				actions: actions
+			});
+		});
+	}).catch(() => {
+		res.status(404);
+		res.end();
+	});
+});
+
+router.post('/queues/:name/students', function (req, res) {
+	if (!('cas_user' in req.session)) {
+		res.status(401);
+		res.end();
+	}
+	
+	if (!('comment' in req.body)) {
+		res.status(400);
+		res.json({
+			'status': 'error',
+			'code': 1,
+			'message': 'Missing comment'
+		});
+	}
+	
 	model.get_queue(req.params.name).then(queue => {
 		res.json(queue);
 	}).catch(() => {
