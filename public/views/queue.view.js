@@ -5,8 +5,9 @@ Vue.component('route-queue', {
 		}
 	},
 	methods: {
-		open_queue(queue) {
-			this.$router.push('/queues/' + queue.name);
+		login(){
+			window.location = '/login';
+			// TODO: skicka tillbaka till kön!
 		}
 	},
 	created() {
@@ -16,15 +17,49 @@ Vue.component('route-queue', {
 		});
 	},
 	template: `
-	<div class="container">
-		<section class="col-md-8 col-md-offset-2">
+<div class="container" v-if="queue">
+	<div class="row">
+		<div class="col-md-4" :class="{ 'text-danger': queue.open === false }"> <h2> <span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>  {{ queue.name }} </h2> </div>
+		<p class="col-md-8"> {{ queue.description }} </p>
+	</div>
+	<div class="row">
+		<div class="col-md-3" style="text-align: center;">
+			<div v-if="! $root.$data.profile">
+				<h4> För att kunna ställa dig i kö måste du logga in </h4>
+				<form novalidate @submit.prevent="login">
+					<md-card-actions>
+						<md-button type="submit" class="md-primary">Logga in</md-button>
+					</md-card-actions>
+				</form>
+			</div>
+			<div v-else>
+				FORMULÄR FÖR ATT STÄLLA SIG I KÖ IN HÄR
+			</div>
+		</div>
+		<section class="col-md-7 col-md-offset-2">
 			<md-table md-card>
-	      <md-table-toolbar>
-	        <h1 class="md-title">{{ queue.name }}</h1>
-	      </md-table-toolbar>
+				<md-table-toolbar>
+				  	<md-table-row>
+					  	<md-table-head>#</md-table-head>
+					  	<md-table-head v-if="$root.$data.profile">Användarnamn</md-table-head>
+					  	<md-table-head>Plats</md-table-head>
+					  	<md-table-head></md-table-head>
+					  	<md-table-head>Kommentar</md-table-head>
+					  	<md-table-head>Tid</md-table-head>
+					</md-table-row>
+		      	</md-table-toolbar>
 
-
+				<md-table-row v-for="(user, index) in queue.students" :key="profile.id">
+					<md-table-cell> {{ index+1 }} </md-table-cell>
+					<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
+					<md-table-cell> <span v-if="typeof(user.location) === 'string'"> {{ user.location }} </span> <span v-else> {{ user.location.computer }}  </span></md-table-cell>
+					<md-table-cell class="font color = user.action.color"> {{ user.action.name }} </md-table-cell>
+					<md-table-cell> <span v-if="user.comment"> {{ user.comment }} </span> </md-table-cell>
+					<md-table-cell>{{ user.entered_at }} </md-table-cell>
+				</md-table-row>
+			</md-table>
 		</section>
 	</div>
+</div>
 	`
 });
