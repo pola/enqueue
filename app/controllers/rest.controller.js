@@ -71,7 +71,7 @@ router.get('/queues', function (req, res) {
 		res.json(queues.map(queue => ({
 			name: queue.name,
 			open: queue.open,
-			queuing_count: queue.queuing.length
+			queuing_count: model.get_students(queue).length
 		})));
 	});
 });
@@ -102,7 +102,7 @@ router.get('/queues/:name', function (req, res) {
 				open: queue.open,
 				force_comment: queue.force_comment,
 				force_action: queue.force_action,
-				queuing: queue.queuing,
+				students: model.get_students(queue),
 				actions: actions
 			});
 		});
@@ -115,20 +115,97 @@ router.get('/queues/:name', function (req, res) {
 router.post('/queues/:name/students', function (req, res) {
 	if (!('cas_user' in req.session)) {
 		res.status(401);
-		res.end();
-	}
-	
-	if (!('comment' in req.body)) {
-		res.status(400);
 		res.json({
-			'status': 'error',
-			'code': 1,
-			'message': 'Missing comment'
+			error: 1,
+			message: 'You need to sign in to join a queue.'
 		});
+		return;
 	}
 	
 	model.get_queue(req.params.name).then(queue => {
-		res.json(queue);
+		if (!queue.open) {
+			res.status(400);
+			res.json({
+				error: 2,
+				message: 'The queue is not open.'
+			});
+			return;
+		}
+		
+		// TODO: kan ej ställa sig i kön om man redan står i den
+		
+		if (!('comment' in req.body) || !('action' in req.body) || !('location' in req.body)) {
+			res.status(400);
+			res.json({
+				error: 3,
+				message: 'Missing comment, action or location.'
+			});
+			return;
+		}
+		
+		if ((req.body.comment !== null && typeof(req.body.comment) !== 'string') || (req.body.action !== null && typeof(req.body.action) !== 'number') || (req.body.location !== null && typeof(req.body.comment) !== 'string')) {
+			res.status(400);
+			res.json({
+				error: 4,
+				message: 'Missing comment, action or location.'
+			});
+			return;
+		}
+		
+		if ((req.body.comment === null || req.body.comment.length === 0) && queue.force_comment) {
+			res.status(400);
+			res.json({
+				error: 5,
+				message: 'A comment is required.'
+			});
+			return;
+		}
+		
+		if (req.body.action === null && queue.force_action) {
+			res.status(400);
+			res.json({
+				error: 6,
+				message: 'An action is required.'
+			});
+			return;
+		}
+		
+		if (req.body.action === null) {
+			model.add_student(queue, req.session.profile, req.body.comment, req.body.location, null);
+			
+			res.status(201);
+			res.end();
+			return;
+			
+			// TODO: berätta för andra via websockets
+		} else {
+			model.get_action(req.body.action).then(action => {
+				if (action.queue_id !== queue.id) {
+					res.status(400);
+					res.json({
+						error: 7,
+						message: 'Unknown action.'
+					});
+					return;
+				}
+				
+				model.add_student(queue, req.session.profile, req.body.comment, req.body.location, action);
+				
+				res.status(201);
+				res.end();
+				return;
+				
+				// TODO: berätta för andra via websockets
+			}).catch(() => {
+				res.status(400);
+				res.json({
+					error: 7,
+					message: 'Unknown action.'
+				});
+				return;
+			});
+		}
+		return;
 	}).catch(() => {
 		res.status(404);
 		res.end();

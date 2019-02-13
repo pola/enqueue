@@ -9,9 +9,11 @@ var Computer = null;
 var Profile = null;
 var QueueStudent = null;
 var Action = null;
+
 var io = null;
 var connection = null;
 var locked_time_slots = {};
+var students = {};
 
 exports.setIo = (io2) => {
 	// TOOD: kan det här bli finare?
@@ -30,8 +32,7 @@ exports.setConnection = (connection2) => {
 		auto_open: Sequelize.DATE,
 		auto_purge: Sequelize.STRING,
 		force_comment: Sequelize.BOOLEAN,
-		force_action: Sequelize.BOOLEAN,
-		queuing: Sequelize.JSON // lista av personerna i kön
+		force_action: Sequelize.BOOLEAN
 	});
 
 	Room = connection.define('room', {
@@ -73,7 +74,13 @@ exports.setConnection = (connection2) => {
 	// För att ange vilka actions en student kan välja på i kön
 	Action.belongsTo(Queue, { foreignKey: 'queue_id' });
 
-	connection.sync();
+	connection.sync().then(() => {
+		Queue.findAll().then(queues => {
+			for (const queue of queues) {
+				students[queue.id] = [];
+			}
+		});
+	});
 };
 
 exports.get_or_create_profile = function(id, user_name, name) {
@@ -195,5 +202,32 @@ exports.get_actions = function(queue) {
 		Action.findAll({ where: { queue_id: queue.id } }).then(actions => {
 			resolve(actions);
 		});
+	});
+};
+
+exports.get_action = function(id) {
+	return new Promise(function(resolve, reject) {
+		Action.findOne({ where: { id: id } }).then(action => {
+			if (action === null) {
+				reject();
+			} else {
+				resolve(action);
+			}
+		});
+	});
+};
+
+exports.get_students = function(queue) {
+	return students[queue.id];
+};
+
+exports.add_student = function(queue, profile, comment, location, action) {
+	students[queue.id].push({
+		profile: profile,
+		entered_at: Date.now,
+		comment: comment,
+		location: location,
+		action: action,
+		receiving_help_from: null
 	});
 };
