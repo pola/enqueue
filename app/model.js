@@ -159,7 +159,20 @@ exports.get_or_create_queue = function(name) {
 				queuing: []
 			}
 		}).spread((queue, created) => {
-			 resolve(queue);
+			if (created === true){
+				Action.bulkCreate([
+					{ name: "Help",
+					color: "blue",
+				 	queue_id: queue.id },
+					{ name: "Present",
+					color: "green",
+				 	queue_id: queue.id }
+				]).then(() => {
+					resolve(queue);
+				});
+			} else{
+				resolve(queue);
+			}
 		});
 	});
 };
