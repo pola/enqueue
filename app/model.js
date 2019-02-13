@@ -175,3 +175,11 @@ exports.get_queue = function(name) {
 		});
 	});
 };
+
+exports.get_actions = function(queue) {
+	return new Promise(function(resolve, reject) {
+		Action.findAll({ where: { queue_id: queue.id } }).then(actions => {
+			resolve(actions);
+		});
+	});
+};
