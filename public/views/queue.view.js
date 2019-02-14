@@ -1,13 +1,18 @@
 Vue.component('route-queue', {
 	data() {
 		return {
-			queue: null
+			queue: null,
+			location: null,
+			comment: null
 		}
 	},
 	methods: {
 		login(){
 			window.location = '/login';
 			// TODO: skicka tillbaka till kön!
+		},
+		enqueue(){
+			console.log("i kön");
 		}
 	},
 	created() {
@@ -33,6 +38,21 @@ Vue.component('route-queue', {
 				</form>
 			</div>
 			<div v-else>
+				<form novalidate @submit.prevent="enqueue">
+					<md-field>
+						<label for="location">Plats</label>
+						<md-input type="text" id="location" name="location" v-model="location" />
+					</md-field>
+
+					<md-field>
+						<label for="comment">Kommentar</label>
+						<md-input type="text" id="comment" name="comment" v-model="comment" />
+					</md-field>
+
+					<md-card-actions>
+						<md-button type="submit" class="md-primary">Gå med i kön</md-button>
+					</md-card-actions>kön
+				</form>
 				FORMULÄR FÖR ATT STÄLLA SIG I KÖ IN HÄR
 			</div>
 		</div>
