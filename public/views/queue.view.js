@@ -15,6 +15,10 @@ Vue.component('route-queue', {
 		enqueue(){
 			console.log("i kön");
 			// TODO: lägg till personen som köande
+		},
+		test (action) {
+
+			return "md-danger";
 		}
 	},
 	created() {
@@ -54,7 +58,8 @@ Vue.component('route-queue', {
 
 					<!-- TODO: fixa färger, krav på att man väljer en --> 
 					<div v-for="p_action in queue.actions">
-						<md-radio v-model="action" :value="p_action.id" class="md-primary"> {{ p_action.name }} </md-radio>
+					<!--class="md-get-palette-color(green, A200)" -->
+						<md-radio v-model="action" :value="p_action.id" :class="'md-' + p_action.color"> {{ p_action.name }} </md-radio>
 					</div>
 
 					<md-card-actions>

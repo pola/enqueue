@@ -68,7 +68,7 @@ exports.setConnection = (connection2) => {
 	Action = connection.define('actions', {
 		id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
 		name: Sequelize.STRING,
-		color: Sequelize.ENUM("red","blue", "green", "yellow", "pink", "purple", "grey")
+		color: Sequelize.ENUM("primary","secondary", "default", "accent")
 	});
 
 	// För att ange vilka actions en student kan välja på i kön
@@ -170,10 +170,10 @@ exports.get_or_create_queue = function(name) {
 			if (created === true){
 				Action.bulkCreate([
 					{ name: "Help",
-					color: "blue",
+					color: "primary",
 				 	queue_id: queue.id },
 					{ name: "Present",
-					color: "green",
+					color: "accent",
 				 	queue_id: queue.id }
 				]).then(() => {
 					resolve(queue);
