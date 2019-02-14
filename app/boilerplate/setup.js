@@ -7,6 +7,7 @@ const expressSession = require('express-session');
 const sharedSession = require('express-socket.io-session');
 const express = require('express');
 const http = require('http');
+const config = require('../config');
 
 /**
  * This function sets up some boilerplate for express and socket.io
@@ -26,8 +27,8 @@ module.exports = () => {
     const Sequelize = require('sequelize');
 
     // ORM (Sequelize)
-    const sequelize = new Sequelize('jarkmpola', 'jarkmpola', 'NUXQ3hVtuHMVVXh4vrZ9PdzsACdqwzDFxmw6qFMvyN4AdqrYwHerh4gf6Xjt5AYF', {
-      host: '171.25.159.81',
+    const sequelize = new Sequelize(config.mysql.database, config.mysql.username, config.mysql.password, {
+      host: config.mysql.host,
       dialect: 'mysql',
 
       pool: {

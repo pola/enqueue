@@ -1,7 +1,7 @@
 const setupBoilerplate = require('./boilerplate/setup');
+const config = require('./config');
 
-const { app, io, sequelize,  listen } =  setupBoilerplate();
-const port = 8989;
+const { app, io, sequelize,  listen } = setupBoilerplate();
 
 // Bind REST controller to /api/*
 const controller_rest = require('./controllers/rest.controller.js');
@@ -24,6 +24,6 @@ model.setConnection(sequelize);
 
 //model.connection = connection;
 
-listen(port, () => {
-	console.log("server listening on port", port);
+listen(config.port, () => {
+	console.log("server listening on port", config.port);
 });

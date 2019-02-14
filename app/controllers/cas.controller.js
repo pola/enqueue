@@ -1,12 +1,13 @@
 const model = require("../model.js");
 const express = require('express');
 const CASAuthentication = require('cas-authentication');
+const config = require('../config.js');
 
 const router = express.Router();
 
 var cas = new CASAuthentication({
 	cas_url: 'https://login.kth.se',
-	service_url: 'http://n163-p145.eduroam.kth.se:8989'
+	service_url: 'http://' + config.hostname + ':' + config.port
 });
 
 router.get('/login', cas.bounce, function ( req, res ) {
