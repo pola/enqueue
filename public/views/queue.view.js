@@ -3,7 +3,8 @@ Vue.component('route-queue', {
 		return {
 			queue: null,
 			location: null,
-			comment: null
+			comment: null,
+			action: null
 		}
 	},
 	methods: {
@@ -13,6 +14,7 @@ Vue.component('route-queue', {
 		},
 		enqueue(){
 			console.log("i kön");
+			// TODO: lägg till personen som köande
 		}
 	},
 	created() {
@@ -28,7 +30,7 @@ Vue.component('route-queue', {
 		<p class="col-md-8"> {{ queue.description }} </p>
 	</div>
 	<div class="row">
-		<div class="col-md-3" style="text-align: center;">
+		<div class="col-md-3">
 			<div v-if="! $root.$data.profile">
 				<h4> För att kunna ställa dig i kö måste du logga in </h4>
 				<form novalidate @submit.prevent="login">
@@ -38,22 +40,27 @@ Vue.component('route-queue', {
 				</form>
 			</div>
 			<div v-else>
-				<form novalidate @submit.prevent="enqueue">
+				<form @submit.prevent="enqueue">
 					<md-field>
+						<!-- TODO: fixa automatisk ifyllnad -->
 						<label for="location">Plats</label>
 						<md-input type="text" id="location" name="location" v-model="location" />
 					</md-field>
 
 					<md-field>
 						<label for="comment">Kommentar</label>
-						<md-input type="text" id="comment" name="comment" v-model="comment" />
+						<md-input :required="queue.force_comment" type="text" id="comment" name="comment" v-model="comment" />
 					</md-field>
 
+					<!-- TODO: fixa färger, krav på att man väljer en --> 
+					<div v-for="p_action in queue.actions">
+						<md-radio v-model="action" :value="p_action.id" class="md-primary"> {{ p_action.name }} </md-radio>
+					</div>
+
 					<md-card-actions>
-						<md-button type="submit" class="md-primary">Gå med i kön</md-button>
-					</md-card-actions>kön
+						<md-button :disabled="!queue.open" type="submit" class="md-primary">Gå med i kön</md-button>
+					</md-card-actions>
 				</form>
-				FORMULÄR FÖR ATT STÄLLA SIG I KÖ IN HÄR
 			</div>
 		</div>
 		<section class="col-md-7 col-md-offset-2">
