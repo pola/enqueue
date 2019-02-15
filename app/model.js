@@ -199,7 +199,7 @@ exports.get_actions = function(queue) {
 
 exports.get_action = id => Action.findOne({ where: { id: id } });
 
-exports.get_students = function(queue) {
+exports.get_students = queue => {
 	return students[queue.id];
 };
 
@@ -214,9 +214,10 @@ exports.add_student = function(queue, profile, comment, location, action) {
 	});
 };
 
+// TODO: den här ger alltid tillbaka alla rum, oberoende av vilken queue man skickar in som parameter
 exports.get_allowed_rooms = (queue) => Room.findAll({
-    include: [{
-        model: Queue,
+	include: [{
+		model: Queue,
 		as: 'Queues'
     }]
 });

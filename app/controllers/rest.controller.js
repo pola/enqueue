@@ -112,13 +112,11 @@ router.get('/queues/:name', function (req, res) {
 	});
 });
 
+// ny student i kön
 router.post('/queues/:name/students', function (req, res) {
 	if (!('cas_user' in req.session)) {
 		res.status(401);
-		res.json({
-			error: 1,
-			message: 'You need to sign in to join a queue.'
-		});
+		res.end();
 		return;
 	}
 
@@ -132,7 +130,7 @@ router.post('/queues/:name/students', function (req, res) {
 		if (!queue.open) {
 			res.status(400);
 			res.json({
-				error: 2,
+				error: 1,
 				message: 'The queue is not open.'
 			});
 			return;
@@ -143,7 +141,7 @@ router.post('/queues/:name/students', function (req, res) {
 			if (student.profile.id === req.session.profile.id) {
 				res.status(400);
 				res.json({
-					error: 3,
+					error: 2,
 					message: 'You are already standing in the queue.'
 				});
 				return;
@@ -153,7 +151,7 @@ router.post('/queues/:name/students', function (req, res) {
 		if (!('comment' in req.body) || !('action' in req.body) || !('location' in req.body)) {
 			res.status(400);
 			res.json({
-				error: 4,
+				error: 3,
 				message: 'Missing comment, action or location.'
 			});
 			return;
@@ -162,7 +160,7 @@ router.post('/queues/:name/students', function (req, res) {
 		if ((req.body.comment !== null && typeof(req.body.comment) !== 'string') || (req.body.action !== null && typeof(req.body.action) !== 'number') || (req.body.location !== null && typeof(req.body.comment) !== 'string')) {
 			res.status(400);
 			res.json({
-				error: 5,
+				error: 4,
 				message: 'Invalid comment, action or location.'
 			});
 			return;
@@ -171,7 +169,7 @@ router.post('/queues/:name/students', function (req, res) {
 		if ((req.body.comment === null || req.body.comment.length === 0) && queue.force_comment) {
 			res.status(400);
 			res.json({
-				error: 6,
+				error: 5,
 				message: 'A comment is required.'
 			});
 			return;
@@ -180,7 +178,7 @@ router.post('/queues/:name/students', function (req, res) {
 		if (req.body.action === null && queue.force_action) {
 			res.status(400);
 			res.json({
-				error: 7,
+				error: 6,
 				message: 'An action is required.'
 			});
 			return;
@@ -207,9 +205,10 @@ router.post('/queues/:name/students', function (req, res) {
 						if (!room_ok) {
 							res.status(400);
 							res.json({
-								error: 8,
+								error: 7,
 								message: 'Invalid room.'
 							});
+							return;
 						}
 					}
 
@@ -221,7 +220,7 @@ router.post('/queues/:name/students', function (req, res) {
 				} else if (req.body.location === null) {
 					res.status(400);
 					res.json({
-						error: 9,
+						error: 8,
 						message: 'A location is required.'
 					});
 					return;
@@ -230,9 +229,10 @@ router.post('/queues/:name/students', function (req, res) {
 					if (rooms.length !== 0) {
 						res.status(400);
 						res.json({
-							error: 10,
+							error: 9,
 							message: 'You must sit in one of the specified rooms.'
 						});
+						return;
 					}
 
 					location = req.body.location;
@@ -251,7 +251,7 @@ router.post('/queues/:name/students', function (req, res) {
 						if (action === null || action.queue_id !== queue.id) {
 							res.status(400);
 							res.json({
-								error: 11,
+								error: 10,
 								message: 'Unknown action.'
 							});
 							return;
@@ -275,6 +275,110 @@ router.post('/queues/:name/students', function (req, res) {
 				}
 			});
 		});
+	});
+});
+
+// lämna kön (om det är en själv) eller sparka ut någon (som assistent)
+router.delete('/queues/:name/students/:id', function (req, res) {
+	if (!('cas_user' in req.session)) {
+		res.status(401);
+		res.end();
+		return;
+	}
+
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+
+		var found = false;
+		const students = model.get_students(queue);
+
+		for (var i = 0; i < students.length; i++) {
+			if (students[i].profile.id === req.params.id) {
+				found = true;
+
+				if (students[i].profile.id === req.session.profile.id || req.session.profile.teacher /* TODO: rättigheter som assistent i den aktuella kön */) {
+					students.splice(i, 1);
+				} else {
+					res.status(401);
+					res.end();
+					return;
+				}
+
+				break;
+			}
+		}
+
+		if (!found) {
+			res.status(404);
+			res.end();
+			return;
+		}
+
+		res.status(200);
+		res.end();
+
+		// TODO: berätta för andra via websockets
+	});
+});
+
+// ändra en student i kön
+router.patch('/queues/:name/students/:id', function (req, res) {
+	if (!('cas_user' in req.session)) {
+		res.status(401);
+		res.end();
+		return;
+	}
+
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+
+		// hitta vilken student i kön det berör
+		var student = null;
+
+		for (const s of model.get_students(queue)) {
+			if (s.profile.id === req.params.id) {
+				student = s;
+				break;
+			}
+		}
+
+		if (s === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+
+		// som student kan man bara ändra på sig själv
+		if (student.profile.id === req.session.profile.id) {
+			if ('location' in req.body) {
+				// TODO: uppdatera studentens platsangivelse
+			}
+
+			if ('comment' in req.body) {
+				// TODO: uppdatera studentens kommentar
+			}
+
+			if ('action' in req.body) {
+				// TODO: uppdatera studentens action(s)
+			}
+		}
+
+		// som assistent kan man bara ändra på någons position
+		if (req.session.profile.teacher /* TODO: kontrollera om man är assistent i den aktuella kön */) {
+			if ('position' in req.body) {
+				// TODO: ändra personens position
+			}
+		}
+
+		// TODO: om det har gjorts en ändring ska vi berätta om den för alla i kön via websockets
 	});
 });
 
