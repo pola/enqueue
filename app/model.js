@@ -185,17 +185,9 @@ exports.get_or_create_queue = function(name) {
 	});
 };
 
-exports.get_queue = function(name) {
-	return new Promise(function(resolve, reject) {
-		Queue.findOne({ where: { name: name } }).then(queue => {
-			if (queue === null) {
-				reject();
-			} else {
-				resolve(queue);
-			}
-		});
-	});
-};
+exports.get_queue = name => Queue.findOne({ where: { name: name } });
+
+exports.get_computer = ip => Computer.findOne({ where: { ip: ip } });
 
 exports.get_actions = function(queue) {
 	return new Promise(function(resolve, reject) {
@@ -205,17 +197,7 @@ exports.get_actions = function(queue) {
 	});
 };
 
-exports.get_action = function(id) {
-	return new Promise(function(resolve, reject) {
-		Action.findOne({ where: { id: id } }).then(action => {
-			if (action === null) {
-				reject();
-			} else {
-				resolve(action);
-			}
-		});
-	});
-};
+exports.get_action = id => Action.findOne({ where: { id: id } });
 
 exports.get_students = function(queue) {
 	return students[queue.id];
@@ -231,3 +213,10 @@ exports.add_student = function(queue, profile, comment, location, action) {
 		receiving_help_from: null
 	});
 };
+
+exports.get_allowed_rooms = (queue) => Room.findAll({
+    include: [{
+        model: Queue,
+		as: 'Queues'
+    }]
+});
