@@ -138,12 +138,22 @@ router.post('/queues/:name/students', function (req, res) {
 			return;
 		}
 
-		// TODO: kan ej ställa sig i kön om man redan står i den
+		// man kan inte gå in i en kö som man redan står i (då får man PUT:a med ny data)
+		for (const student of model.get_students(queue)) {
+			if (student.profile.id === req.session.profile.id) {
+				res.status(400);
+				res.json({
+					error: 3,
+					message: 'You are already standing in the queue.'
+				});
+				return;
+			}
+		}
 
 		if (!('comment' in req.body) || !('action' in req.body) || !('location' in req.body)) {
 			res.status(400);
 			res.json({
-				error: 3,
+				error: 4,
 				message: 'Missing comment, action or location.'
 			});
 			return;
@@ -152,7 +162,7 @@ router.post('/queues/:name/students', function (req, res) {
 		if ((req.body.comment !== null && typeof(req.body.comment) !== 'string') || (req.body.action !== null && typeof(req.body.action) !== 'number') || (req.body.location !== null && typeof(req.body.comment) !== 'string')) {
 			res.status(400);
 			res.json({
-				error: 4,
+				error: 5,
 				message: 'Invalid comment, action or location.'
 			});
 			return;
@@ -161,7 +171,7 @@ router.post('/queues/:name/students', function (req, res) {
 		if ((req.body.comment === null || req.body.comment.length === 0) && queue.force_comment) {
 			res.status(400);
 			res.json({
-				error: 5,
+				error: 6,
 				message: 'A comment is required.'
 			});
 			return;
@@ -170,13 +180,11 @@ router.post('/queues/:name/students', function (req, res) {
 		if (req.body.action === null && queue.force_action) {
 			res.status(400);
 			res.json({
-				error: 6,
+				error: 7,
 				message: 'An action is required.'
 			});
 			return;
 		}
-
-		console.log('req.connection.remoteAddress = ' + req.connection.remoteAddress);
 
 		model.get_computer(req.connection.remoteAddress).then(computer => {
 			model.get_allowed_rooms(queue).then(rooms => {
@@ -189,7 +197,7 @@ router.post('/queues/:name/students', function (req, res) {
 					if (rooms.length !== 0) {
 						var room_ok = false;
 
-						for (var room of rooms) {
+						for (const room of rooms) {
 							if (room.id === computer.room_id) {
 								room_ok = true;
 								break;
@@ -199,7 +207,7 @@ router.post('/queues/:name/students', function (req, res) {
 						if (!room_ok) {
 							res.status(400);
 							res.json({
-								error: 7,
+								error: 8,
 								message: 'Invalid room.'
 							});
 						}
@@ -213,7 +221,7 @@ router.post('/queues/:name/students', function (req, res) {
 				} else if (req.body.location === null) {
 					res.status(400);
 					res.json({
-						error: 8,
+						error: 9,
 						message: 'A location is required.'
 					});
 					return;
@@ -222,7 +230,7 @@ router.post('/queues/:name/students', function (req, res) {
 					if (rooms.length !== 0) {
 						res.status(400);
 						res.json({
-							error: 7,
+							error: 10,
 							message: 'You must sit in one of the specified rooms.'
 						});
 					}
@@ -243,7 +251,7 @@ router.post('/queues/:name/students', function (req, res) {
 						if (action === null || action.queue_id !== queue.id) {
 							res.status(400);
 							res.json({
-								error: 9,
+								error: 11,
 								message: 'Unknown action.'
 							});
 							return;
