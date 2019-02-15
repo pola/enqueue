@@ -24,6 +24,6 @@ model.setConnection(sequelize);
 
 //model.connection = connection;
 
-listen(config.port, () => {
+listen(config.port, '0.0.0.0', () => {
 	console.log("server listening on port", config.port);
 });
