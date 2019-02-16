@@ -1,14 +1,11 @@
-const routes = [
-	{ path: '/', redirect: '/queues' },
-	{ path: '/queues', component: Vue.component('route-queues') },
-	{ path: '/queues/:name', component: Vue.component('route-queue') },
-	{ path: '/admin', component: Vue.component('route-admin-dashboard') }
-];
-
-// Create VueRouter
-// Docs: https://router.vuejs.org/guide
 const router = new VueRouter({
-	routes
+	mode: 'history',
+	routes: [
+		{ path: '/', redirect: '/queues' },
+		{ path: '/queues', component: Vue.component('route-queues') },
+		{ path: '/queues/:name', component: Vue.component('route-queue') },
+		{ path: '/admin', component: Vue.component('route-admin-dashboard') }
+	]
 });
 
 Vue.use(VueMaterial.default);

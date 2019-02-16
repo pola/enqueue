@@ -1,4 +1,5 @@
 const setupBoilerplate = require('./boilerplate/setup');
+const history = require('connect-history-api-fallback');
 const config = require('./config');
 
 const { app, io, sequelize,  listen } = setupBoilerplate();
@@ -8,6 +9,9 @@ const controller_rest = require('./controllers/rest.controller.js');
 const controller_cas = require('./controllers/cas.controller.js');
 
 app.use('/api', controller_rest);
+
+app.use(history());
+
 app.use('/', controller_cas);
 
 // Registers socket.io controller
