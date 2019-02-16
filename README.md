@@ -3,7 +3,7 @@ Ni ska lämna in er kod till projektet här. Det är okej att även ha projektet
 
 Innan ni börjar på projektet behöver ni få er projektspecifikation godkänd. Ni lämnar in den på canvas här: https://kth.instructure.com/courses/7493/assignments/82729 Om ni är flera som jobbar tillsammans så behöver bara en lämna in uppgiften
 
-Tänk på att hålla en någolunda snygg och tydlig githistorik där det syns att alla jobbat på projektet. Försök att hålla commits så små som möjligt (atomic). 
+Tänk på att hålla en någolunda snygg och tydlig githistorik där det syns att alla jobbat på projektet. Försök att hålla commits så små som möjligt (atomic).
 
 ## Gitignore
 Det är bra att i början av ett projekt skapa en bra `.gitignore` så att ni inte råkar pusha upp byggfiler, paket eller annat som inte hör hemma i ett gitrepo.
