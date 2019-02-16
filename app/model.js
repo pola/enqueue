@@ -203,7 +203,7 @@ exports.get_students = queue => {
 	return students[queue.id];
 };
 
-exports.add_student = function(queue, profile, comment, location, action) {
+exports.add_student = (queue, profile, comment, location, action) => {
 	students[queue.id].push({
 		profile: profile,
 		entered_at: Date.now,
@@ -214,8 +214,44 @@ exports.add_student = function(queue, profile, comment, location, action) {
 	});
 };
 
+exports.move_student_after = (queue, student, move_after) => {
+	const s = exports.get_students(queue);
+	var remove_index = null;
+
+	for (var i = 0; i < s.length; i++) {
+		if (s[i].profile.id === student.profile.id) {
+			remove_index = i;
+			break;
+		}
+	}
+
+	if (remove_index === null) {
+		console.log('!!!');
+		return;
+	}
+
+	if (move_after === null) {
+		console.log('move_after = null');
+		s.splice(remove_index, 1);
+		s.unshift(student);
+	} else {
+		console.log('move_after = ' + move_after);
+		for (var i = 0; i < s.length; i++) {
+			console.log('s[' + i + '].profile.id = ' + s[i].profile.id);
+			if (s[i].profile.id === move_after) {
+				console.log('???');
+				s.splice(i + 1, 0, student);
+				break;
+			}
+		}
+
+		s.splice(remove_index, 1);
+	}
+};
+
 // TODO: den här ger alltid tillbaka alla rum, oberoende av vilken queue man skickar in som parameter
 exports.get_allowed_rooms = (queue) => Room.findAll({
+	where: { id: 1337 },
 	include: [{
 		model: Queue,
 		as: 'Queues'

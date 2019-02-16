@@ -350,36 +350,209 @@ router.patch('/queues/:name/students/:id', function (req, res) {
 			}
 		}
 
-		if (s === null) {
+		if (student === null) {
 			res.status(404);
 			res.end();
 			return;
 		}
 
-		// som student kan man bara ändra på sig själv
-		if (student.profile.id === req.session.profile.id) {
-			if ('location' in req.body) {
-				// TODO: uppdatera studentens platsangivelse
-			}
-
-			if ('comment' in req.body) {
-				// TODO: uppdatera studentens kommentar
-			}
-
-			if ('action' in req.body) {
-				// TODO: uppdatera studentens action(s)
-			}
-		}
-
-		// som assistent kan man bara ändra på någons position
-		if (req.session.profile.teacher /* TODO: kontrollera om man är assistent i den aktuella kön */) {
-			if ('position' in req.body) {
-				// TODO: ändra personens position
-			}
-		}
-
-		// TODO: om det har gjorts en ändring ska vi berätta om den för alla i kön via websockets
+		update_student(queue, student, {}, req, res, Object.keys(req.body));
 	});
 });
+
+const update_student = (queue, student, changes, req, res, keys) => {
+	if (keys.length === 0) {
+		const changes_keys = Object.keys(changes);
+
+		if (changes_keys.length === 0) {
+			res.status(400);
+			res.json({
+				error: 1,
+				message: 'Specify at least one parameter to change.'
+			});
+			return;
+		}
+
+		// spara ändringarna
+		for (const changes_key of changes_keys) {
+			if (changes_key === 'move_after') {
+				model.move_student_after(queue, student, changes.move_after);
+			} else {
+				student[changes_key] = changes[changes_key];
+			}
+		}
+
+		res.status(200);
+		res.end();
+
+		// TODO: om det har gjorts en ändring ska vi berätta om den för alla i kön via websockets
+	} else {
+		const key = keys[0];
+
+		if (key === 'location' || key === 'comment' || key === 'action') {
+			if (student.profile.id !== req.session.profile.id) {
+				res.status(401);
+				res.end();
+				return;
+			}
+
+			if (key === 'location') {
+				keys.shift();
+
+				model.get_computer(req.connection.remoteAddress).then(computer => {
+					model.get_allowed_rooms(queue).then(rooms => {
+						// blir antingen en sträng eller en datorplats ({id: ..., name: ...})
+						var location;
+
+						// klienten sitter vid en identifierad dator
+						if (computer !== null) {
+							// men är datorn i listan på godkända rum?
+							if (rooms.length !== 0) {
+								var room_ok = false;
+
+								for (const room of rooms) {
+									if (room.id === computer.room_id) {
+										room_ok = true;
+										break;
+									}
+								}
+
+								if (!room_ok) {
+									res.status(400);
+									res.json({
+										error: 6,
+										message: 'Invalid room.'
+									});
+									return;
+								}
+							}
+
+							// datorn är i listan på godkända rum, eller så är listan tom och alla rum är godkända
+							changes.location = {
+								id: computer.id,
+								name: computer.name
+							};
+						} else if (req.body.location === null) {
+							res.status(400);
+							res.json({
+								error: 7,
+								message: 'A location is required.'
+							});
+							return;
+						} else {
+							// om man måste sitta i ett särskilt rum måste man sitta vid en identifierad dator
+							if (rooms.length !== 0) {
+								res.status(400);
+								res.json({
+									error: 8,
+									message: 'You must sit in one of the specified rooms.'
+								});
+								return;
+							}
+
+							changes.location = req.body.location;
+						}
+
+						update_student(queue, student, changes, req, res, keys);
+					});
+				});
+			}
+
+			if (key === 'comment') {
+				keys.shift();
+
+				if ((req.body.comment === null || req.body.comment.length === 0) && queue.force_comment) {
+					res.status(400);
+					res.json({
+						error: 3,
+						message: 'A comment is required.'
+					});
+					return;
+				}
+
+				changes.comment = req.body.comment;
+
+				update_student(queue, student, changes, req, res, keys);
+			}
+
+			if (key === 'action') {
+				keys.shift();
+
+				if (req.body.action === null) {
+					if (queue.force_action) {
+						res.status(400);
+						res.json({
+							error: 4,
+							message: 'An action is required.'
+						});
+						return;
+					}
+
+					changes.action = null;
+
+					update_student(queue, student, changes, req, res, keys);
+				} else {
+					model.get_action(req.body.action).then(action => {
+						if (action === null || action.queue_id !== queue.id) {
+							res.status(400);
+							res.json({
+								error: 5,
+								message: 'Unknown action.'
+							});
+							return;
+						}
+
+						// action-objektet kommer direkt från databasen, så vi tar endast med den data som vi behöver
+						changes.action = {
+							id: action.id,
+							name: action.name,
+							color: action.color
+						};
+
+						update_student(queue, student, changes, req, res, keys);
+					});
+				}
+			}
+		} else if (key === 'move_after') {
+			keys.shift();
+
+			if (!req.session.profile.teacher /* TODO: kontrollera om man är assistent i den aktuella kön */) {
+				res.status(401);
+				res.end();
+				return;
+			}
+
+			if (req.body.move_after !== null) {
+				var found = null;
+
+				for (const s of model.get_students(queue)) {
+					if (s.profile.id === req.body.move_after) {
+						found = true;
+						break;
+					}
+				}
+
+				if (!found) {
+					res.status(400);
+					res.json({
+						error: 10,
+						message: 'Cannot find the student specified in parameter move_after.'
+					});
+					return;
+				}
+			}
+
+			changes.move_after = req.body.move_after;
+			update_student(queue, student, changes, req, res, keys);
+		} else {
+			res.status(400);
+			res.json({
+				error: 2,
+				message: 'An unknown parameter was specified.'
+			});
+			return;
+		}
+	}
+};
 
 module.exports = router;
