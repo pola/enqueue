@@ -1,5 +1,4 @@
 const setupBoilerplate = require('./boilerplate/setup');
-const history = require('connect-history-api-fallback');
 const config = require('./config');
 
 const { app, io, sequelize,  listen } = setupBoilerplate();
@@ -9,8 +8,6 @@ const controller_rest = require('./controllers/rest.controller.js');
 const controller_cas = require('./controllers/cas.controller.js');
 
 app.use('/api', controller_rest);
-
-app.use(history());
 
 app.use('/', controller_cas);
 
@@ -25,8 +22,6 @@ const model = require('./model.js');
 
 model.setIo(io);
 model.setConnection(sequelize);
-
-//model.connection = connection;
 
 listen(config.port, '0.0.0.0', () => {
 	console.log("server listening on port", config.port);
