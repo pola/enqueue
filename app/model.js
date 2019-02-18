@@ -168,6 +168,8 @@ exports.get_or_create_queue = function(name) {
 			}
 		}).spread((queue, created) => {
 			if (created === true){
+				students[queue.id] = [];
+
 				Action.bulkCreate([
 					{ name: "Help",
 					color: "primary",
