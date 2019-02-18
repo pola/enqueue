@@ -185,6 +185,15 @@ exports.get_or_create_queue = function(name) {
 	});
 };
 
+exports.delete_queue = (queue) => {
+	return new Promise(function(resolve, reject) {
+		Queue.destroy({ where: { id: queue.id } }).then(() => {
+			delete students[queue.id];
+			resolve();
+		});
+	});
+};
+
 exports.get_queue = name => Queue.findOne({ where: { name: name } });
 
 exports.get_computer = ip => Computer.findOne({ where: { ip: ip } });

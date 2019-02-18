@@ -70,3 +70,10 @@ fetch('/api/queues/prutt/students/u1tm1nqn', {
 		});
 	}
 });
+
+// ta bort en kö (skickar bara en statuskod tillbaka, aldrig något body-innehåll)
+fetch('/api/queues/tilpro', {
+	method: 'DELETE'
+}).then(res => {
+	console.log(res.status);
+});

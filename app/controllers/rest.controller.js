@@ -94,6 +94,11 @@ router.post('/queues', function (req, res) {
 
 router.get('/queues/:name', function (req, res) {
 	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(401);
+			res.end();
+			return;
+		}
 
 		model.get_actions(queue).then(actions => {
 			res.json({
@@ -106,9 +111,36 @@ router.get('/queues/:name', function (req, res) {
 				actions: actions
 			});
 		});
-	}).catch(() => {
-		res.status(404);
+	});
+});
+
+// radera en kö
+router.delete('/queues/:name', function (req, res) {
+	if (!('cas_user' in req.session)) {
+		res.status(401);
 		res.end();
+		return;
+	}
+
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+
+		if (!req.session.profile.teacher /* TODO: rättigheter som assistent i den aktuella kön */) {
+			res.status(401);
+			res.end();
+			return;
+		}
+
+		model.delete_queue(queue).then(() => {
+			res.status(200);
+			res.end();
+
+			// TODO: informera via websockets
+		});
 	});
 });
 
