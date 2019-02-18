@@ -89,12 +89,18 @@ router.post('/queues', function (req, res) {
 		return;
 	}
 
+	if (!valid_queue_name(req.body.name)) {
+		res.status(400);
+		res.json({
+			error: 1,
+			message: 'The name is invalid.'
+		});
+		return;
+	}
+
 	model.get_or_create_queue(req.body.name).then(queue => {
 		res.status(201);
 		res.json(queue);
-	}).catch(() => {
-		res.status(400);
-		res.end();
 	});
 });
 
