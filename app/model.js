@@ -153,6 +153,8 @@ exports.get_queues = function() {
 	});
 };
 
+exports.get_queue = (name) => Queue.findOne({ where: { name: name } });
+
 exports.get_or_create_queue = function(name) {
 	return new Promise(function(resolve, reject) {
 		Queue.findOrCreate({
@@ -164,6 +166,7 @@ exports.get_or_create_queue = function(name) {
 				auto_open: null,
 				auto_purge: null,
 				force_comment: true,
+				force_action: true,
 				queuing: []
 			}
 		}).spread((queue, created) => {

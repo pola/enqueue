@@ -2,6 +2,7 @@ const model = require("../model.js");
 const express = require('express');
 const router = express.Router();
 
+// hämta profilen för den inloggade användaren
 router.get('/profile', function (req, res) {
 	if ('cas_user' in req.session) {
 		res.json({
@@ -15,6 +16,7 @@ router.get('/profile', function (req, res) {
 	}
 });
 
+// hämta alla lärarprofiler
 router.get('/admin/teachers', function (req, res) {
 	if (!('teacher' in req.session) || !req.session.teacher) {
 		res.status(401);
@@ -27,6 +29,7 @@ router.get('/admin/teachers', function (req, res) {
 	});
 });
 
+// lägg till en profil som lärare
 router.post('/admin/teachers', function (req, res) {
 	if (!('teacher' in req.session) || !req.session.teacher) {
 		res.status(401);
@@ -43,6 +46,7 @@ router.post('/admin/teachers', function (req, res) {
 	});
 });
 
+// ta bort en profil som lärare
 router.delete('/admin/teachers/:id', function (req, res) {
 	if (!('teacher' in req.session) || !req.session.teacher) {
 		res.status(401);
@@ -66,6 +70,7 @@ router.delete('/admin/teachers/:id', function (req, res) {
 	});
 });
 
+// ge (grundläggande) information om alla köer
 router.get('/queues', function (req, res) {
 	model.get_queues().then(queues => {
 		res.json(queues.map(queue => ({
@@ -76,6 +81,7 @@ router.get('/queues', function (req, res) {
 	});
 });
 
+// skapa en ny kö
 router.post('/queues', function (req, res) {
 	if (!('teacher' in req.session) || !req.session.teacher) {
 		res.status(401);
@@ -92,6 +98,7 @@ router.post('/queues', function (req, res) {
 	});
 });
 
+// ge information om en kö
 router.get('/queues/:name', function (req, res) {
 	model.get_queue(req.params.name).then(queue => {
 		if (queue === null) {
@@ -357,6 +364,179 @@ router.delete('/queues/:name/students/:id', function (req, res) {
 	});
 });
 
+// ändra en kö
+router.patch('/queues/:name', function(req, res) {
+	if (!('cas_user' in req.session)) {
+		res.status(401);
+		res.end();
+		return;
+	}
+
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+
+		if (!req.session.profile.teacher /* TODO: kontrollera om man är assistent i den aktuella kön */) {
+			res.status(401);
+			res.end();
+			return;
+		}
+
+		update_queue(queue, {}, req, res, Object.keys(req.body));
+	});
+});
+
+const update_queue = (queue, changes, req, res, keys) => {
+	if (keys.length === 0) {
+		const changes_keys = Object.keys(changes);
+
+		if (changes_keys.length === 0) {
+			res.status(400);
+			res.json({
+				error: 1,
+				message: 'Specify at least one parameter to change.'
+			});
+			return;
+		}
+
+		// spara ändringarna
+		for (const changes_key of changes_keys) {
+			queue[changes_key] = changes[changes_key];
+		}
+
+		queue.save().then(() => {
+			res.status(200);
+			res.end();
+
+			// TODO: om det har gjorts en ändring ska vi berätta om den för alla via websockets
+		});
+	} else {
+		const key = keys[0];
+
+		if (key === 'name') {
+			keys.shift();
+
+			if (typeof req.body.name !== 'string') {
+				res.status(400);
+				res.json({
+					error: 3,
+					message: 'The value for parameter name must be a string.'
+				});
+				return;
+			}
+
+			if (!valid_queue_name(req.body.name)) {
+				res.status(400);
+				res.json({
+					error: 4,
+					message: 'The name is invalid.'
+				});
+				return;
+			}
+
+			model.get_queue(req.body.name).then(existing_queue => {
+				if (existing_queue !== null && existing_queue.id !== queue.id) {
+					res.status(400);
+					res.json({
+						error: 5,
+						message: 'The name is already used by another queue.'
+					});
+					return;
+				}
+
+				changes.name = req.body.name;
+
+				update_queue(queue, changes, req, res, keys);
+			});
+		} else if (key === 'description') {
+			keys.shift();
+
+			if (typeof req.body.description !== 'string') {
+				res.status(400);
+				res.json({
+					error: 6,
+					message: 'The value for parameter description must be a string.'
+				});
+				return;
+			}
+
+			changes.description = req.body.description;
+
+			if (changes.description.length === 0) {
+				changes.description = 0;
+			}
+
+			update_queue(queue, changes, req, res, keys);
+		} else if (key === 'open') {
+			keys.shift();
+
+			if (!(typeof req.body.open === 'boolean')) {
+				res.status(400);
+				res.json({
+					error: 7,
+					message: 'The value for parameter open must be a boolean.'
+				});
+				return;
+			}
+
+			changes.open = req.body.open;
+
+			update_queue(queue, changes, req, res, keys);
+		} else if (key === 'auto_open') {
+			keys.shift();
+
+			// TODO hantera null eller en tidsstämpel i framtiden
+
+			update_queue(queue, changes, req, res, keys);
+		} else if (key === 'auto_purge') {
+			keys.shift();
+
+			// TODO: hantera null eller ett klockslag på HH:MM
+
+			update_queue(queue, changes, req, res, keys);
+		} else if (key === 'force_comment') {
+			keys.shift();
+
+			if (!(typeof req.body.force_comment === 'boolean')) {
+				res.status(400);
+				res.json({
+					error: 8,
+					message: 'The value for parameter force_comment must be a boolean.'
+				});
+				return;
+			}
+
+			changes.force_comment = req.body.force_comment;
+
+			update_queue(queue, changes, req, res, keys);
+		} else if (key === 'force_action') {
+			keys.shift();
+
+			if (!(typeof req.body.force_action === 'boolean')) {
+				res.status(400);
+				res.json({
+					error: 9,
+					message: 'The value for parameter force_action must be a boolean.'
+				});
+				return;
+			}
+
+			changes.force_action = req.body.force_action;
+
+			update_queue(queue, changes, req, res, keys);
+		} else {
+			res.status(400);
+			res.json({
+				error: 2,
+				message: 'An unknown parameter was specified.'
+			});
+		}
+	}
+};
+
 // ändra en student i kön
 router.patch('/queues/:name/students/:id', function (req, res) {
 	if (!('cas_user' in req.session)) {
@@ -586,5 +766,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 		}
 	}
 };
+
+const valid_queue_name = (name) => /^([A-ZÅÄÖÆØa-zåäöæø0-9_\-]{1,20})$/.test(name);
 
 module.exports = router;

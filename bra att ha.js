@@ -77,3 +77,24 @@ fetch('/api/queues/tilpro', {
 }).then(res => {
 	console.log(res.status);
 });
+
+// ändra egenskaper hos en kö
+fetch('/api/queues/tilpro', {
+	method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+	body: JSON.stringify({
+		// name: 'annat-namn',
+		open: true,
+		description: 'En beskrivning\med flera rader',
+		force_comment: false,
+		force_action: true
+	})
+}).then(res => {
+	console.log(res.status);
+	
+	if (res.status !== 200) {
+		res.json().then(j => {
+			console.log(j);
+		});
+	}
+});
