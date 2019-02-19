@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 // hämta profilen för den inloggade användaren
-router.get('/profile', function (req, res) {
+router.get('/profile', (req, res) => {
 	if ('cas_user' in req.session) {
 		res.json({
 			id: req.session.cas_user,
@@ -17,7 +17,7 @@ router.get('/profile', function (req, res) {
 });
 
 // hämta alla lärarprofiler
-router.get('/admin/teachers', function (req, res) {
+router.get('/admin/teachers', (req, res) => {
 	if (!('teacher' in req.session) || !req.session.teacher) {
 		res.status(401);
 		res.json([]);
@@ -30,7 +30,7 @@ router.get('/admin/teachers', function (req, res) {
 });
 
 // lägg till en profil som lärare
-router.post('/admin/teachers', function (req, res) {
+router.post('/admin/teachers', (req, res) => {
 	if (!('teacher' in req.session) || !req.session.teacher) {
 		res.status(401);
 		res.end();
@@ -47,7 +47,7 @@ router.post('/admin/teachers', function (req, res) {
 });
 
 // ta bort en profil som lärare
-router.delete('/admin/teachers/:id', function (req, res) {
+router.delete('/admin/teachers/:id', (req, res) => {
 	if (!('teacher' in req.session) || !req.session.teacher) {
 		res.status(401);
 		res.end();
@@ -71,7 +71,7 @@ router.delete('/admin/teachers/:id', function (req, res) {
 });
 
 // ge (grundläggande) information om alla köer
-router.get('/queues', function (req, res) {
+router.get('/queues', (req, res) => {
 	model.get_queues().then(queues => {
 		res.json(queues.map(queue => ({
 			name: queue.name,
@@ -82,7 +82,7 @@ router.get('/queues', function (req, res) {
 });
 
 // skapa en ny kö
-router.post('/queues', function (req, res) {
+router.post('/queues', (req, res) => {
 	if (!('teacher' in req.session) || !req.session.teacher) {
 		res.status(401);
 		res.end();
@@ -105,7 +105,7 @@ router.post('/queues', function (req, res) {
 });
 
 // ge information om en kö
-router.get('/queues/:name', function (req, res) {
+router.get('/queues/:name', (req, res) => {
 	model.get_queue(req.params.name).then(queue => {
 		if (queue === null) {
 			res.status(401);
@@ -128,7 +128,7 @@ router.get('/queues/:name', function (req, res) {
 });
 
 // radera en kö
-router.delete('/queues/:name', function (req, res) {
+router.delete('/queues/:name', (req, res) => {
 	if (!('cas_user' in req.session)) {
 		res.status(401);
 		res.end();
@@ -156,7 +156,7 @@ router.delete('/queues/:name', function (req, res) {
 });
 
 // ny student i kön
-router.post('/queues/:name/students', function (req, res) {
+router.post('/queues/:name/students', (req, res) => {
 	if (!('cas_user' in req.session)) {
 		res.status(401);
 		res.end();
@@ -318,7 +318,7 @@ router.post('/queues/:name/students', function (req, res) {
 });
 
 // lämna kön (om det är en själv) eller sparka ut någon (som assistent)
-router.delete('/queues/:name/students/:id', function (req, res) {
+router.delete('/queues/:name/students/:id', (req, res) => {
 	if (!('cas_user' in req.session)) {
 		res.status(401);
 		res.end();
@@ -367,7 +367,7 @@ router.delete('/queues/:name/students/:id', function (req, res) {
 });
 
 // ändra en kö
-router.patch('/queues/:name', function(req, res) {
+router.patch('/queues/:name', (req, res) => {
 	if (!('cas_user' in req.session)) {
 		res.status(401);
 		res.end();
@@ -542,7 +542,7 @@ const update_queue = (queue, changes, req, res, keys) => {
 };
 
 // ändra en student i kön
-router.patch('/queues/:name/students/:id', function (req, res) {
+router.patch('/queues/:name/students/:id', (req, res) => {
 	if (!('cas_user' in req.session)) {
 		res.status(401);
 		res.end();

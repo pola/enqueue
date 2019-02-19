@@ -96,8 +96,8 @@ exports.setConnection = (connection2) => {
 	});
 };
 
-exports.get_or_create_profile = function(id, user_name, name) {
-	return new Promise(function(resolve, reject) {
+exports.get_or_create_profile = (id, user_name, name) => {
+	return new Promise((resolve, reject) => {
 		Profile.findOrCreate({
 			where: { id: id },
 			defaults: {
@@ -112,16 +112,16 @@ exports.get_or_create_profile = function(id, user_name, name) {
 	});
 };
 
-exports.get_teachers = function() {
-	return new Promise(function(resolve, reject) {
+exports.get_teachers = () => {
+	return new Promise((resolve, reject) => {
 		Profile.findAll({ where: { teacher: true } }).then(teachers => {
 			resolve(teachers);
 		});
 	});
 }
 
-exports.add_teacher = function(user_name) {
-	return new Promise(function(resolve, reject) {
+exports.add_teacher = (user_name) => {
+	return new Promise((resolve, reject) => {
 		Profile.findOne({ where: {user_name: user_name} }).then(profile => {
 			if (profile === null) {
 				reject();
@@ -139,8 +139,8 @@ exports.add_teacher = function(user_name) {
 	});
 };
 
-exports.remove_teacher = function(id) {
-	return new Promise(function(resolve, reject) {
+exports.remove_teacher = (id) => {
+	return new Promise((resolve, reject) => {
 		Profile.findOne({ where: { id: id } }).then(profile => {
 			if (profile === null) {
 				reject();
@@ -158,8 +158,8 @@ exports.remove_teacher = function(id) {
 	});
 };
 
-exports.get_queues = function() {
-	return new Promise(function(resolve, reject) {
+exports.get_queues = () => {
+	return new Promise((resolve, reject) => {
 		Queue.findAll().then(queues => {
 			resolve(queues);
 		});
@@ -168,8 +168,8 @@ exports.get_queues = function() {
 
 exports.get_queue = (name) => Queue.findOne({ where: { name: name } });
 
-exports.get_or_create_queue = function(name) {
-	return new Promise(function(resolve, reject) {
+exports.get_or_create_queue = (name) => {
+	return new Promise((resolve, reject) => {
 		Queue.findOrCreate({
 			where: { name: name },
 			defaults: {
@@ -204,7 +204,7 @@ exports.get_or_create_queue = function(name) {
 };
 
 exports.delete_queue = (queue) => {
-	return new Promise(function(resolve, reject) {
+	return new Promise((resolve, reject) => {
 		Queue.destroy({ where: { id: queue.id } }).then(() => {
 			delete students[queue.id];
 
@@ -219,8 +219,8 @@ exports.get_queue = name => Queue.findOne({ where: { name: name } });
 
 exports.get_computer = ip => Computer.findOne({ where: { ip: ip } });
 
-exports.get_actions = function(queue) {
-	return new Promise(function(resolve, reject) {
+exports.get_actions = (queue) => {
+	return new Promise((resolve, reject) => {
 		Action.findAll({ where: { queue_id: queue.id } }).then(actions => {
 			resolve(actions);
 		});
@@ -232,7 +232,7 @@ exports.get_action_by_id = (id) => Action.findOne({ where: { id: id } });
 exports.get_action_by_name = (queue, name) => Action.findOne({ where: { queue_id: queue.id, name: name } });
 
 exports.create_action = (queue, name, color) => {
-	return new Promise(function(resolve, reject) {
+	return new Promise((resolve, reject) => {
 		Action.create({
 			queue_id: queue.id,
 			name: name,
@@ -308,7 +308,7 @@ exports.get_allowed_rooms = (queue) => Room.findAll({
 
 // används för att se om en användare, givet ett köobjekt och användarens ID, har lärar- eller assistenträttigheter i en kö
 exports.has_permission = (queue, profile_id) => {
-	return new Promise(function(resolve, reject) {
+	return new Promise((resolve, reject) => {
 		Profile.findOne({ where: { id: profile_id }}).then(profile => {
 			if (profile.teacher) {
 				resolve(true);
