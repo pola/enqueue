@@ -80,6 +80,12 @@ exports.setConnection = (connection2) => {
 				students[queue.id] = [];
 			}
 		});
+
+		Queue.findOne({ where: { name: 'tilpro' } }).then(queue => {
+			Profile.findOne({ where: { id: 'u1tm1nqn' } }).then(profile => {
+
+			});
+		});
 	});
 };
 
@@ -267,3 +273,19 @@ exports.get_allowed_rooms = (queue) => Room.findAll({
 		as: 'Queues'
     }]
 });
+
+// används för att se om en användare, givet ett köobjekt och användarens ID, har lärar- eller assistenträttigheter i en kö
+exports.has_permission = (queue, profile_id) => {
+	return new Promise(function(resolve, reject) {
+		Profile.findOne({ where: { id: profile_id }}).then(profile => {
+			if (profile.teacher) {
+				resolve(true);
+				return;
+			}
+
+			profile.hasQueue(queue).then(result => {
+				resolve(result);
+			});
+		});
+	});
+}

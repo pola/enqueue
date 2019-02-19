@@ -142,7 +142,7 @@ router.delete('/queues/:name', function (req, res) {
 			return;
 		}
 
-		if (!req.session.profile.teacher /* TODO: rättigheter som assistent i den aktuella kön */) {
+		if (!req.session.profile.teacher) {
 			res.status(401);
 			res.end();
 			return;
@@ -345,13 +345,20 @@ router.delete('/queues/:name/students/:id', function (req, res) {
 			if (students[i].profile.id === req.params.id) {
 				found = true;
 
-				if (students[i].profile.id === req.session.profile.id || req.session.profile.teacher /* TODO: rättigheter som assistent i den aktuella kön */) {
+				model.has_permission(queue, req.session.profile.id).then(has_permission => {
+					if (students[i].profile.id !== req.session.profile.id && !has_permission) {
+						res.status(401);
+						res.end();
+						return;
+					}
+
 					students.splice(i, 1);
-				} else {
-					res.status(401);
+
+					res.status(200);
 					res.end();
-					return;
-				}
+
+					// TODO: berätta för andra via websockets
+				});
 
 				break;
 			}
@@ -362,11 +369,6 @@ router.delete('/queues/:name/students/:id', function (req, res) {
 			res.end();
 			return;
 		}
-
-		res.status(200);
-		res.end();
-
-		// TODO: berätta för andra via websockets
 	});
 });
 
@@ -385,13 +387,15 @@ router.patch('/queues/:name', function(req, res) {
 			return;
 		}
 
-		if (!req.session.profile.teacher /* TODO: kontrollera om man är assistent i den aktuella kön */) {
-			res.status(401);
-			res.end();
-			return;
-		}
+		model.has_permission(queue, req.session.profile.id).then(has_permission => {
+			if (!has_permission) {
+				res.status(401);
+				res.end();
+				return;
+			}
 
-		update_queue(queue, {}, req, res, Object.keys(req.body));
+			update_queue(queue, {}, req, res, Object.keys(req.body));
+		});
 	});
 });
 
@@ -734,34 +738,36 @@ const update_student = (queue, student, changes, req, res, keys) => {
 		} else if (key === 'move_after') {
 			keys.shift();
 
-			if (!req.session.profile.teacher /* TODO: kontrollera om man är assistent i den aktuella kön */) {
-				res.status(401);
-				res.end();
-				return;
-			}
+			model.has_permission(queue, req.session.profile.id).then(has_permission => {
+				if (!has_permission) {
+					res.status(401);
+					res.end();
+					return;
+				}
 
-			if (req.body.move_after !== null) {
-				var found = null;
+				if (req.body.move_after !== null) {
+					var found = null;
 
-				for (const s of model.get_students(queue)) {
-					if (s.profile.id === req.body.move_after) {
-						found = true;
-						break;
+					for (const s of model.get_students(queue)) {
+						if (s.profile.id === req.body.move_after) {
+							found = true;
+							break;
+						}
+					}
+
+					if (!found) {
+						res.status(400);
+						res.json({
+							error: 10,
+							message: 'Cannot find the student specified in parameter move_after.'
+						});
+						return;
 					}
 				}
 
-				if (!found) {
-					res.status(400);
-					res.json({
-						error: 10,
-						message: 'Cannot find the student specified in parameter move_after.'
-					});
-					return;
-				}
-			}
-
-			changes.move_after = req.body.move_after;
-			update_student(queue, student, changes, req, res, keys);
+				changes.move_after = req.body.move_after;
+				update_student(queue, student, changes, req, res, keys);
+			});
 		} else {
 			res.status(400);
 			res.json({
