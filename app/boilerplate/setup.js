@@ -28,18 +28,18 @@ module.exports = () => {
 	const sequelize = new Sequelize(config.mysql.database, config.mysql.username, config.mysql.password, {
 		host: config.mysql.host,
 		dialect: 'mysql',
-		
+
 		pool: {
 			max: 5,
 			min: 0,
 			acquire: 30000,
 			idle: 10000
 		},
-		
+
 		define: {
 			timestamps: false
 		},
-		
+
 		// http://docs.sequelizejs.com/manual/tutorial/querying.html#operators
 		operatorsAliases: false
 	});
@@ -50,29 +50,29 @@ module.exports = () => {
 		console.info(`${console.color.Dark_Gray} ${req.ip} ${console.color.RESET} ${req.path} ${req.body || ''}`);
 		next();
 	});
-	
+
 	/*
 		This is a middleware, provided by express, that parses the body of the request into a javascript object.
 		It's basically just replacing the body property like this:
 		req.body = JSON.parse(req.body)
 	*/
 	app.use(express.json());
-	
+
 	app.use(history({
 		rewrites: [
 			{
-				from: /((^\/api\/.*$)|^\/login$)/,
+				from: /((^\/api\/.*$)|^\/login$|^\/logout$)/,
 				to: (context) => {
 					return context.parsedUrl.pathname;
 				}
 			}
 		]
 	}));
-	
+
 	app.use(express.urlencoded({
 		extended: true
 	}));
-	
+
 	// This will serve static files from the public directory, starting with index.html
 	app.use(express.static(path.join(__dirname, '..', '..', 'public')));
 
