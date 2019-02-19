@@ -20,6 +20,8 @@ exports.setIo = (io2) => {
 	io = io2;
 };
 
+exports.get_io = () => io;
+
 exports.setConnection = (connection2) => {
 	// TOOD: kan det här bli finare?
 	connection = connection2;
@@ -200,6 +202,9 @@ exports.delete_queue = (queue) => {
 	return new Promise(function(resolve, reject) {
 		Queue.destroy({ where: { id: queue.id } }).then(() => {
 			delete students[queue.id];
+
+			io.emit('queue_delete', queue.id);
+
 			resolve();
 		});
 	});
@@ -232,6 +237,8 @@ exports.add_student = (queue, profile, comment, location, action) => {
 		action: action,
 		receiving_help_from: null
 	});
+
+	this.io_emit_queue_students(queue);
 };
 
 exports.move_student_after = (queue, student, move_after) => {
@@ -253,6 +260,8 @@ exports.move_student_after = (queue, student, move_after) => {
 	if (move_after === null) {
 		s.splice(remove_index, 1);
 		s.unshift(student);
+
+		this.io_emit_queue_students(queue);
 	} else {
 		for (var i = 0; i < s.length; i++) {
 			if (s[i].profile.id === move_after) {
@@ -262,6 +271,8 @@ exports.move_student_after = (queue, student, move_after) => {
 		}
 
 		s.splice(remove_index, 1);
+
+		this.io_emit_queue_students(queue);
 	}
 };
 
@@ -287,5 +298,12 @@ exports.has_permission = (queue, profile_id) => {
 				resolve(result);
 			});
 		});
+	});
+}
+
+exports.io_emit_queue_students = (queue) => {
+	io.emit('queue_students', {
+		queue: queue.id,
+		students: students[queue.id]
 	});
 }

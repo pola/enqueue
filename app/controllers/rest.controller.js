@@ -151,8 +151,6 @@ router.delete('/queues/:name', function (req, res) {
 		model.delete_queue(queue).then(() => {
 			res.status(200);
 			res.end();
-
-			// TODO: informera via websockets
 		});
 	});
 });
@@ -289,8 +287,6 @@ router.post('/queues/:name/students', function (req, res) {
 					res.status(201);
 					res.end();
 					return;
-
-					// TODO: berätta för andra via websockets
 				} else {
 					model.get_action(req.body.action).then(action => {
 						if (action === null || action.queue_id !== queue.id) {
@@ -314,8 +310,6 @@ router.post('/queues/:name/students', function (req, res) {
 						res.status(201);
 						res.end();
 						return;
-
-						// TODO: berätta för andra via websockets
 					});
 				}
 			});
@@ -357,7 +351,7 @@ router.delete('/queues/:name/students/:id', function (req, res) {
 					res.status(200);
 					res.end();
 
-					// TODO: berätta för andra via websockets
+					model.io_emit_queue_students(queue);
 				});
 
 				break;
@@ -421,7 +415,7 @@ const update_queue = (queue, changes, req, res, keys) => {
 			res.status(200);
 			res.end();
 
-			// TODO: om det har gjorts en ändring ska vi berätta om den för alla via websockets
+			model.io_emit_queue_students(queue);
 		});
 	} else {
 		const key = keys[0];
@@ -607,7 +601,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 		res.status(200);
 		res.end();
 
-		// TODO: om det har gjorts en ändring ska vi berätta om den för alla i kön via websockets
+		model.io_emit_queue_students(queue);
 	} else {
 		const key = keys[0];
 
