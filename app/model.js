@@ -208,7 +208,7 @@ exports.delete_queue = (queue) => {
 		Queue.destroy({ where: { id: queue.id } }).then(() => {
 			delete students[queue.id];
 
-			io.emit('queue_delete', queue.id);
+			io.emit('delete_queue', queue.id);
 
 			resolve();
 		});
@@ -238,9 +238,31 @@ exports.create_action = (queue, name, color) => {
 			name: name,
 			color: color
 		}).then(action => {
-			exports.io_emit_queue_actions(queue);
+			exports.get_actions(queue).then(actions => {
+				exports.io_emit_update_queue(queue, { actions: actions });
+			});
 
 			resolve(action);
+		});
+	});
+};
+
+exports.delete_action = (queue, action) => {
+	return new Promise((resolve, reject) => {
+		action.destroy().then(() => {
+			exports.get_actions(queue).then(actions => {
+				// tvinga inte studenterna att välja en action om vi inte längre har några actions
+				if (actions.length === 0 && queue.force_action) {
+					queue.force_action = false;
+					queue.save();
+
+					exports.io_emit_update_queue(queue, { force_action: false });
+				}
+
+				io.emit('delete_action', action.id);
+
+				resolve();
+			});
 		});
 	});
 };
@@ -322,18 +344,16 @@ exports.has_permission = (queue, profile_id) => {
 	});
 }
 
-exports.io_emit_queue_students = (queue) => {
-	io.emit('queue_students', {
+exports.io_emit_update_queue_students = (queue) => {
+	io.emit('update_queue_students', {
 		queue: queue.id,
 		students: students[queue.id]
 	});
 };
 
-exports.io_emit_queue_actions = (queue) => {
-	exports.get_actions(queue).then(actions => {
-		io.emit('queue_actions', {
-			queue: queue.id,
-			actions: actions
-		});
+exports.io_emit_update_queue = (queue, changes) => {
+	io.emit('update_queue', {
+		queue: queue.id,
+		changes: changes
 	});
 };

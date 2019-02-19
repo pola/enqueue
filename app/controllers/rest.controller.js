@@ -351,7 +351,7 @@ router.delete('/queues/:name/students/:id', (req, res) => {
 					res.status(200);
 					res.end();
 
-					model.io_emit_queue_students(queue);
+					model.io_emit_update_queue_students(queue);
 				});
 
 				break;
@@ -415,7 +415,7 @@ const update_queue = (queue, changes, req, res, keys) => {
 			res.status(200);
 			res.end();
 
-			model.io_emit_queue_students(queue);
+			model.io_emit_update_queue(queue, changes);
 		});
 	} else {
 		const key = keys[0];
@@ -635,6 +635,36 @@ router.post('/queues/:name/actions', (req, res) => {
 	});
 });
 
+// ta bort en action
+router.delete('/queues/:name/actions/:id', (req, res) => {
+	if (!('cas_user' in req.session)) {
+		res.status(401);
+		res.end();
+		return;
+	}
+
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+
+		model.get_action_by_id(req.params.id).then(action => {
+			if (action === null || action.queue_id !== queue.id) {
+				res.status(404);
+				res.end();
+				return;
+			}
+
+			model.delete_action(queue, action).then(() => {
+				res.status(200);
+				res.end();
+			});
+		});
+	});
+});
+
 const update_student = (queue, student, changes, req, res, keys) => {
 	if (keys.length === 0) {
 		const changes_keys = Object.keys(changes);
@@ -660,7 +690,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 		res.status(200);
 		res.end();
 
-		model.io_emit_queue_students(queue);
+		model.io_emit_update_queue_students(queue);
 	} else {
 		const key = keys[0];
 

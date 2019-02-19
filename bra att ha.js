@@ -98,3 +98,31 @@ fetch('/api/queues/tilpro', {
 		});
 	}
 });
+
+// skapa en action för en kö
+fetch('/api/queues/tilpro/actions', {
+	method: 'POST',
+	headers: { 'Content-Type': 'application/json' },
+	body: JSON.stringify({ name: 'Test 5', color: 'primary' })
+}).then(res => {
+	console.log(res.status);
+	
+	if (res.status !== 201) {
+		res.json().then(j => {
+			console.log(j);
+		});
+	}
+});
+
+// ta bort en action för en kö
+fetch('/api/queues/tilpro/actions/12', {
+	method: 'DELETE'
+}).then(res => {
+	console.log(res.status);
+	
+	if (res.status !== 201) {
+		res.json().then(j => {
+			console.log(j);
+		});
+	}
+});
