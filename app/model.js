@@ -245,15 +245,11 @@ exports.move_student_after = (queue, student, move_after) => {
 	}
 
 	if (move_after === null) {
-		console.log('move_after = null');
 		s.splice(remove_index, 1);
 		s.unshift(student);
 	} else {
-		console.log('move_after = ' + move_after);
 		for (var i = 0; i < s.length; i++) {
-			console.log('s[' + i + '].profile.id = ' + s[i].profile.id);
 			if (s[i].profile.id === move_after) {
-				console.log('???');
 				s.splice(i + 1, 0, student);
 				break;
 			}
