@@ -22,6 +22,8 @@ exports.setIo = (io2) => {
 
 exports.get_io = () => io;
 
+exports.colors = ['primary', 'secondary', 'default', 'accent'];
+
 exports.setConnection = (connection2) => {
 	// TOOD: kan det här bli finare?
 	connection = connection2;
@@ -70,7 +72,10 @@ exports.setConnection = (connection2) => {
 	Action = connection.define('actions', {
 		id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
 		name: Sequelize.STRING,
-		color: Sequelize.ENUM("primary","secondary", "default", "accent")
+		color: {
+			type: Sequelize.ENUM,
+			values: exports.colors
+		}
 	});
 
 	// För att ange vilka actions en student kan välja på i kön
@@ -222,7 +227,23 @@ exports.get_actions = function(queue) {
 	});
 };
 
-exports.get_action = id => Action.findOne({ where: { id: id } });
+exports.get_action_by_id = (id) => Action.findOne({ where: { id: id } });
+
+exports.get_action_by_name = (queue, name) => Action.findOne({ where: { queue_id: queue.id, name: name } });
+
+exports.create_action = (queue, name, color) => {
+	return new Promise(function(resolve, reject) {
+		Action.create({
+			queue_id: queue.id,
+			name: name,
+			color: color
+		}).then(action => {
+			exports.io_emit_queue_actions(queue);
+
+			resolve(action);
+		});
+	});
+};
 
 exports.get_students = queue => {
 	return students[queue.id];
@@ -238,7 +259,7 @@ exports.add_student = (queue, profile, comment, location, action) => {
 		receiving_help_from: null
 	});
 
-	this.io_emit_queue_students(queue);
+	exports.io_emit_queue_students(queue);
 };
 
 exports.move_student_after = (queue, student, move_after) => {
@@ -261,7 +282,7 @@ exports.move_student_after = (queue, student, move_after) => {
 		s.splice(remove_index, 1);
 		s.unshift(student);
 
-		this.io_emit_queue_students(queue);
+		exports.io_emit_queue_students(queue);
 	} else {
 		for (var i = 0; i < s.length; i++) {
 			if (s[i].profile.id === move_after) {
@@ -272,7 +293,7 @@ exports.move_student_after = (queue, student, move_after) => {
 
 		s.splice(remove_index, 1);
 
-		this.io_emit_queue_students(queue);
+		exports.io_emit_queue_students(queue);
 	}
 };
 
@@ -306,4 +327,13 @@ exports.io_emit_queue_students = (queue) => {
 		queue: queue.id,
 		students: students[queue.id]
 	});
-}
+};
+
+exports.io_emit_queue_actions = (queue) => {
+	exports.get_actions(queue).then(actions => {
+		io.emit('queue_actions', {
+			queue: queue.id,
+			actions: actions
+		});
+	});
+};

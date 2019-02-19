@@ -288,7 +288,7 @@ router.post('/queues/:name/students', function (req, res) {
 					res.end();
 					return;
 				} else {
-					model.get_action(req.body.action).then(action => {
+					model.get_action_by_id(req.body.action).then(action => {
 						if (action === null || action.queue_id !== queue.id) {
 							res.status(400);
 							res.json({
@@ -576,6 +576,65 @@ router.patch('/queues/:name/students/:id', function (req, res) {
 	});
 });
 
+// lägg till en ny action
+router.post('/queues/:name/actions', (req, res) => {
+	if (!('cas_user' in req.session)) {
+		res.status(401);
+		res.end();
+		return;
+	}
+
+	if (!('name' in req.body) || typeof req.body.name !== 'string' || !('color' in req.body) || model.colors.indexOf(req.body.color) === -1) {
+		res.status(400);
+		res.json({
+			error: 1,
+			message: 'Missing or invalid name or color parameters.'
+		});
+		return;
+	}
+
+	if (req.body.name.length === 0) {
+		res.status(400);
+		res.json({
+			error: 2,
+			message: 'The name cannot be empty.'
+		});
+		return;
+	}
+
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+
+		model.has_permission(queue, req.session.profile.id).then(has_permission => {
+			if (!has_permission) {
+				res.status(401);
+				res.end();
+				return;
+			}
+
+			model.get_action_by_name(queue, req.body.name).then(existing_action => {
+				if (existing_action !== null) {
+					res.status(400);
+					res.json({
+						error: 3,
+						message: 'The name is already in use.'
+					});
+					return;
+				}
+
+				model.create_action(queue, req.body.name, req.body.color).then(action => {
+					res.status(201);
+					res.end();
+				});
+			});
+		});
+	});
+});
+
 const update_student = (queue, student, changes, req, res, keys) => {
 	if (keys.length === 0) {
 		const changes_keys = Object.keys(changes);
@@ -708,7 +767,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 
 					update_student(queue, student, changes, req, res, keys);
 				} else {
-					model.get_action(req.body.action).then(action => {
+					model.get_action_by_id(req.body.action).then(action => {
 						if (action === null || action.queue_id !== queue.id) {
 							res.status(400);
 							res.json({
