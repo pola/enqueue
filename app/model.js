@@ -96,6 +96,8 @@ exports.setConnection = (connection2) => {
 	});
 };
 
+exports.get_profile = (id) => Profile.findOne({ where: { id: id } });
+
 exports.get_or_create_profile = (id, user_name, name) => {
 	return new Promise((resolve, reject) => {
 		Profile.findOrCreate({
@@ -217,7 +219,12 @@ exports.delete_queue = (queue) => {
 
 exports.get_queue = name => Queue.findOne({ where: { name: name } });
 
-exports.get_computer = ip => Computer.findOne({ where: { ip: ip } });
+exports.get_computer = ip => Computer.findOne({
+	where: { ip: ip },
+	include: [
+		{ model: Room, as: Room.rooms }
+	]
+});
 
 exports.get_actions = (queue) => {
 	return new Promise((resolve, reject) => {
@@ -281,7 +288,7 @@ exports.add_student = (queue, profile, comment, location, action) => {
 		receiving_help_from: null
 	});
 
-	exports.io_emit_queue_students(queue);
+	exports.io_emit_update_queue_students(queue);
 };
 
 exports.move_student_after = (queue, student, move_after) => {
@@ -304,7 +311,7 @@ exports.move_student_after = (queue, student, move_after) => {
 		s.splice(remove_index, 1);
 		s.unshift(student);
 
-		exports.io_emit_queue_students(queue);
+		exports.io_emit_update_queue_students(queue);
 	} else {
 		for (var i = 0; i < s.length; i++) {
 			if (s[i].profile.id === move_after) {
@@ -315,7 +322,7 @@ exports.move_student_after = (queue, student, move_after) => {
 
 		s.splice(remove_index, 1);
 
-		exports.io_emit_queue_students(queue);
+		exports.io_emit_update_queue_students(queue);
 	}
 };
 

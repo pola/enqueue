@@ -3,13 +3,15 @@ const express = require('express');
 const router = express.Router();
 
 // hämta profilen för den inloggade användaren
-router.get('/profile', (req, res) => {
+router.get('/me', (req, res) => {
 	if ('cas_user' in req.session) {
-		res.json({
-			id: req.session.cas_user,
-			user_name: req.session.cas_user,
-			name: req.session.cas_user,
-			teacher: req.session.teacher
+		model.get_profile(req.session.cas_user).then((profile) => {
+			model.get_computer(req.connection.remoteAddress).then(location => {
+				res.json({
+					profile: profile,
+					location: location
+				});
+			});
 		});
 	} else {
 		res.json(null);
