@@ -696,7 +696,9 @@ const update_student = (queue, student, changes, req, res, keys) => {
 	} else {
 		const key = keys[0];
 
-		if (key === 'location' || key === 'comment' || key === 'action') {
+		if ((key === 'location' && (req.body.location === null || typeof req.body.location === 'string'))
+			|| (key === 'comment' && (req.body.comment === null || typeof req.body.comment === 'string'))
+			|| (key === 'action' && (req.body.action === null || typeof req.body.action === 'number'))) {
 			if (student.profile.id !== req.session.profile.id) {
 				res.status(401);
 				res.end();
@@ -820,7 +822,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 					});
 				}
 			}
-		} else if (key === 'move_after') {
+		} else if (key === 'move_after' && typeof req.body.move_after === 'number') {
 			keys.shift();
 
 			model.has_permission(queue, req.session.profile.id).then(has_permission => {
@@ -857,7 +859,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 			res.status(400);
 			res.json({
 				error: 2,
-				message: 'An unknown parameter was specified.'
+				message: 'An unknown parameter or an invalid value was specified.'
 			});
 			return;
 		}
