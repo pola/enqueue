@@ -9,10 +9,10 @@ Vue.component('route-admin-dashboard', {
 	methods: {
 		add_teacher() {
 			fetch('/api/admin/teachers', {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_name: this.user_name })
-    	}).then(res => {
+		        method: "POST",
+		        headers: { "Content-Type": "application/json" },
+		        body: JSON.stringify({ user_name: this.user_name })
+    		}).then(res => {
 				if (res.status === 400) {
 					alert('Ogiltigt KTH-användarnamn.');
 				} else if (res.status === 401) {
@@ -24,8 +24,8 @@ Vue.component('route-admin-dashboard', {
 		},
 		remove_teacher(teacher) {
 			fetch('/api/admin/teachers/' + teacher.id, {
-        method: "DELETE"
-    	}).then(res => {
+       			method: "DELETE"
+    		}).then(res => {
 				if (res.status === 404) {
 					alert('Läraren hittades inte.');
 				} else if (res.status === 401) {
@@ -35,10 +35,10 @@ Vue.component('route-admin-dashboard', {
 		},
 		add_queue() {
 			fetch('/api/queues', {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: this.queue_name })
-    	}).then(res => {
+		        method: "POST",
+		        headers: { "Content-Type": "application/json" },
+		        body: JSON.stringify({ name: this.queue_name })
+    		}).then(res => {
 				if (res.status === 400) {
 					alert('Namnet är ogiltigt.');
 				} else if (res.status === 201) {

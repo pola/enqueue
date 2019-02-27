@@ -14,7 +14,19 @@ Vue.component('route-queue', {
 		},
 		enqueue(){
 			console.log("i kön");
-			// TODO: lägg till personen som köande
+			// gå med i en kö
+			fetch('/api/queues/' + queue.name + '/students', {
+				method: 'POST',
+			    headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ comment: comment , location: location, action: action })
+			}).then(res => {
+				console.log(res.status);
+				
+				res.json().then(j => {
+					console.log(j);
+				});
+			});
+
 		},
 		test (action) {
 
