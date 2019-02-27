@@ -30,6 +30,8 @@ const app = new Vue({
 	}
 }).$mount('#app');
 
-fetch('/api/profile').then(res => res.json()).then(profile => {
-	app.$data.profile = profile;
+fetch('/api/me').then(res => res.json()).then(me => {
+	app.$data.profile = me.profile;
+	app.$data.location = null;
+	//app.$data.profile = profile;
 })
