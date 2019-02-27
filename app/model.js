@@ -281,7 +281,7 @@ exports.get_students = queue => {
 exports.add_student = (queue, profile, comment, location, action) => {
 	students[queue.id].push({
 		profile: profile,
-		entered_at: Date.now,
+		entered_at: Date.now(),
 		comment: comment,
 		location: location,
 		action: action,
