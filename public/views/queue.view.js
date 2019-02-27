@@ -13,16 +13,6 @@ Vue.component('route-queue', {
 			// TODO: skicka tillbaka till kön!
 		},
 		enqueue(){
-			/*if (this.action === null && this.queue.force_action) {
-				alert("Du måste välja en action!");
-			}
-			else if (this.location === null) {
-				alert("Du måste välja en plats!");
-			}
-			else if (this.comment === null && this.queue.force_comment) {
-				alert("Du måste skriva en kommentar!");
-			}
-			else {*/
 				fetch('/api/queues/' + this.queue.name + '/students', {
         			method: "POST",
         			headers: { "Content-Type": "application/json" },
@@ -37,8 +27,32 @@ Vue.component('route-queue', {
 						});
 					}
 				});
-			// TODO: lägg till personen som köande
 		},
+
+		dequeue(){
+			// TODO: denna funkar inte??
+			fetch('/api/queues/' + this.queue.name + '/students/' + this.this.$root.$data.profile.id, {
+        		method: "DELETE"
+    		}).then(res => {
+				if (res.status !== 200) {
+					res.json().then (data => {
+						alert(data.message);
+					});
+				}
+			});
+		},
+
+		/*in_queue(){
+			for (student in this.queue.students) {
+				if (this.$root.$data.profile.id === student.profile.id){
+					console.log("i kö");
+					return true;
+				}
+			}
+			console.log("ej i kö");
+			return false;
+		},*/
+
 		test (action) {
 
 			return "md-danger";
@@ -48,6 +62,12 @@ Vue.component('route-queue', {
     // TODO: lägg till hantering av 404
 		fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
 			this.queue = queue;
+		});
+
+		this.$root.$data.socket.on('update_queue_students', data => {
+			if (data.id == this.queue.id) {
+				this.queue.students = data.students;
+			}
 		});
 	},
 	template: `
@@ -67,7 +87,7 @@ Vue.component('route-queue', {
 				</form>
 			</div>
 			<div v-else>
-				<form novalidate @submit.prevent="enqueue">
+				<form novalidate >
 					<md-field>
 						<!-- TODO: fixa automatisk ifyllnad -->
 						<label for="location">Plats</label>
@@ -86,7 +106,10 @@ Vue.component('route-queue', {
 					</div>
 
 					<md-card-actions>
-						<md-button :disabled="!queue.open" type="submit" class="md-primary">Gå med i kön</md-button>
+											<!-- TODO: visa endast ena -->
+
+						<md-button v-on:click="dequeue" type="submit" class="md-primary">Lämna kön</md-button>
+						<md-button :disabled="!queue.open" v-on:click="enqueue" type="submit" class="md-primary">Gå med i kön</md-button>
 					</md-card-actions>
 				</form>
 			</div>

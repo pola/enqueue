@@ -24,8 +24,8 @@ Vue.component('route-admin-dashboard', {
 		},
 		remove_teacher(teacher) {
 			fetch('/api/admin/teachers/' + teacher.id, {
-        method: "DELETE"
-    	}).then(res => {
+        		method: "DELETE"
+    		}).then(res => {
 				if (res.status === 404) {
 					alert('Läraren hittades inte.');
 				} else if (res.status === 401) {

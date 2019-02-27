@@ -32,6 +32,6 @@ const app = new Vue({
 
 fetch('/api/me').then(res => res.json()).then(me => {
 	app.$data.profile = me.profile;
-	app.$data.location = null;
+	app.$data.location = me.location;
 	//app.$data.profile = profile;
 })
