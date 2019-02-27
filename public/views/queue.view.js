@@ -13,7 +13,30 @@ Vue.component('route-queue', {
 			// TODO: skicka tillbaka till kön!
 		},
 		enqueue(){
-			console.log("i kön");
+			/*if (this.action === null && this.queue.force_action) {
+				alert("Du måste välja en action!");
+			}
+			else if (this.location === null) {
+				alert("Du måste välja en plats!");
+			}
+			else if (this.comment === null && this.queue.force_comment) {
+				alert("Du måste skriva en kommentar!");
+			}
+			else {*/
+				fetch('/api/queues/' + this.queue.name + '/students', {
+        			method: "POST",
+        			headers: { "Content-Type": "application/json" },
+        			body: JSON.stringify({ 	
+        				"location": this.location,
+						"action": this.action,
+						"comment": this.comment})})
+				.then(res => {
+					if (res.status !== 201) {
+						res.json().then (data => {
+							alert(data.message);
+						});
+					}
+				});
 			// TODO: lägg till personen som köande
 		},
 		test (action) {
@@ -44,7 +67,7 @@ Vue.component('route-queue', {
 				</form>
 			</div>
 			<div v-else>
-				<form @submit.prevent="enqueue">
+				<form novalidate @submit.prevent="enqueue">
 					<md-field>
 						<!-- TODO: fixa automatisk ifyllnad -->
 						<label for="location">Plats</label>
@@ -56,7 +79,7 @@ Vue.component('route-queue', {
 						<md-input :required="queue.force_comment" type="text" id="comment" name="comment" v-model="comment" />
 					</md-field>
 
-					<!-- TODO: fixa färger, krav på att man väljer en --> 
+					<!-- TODO: krav på att man väljer en --> 
 					<div v-for="p_action in queue.actions">
 					<!--class="md-get-palette-color(green, A200)" -->
 						<md-radio v-model="action" :value="p_action.id" :class="'md-' + p_action.color"> {{ p_action.name }} </md-radio>
@@ -81,7 +104,7 @@ Vue.component('route-queue', {
 					</md-table-row>
 		      	</md-table-toolbar>
 
-				<md-table-row v-for="(user, index) in queue.students" :key="profile.id">
+				<md-table-row v-for="(user, index) in queue.students" :key="user.profile.id">
 					<md-table-cell> {{ index+1 }} </md-table-cell>
 					<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
 					<md-table-cell> <span v-if="typeof(user.location) === 'string'"> {{ user.location }} </span> <span v-else> {{ user.location.computer }}  </span></md-table-cell>
