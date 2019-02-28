@@ -1,3 +1,5 @@
+// buggar: innan man loggar in får man ett error. Om man klickar snabbt hamnar man i kön 2 gånger.
+
 Vue.component('route-queue', {
 	data() {
 		return {
@@ -30,9 +32,7 @@ Vue.component('route-queue', {
 		},
 
 		dequeue(){
-			// TODO: denna funkar inte??
-			console.log("häääääär");
-			/*fetch('/api/queues/' + this.queue.name + '/students/' + this.this.$root.$data.profile.id, {
+			fetch('/api/queues/' + this.queue.name + '/students/' + this.$root.$data.profile.id, {
         		method: "DELETE"
     		}).then(res => {
 				if (res.status !== 200) {
@@ -40,7 +40,7 @@ Vue.component('route-queue', {
 						alert(data.message);
 					});
 				}
-			});*/
+			});
 		},
 
 		/*in_queue(){
@@ -106,12 +106,14 @@ Vue.component('route-queue', {
 						<md-radio v-model="action" :value="p_action.id" :class="'md-' + p_action.color"> {{ p_action.name }} </md-radio>
 					</div>
 
-					<md-card-actions>
-											<!-- TODO: visa endast ena -->
-						<md-button v-on:click="dequeue" type="submit" class="md-primary">Lämna kön</md-button>
-						<md-button :disabled="!queue.open" v-on:click="enqueue" type="submit" class="md-primary">Gå med i kön</md-button>
-					</md-card-actions>
+					
 				</form>
+
+				<md-card-actions>
+											<!-- TODO: visa endast ena -->
+					<md-button v-on:click="dequeue" type="submit" class="md-primary">Lämna kön</md-button>
+					<md-button :disabled="!queue.open" v-on:click="enqueue" type="submit" class="md-primary">Gå med i kön</md-button>
+				</md-card-actions>
 			</div>
 		</div>
 		<section class="col-md-7 col-md-offset-2">
