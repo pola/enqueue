@@ -31,7 +31,8 @@ Vue.component('route-queue', {
 
 		dequeue(){
 			// TODO: denna funkar inte??
-			fetch('/api/queues/' + this.queue.name + '/students/' + this.this.$root.$data.profile.id, {
+			console.log("häääääär");
+			/*fetch('/api/queues/' + this.queue.name + '/students/' + this.this.$root.$data.profile.id, {
         		method: "DELETE"
     		}).then(res => {
 				if (res.status !== 200) {
@@ -39,7 +40,7 @@ Vue.component('route-queue', {
 						alert(data.message);
 					});
 				}
-			});
+			});*/
 		},
 
 		/*in_queue(){
@@ -107,7 +108,6 @@ Vue.component('route-queue', {
 
 					<md-card-actions>
 											<!-- TODO: visa endast ena -->
-
 						<md-button v-on:click="dequeue" type="submit" class="md-primary">Lämna kön</md-button>
 						<md-button :disabled="!queue.open" v-on:click="enqueue" type="submit" class="md-primary">Gå med i kön</md-button>
 					</md-card-actions>
