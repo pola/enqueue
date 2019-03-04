@@ -44,6 +44,12 @@ Vue.component('route-queue', {
 			});
 		},
 
+		receiving_help(){
+			console.log("får hjälp");
+
+			// TODO: fixa allt som ska hända här: blinka i kön
+		},
+
 		/*in_queue(){
 			for (student in this.queue.students) {
 				if (this.$root.$data.profile.id === student.profile.id){
@@ -59,6 +65,10 @@ Vue.component('route-queue', {
 
 			return "md-danger";
 		},
+
+		redirect( url ) {
+			this.$router.push('/queues/' + this.queue.name + '/edit');
+		}
 
 	},
 	created() {
@@ -76,7 +86,10 @@ Vue.component('route-queue', {
 	template: `
 <div class="container" v-if="queue">
 	<div class="row">
-		<div class="col-md-4" :class="{ 'text-danger': queue.open === false }"> <h2> <span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>  {{ queue.name }} </h2> </div>
+		<div class="col-md-4" :class="{ 'text-danger': queue.open === false }"> 
+			<h2> <span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>  {{ queue.name }} </h2> 
+			<md-button v-on:click="redirect('/edit')" type="submit" class="md-primary"> Redigera kön </md-button>
+		</div>
 		<p class="col-md-8"> {{ queue.description }} </p>
 	</div>
 	<div class="row">
@@ -116,6 +129,12 @@ Vue.component('route-queue', {
 					<md-button v-on:click="dequeue" type="submit" class="md-primary">Lämna kön</md-button>
 					<md-button :disabled="!queue.open" v-on:click="enqueue" type="submit" class="md-primary">Gå med i kön</md-button>
 				</md-card-actions>
+
+				<md-card-actions>
+											<!-- TODO: visa endast om i kön -->
+					<md-button v-on:click="receiving_help" type="submit" class="md-primary">Får hjälp</md-button>
+				</md-card-actions>
+
 			</div>
 		</div>
 		<section class="col-md-7 col-md-offset-2">

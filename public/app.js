@@ -4,7 +4,8 @@ const router = new VueRouter({
 		{ path: '/', redirect: '/queues' },
 		{ path: '/queues', component: Vue.component('route-queues') },
 		{ path: '/queues/:name', component: Vue.component('route-queue') },
-		{ path: '/admin', component: Vue.component('route-admin-dashboard') }
+		{ path: '/admin', component: Vue.component('route-admin-dashboard') },
+		{ path: '/queues/:name/edit', component: Vue.component('route-edit') }
 	]
 });
 
