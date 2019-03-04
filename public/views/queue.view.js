@@ -15,6 +15,7 @@ Vue.component('route-queue', {
 			// TODO: skicka tillbaka till kön!
 		},
 		enqueue(){
+			console.log("häääär");
 				fetch('/api/queues/' + this.queue.name + '/students', {
         			method: "POST",
         			headers: { "Content-Type": "application/json" },
@@ -57,7 +58,8 @@ Vue.component('route-queue', {
 		test (action) {
 
 			return "md-danger";
-		}
+		},
+
 	},
 	created() {
     // TODO: lägg till hantering av 404
@@ -90,7 +92,7 @@ Vue.component('route-queue', {
 			<div v-else>
 				<form novalidate >
 					<md-field>
-						<!-- TODO: fixa automatisk ifyllnad -->
+											<!-- TODO: fixa automatisk ifyllnad -->
 						<label for="location">Plats</label>
 						<md-input type="text" id="location" name="location" v-model="location" />
 					</md-field>
@@ -100,7 +102,7 @@ Vue.component('route-queue', {
 						<md-input :required="queue.force_comment" type="text" id="comment" name="comment" v-model="comment" />
 					</md-field>
 
-					<!-- TODO: krav på att man väljer en --> 
+											<!-- TODO: krav på att man väljer en --> 
 					<div v-for="p_action in queue.actions">
 					<!--class="md-get-palette-color(green, A200)" -->
 						<md-radio v-model="action" :value="p_action.id" :class="'md-' + p_action.color"> {{ p_action.name }} </md-radio>
@@ -123,7 +125,7 @@ Vue.component('route-queue', {
 					  	<md-table-head>#</md-table-head>
 					  	<md-table-head v-if="$root.$data.profile">Användarnamn</md-table-head>
 					  	<md-table-head>Plats</md-table-head>
-					  	<md-table-head></md-table-head>
+					  	<md-table-head>Action</md-table-head>
 					  	<md-table-head>Kommentar</md-table-head>
 					  	<md-table-head>Tid</md-table-head>
 					</md-table-row>
@@ -132,8 +134,9 @@ Vue.component('route-queue', {
 				<md-table-row v-for="(user, index) in queue.students" :key="user.profile.id">
 					<md-table-cell> {{ index+1 }} </md-table-cell>
 					<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
+										<!-- VET EJ OM DETTA FUNKAR SOM DET SKA (AUTO)?? -->
 					<md-table-cell> <span v-if="typeof(user.location) === 'string'"> {{ user.location }} </span> <span v-else> {{ user.location.computer }}  </span></md-table-cell>
-					<md-table-cell <span v-if="user.action"> class="font color = user.action.color"> {{ user.action.name }} </span>  </md-table-cell>
+					<md-table-cell> <span v-if="user.action" style="color: red;" > {{ user.action.name }} </span>  </md-table-cell>
 					<md-table-cell> <span v-if="user.comment"> {{ user.comment }} </span> </md-table-cell>
 					<md-table-cell>{{ user.entered_at }} </md-table-cell>
 				</md-table-row>

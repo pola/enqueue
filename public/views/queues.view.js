@@ -11,9 +11,22 @@ Vue.component('route-queues', {
 	},
 	created() {
 		fetch('/api/queues').then(res => res.json()).then(queues => {
-			this.queues = queues;
+			this.queues = queues.sort((x, y) => {
+				if (x.open && !y.open) {
+					return -1;
+				} else if (!x.open && y.open) {
+					return 1;
+				} else if (x.name < y.name) {
+					return -1;
+				} else if (x.name > y.name) {
+					return 1;
+				} else {
+					return 0;
+				}
+			});
 		});
 	},
+
 	template: `
 	<div class="container">
 		<section class="col-md-8 col-md-offset-2">
