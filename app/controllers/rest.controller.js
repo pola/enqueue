@@ -175,27 +175,6 @@ router.post('/queues/:name/students', (req, res) => {
 			return;
 		}
 
-		if (!queue.open) {
-			res.status(400);
-			res.json({
-				error: 1,
-				message: 'The queue is not open.'
-			});
-			return;
-		}
-
-		// man kan inte gå in i en kö som man redan står i (då får man PUT:a med ny data)
-		for (const student of model.get_students(queue)) {
-			if (student.profile.id === req.session.profile.id) {
-				res.status(400);
-				res.json({
-					error: 2,
-					message: 'You are already standing in the queue.'
-				});
-				return;
-			}
-		}
-
 		if (!('comment' in req.body) || !('action' in req.body) || !('location' in req.body)) {
 			res.status(400);
 			res.json({
@@ -282,18 +261,12 @@ router.post('/queues/:name/students', (req, res) => {
 						});
 						return;
 					}
-
+					
 					location = req.body.location;
 				}
-
-				if (req.body.action === null) {
-					model.add_student(queue, req.session.profile, req.body.comment, location, null);
-
-					res.status(201);
-					res.end();
-					return;
-				} else {
-					model.get_action_by_id(req.body.action).then(action => {
+				
+				model.get_action_by_id(req.body.action).then(action => {
+					if (req.body.action !== null) {
 						if (action === null || action.queue_id !== queue.id) {
 							res.status(400);
 							res.json({
@@ -302,21 +275,42 @@ router.post('/queues/:name/students', (req, res) => {
 							});
 							return;
 						}
-
+						
 						// action-objektet kommer direkt från databasen, så vi tar endast med den data som vi behöver
 						action = {
 							id: action.id,
 							name: action.name,
 							color: action.color
 						};
-
-						model.add_student(queue, req.session.profile, req.body.comment, location, action);
-
-						res.status(201);
-						res.end();
+					}
+					
+					if (!queue.open) {
+						res.status(400);
+						res.json({
+							error: 1,
+							message: 'The queue is not open.'
+						});
 						return;
-					});
-				}
+					}
+					
+					// man kan inte gå in i en kö som man redan står i (då får man PUT:a med ny data)
+					for (const student of model.get_students(queue)) {
+						if (student.profile.id === req.session.profile.id) {
+							res.status(400);
+							res.json({
+								error: 2,
+								message: 'You are already standing in the queue.'
+							});
+							return;
+						}
+					}
+					
+					model.add_student(queue, req.session.profile, req.body.comment, location, action);
+					
+					res.status(201);
+					res.end();
+					return;
+				});
 			});
 		});
 	});
