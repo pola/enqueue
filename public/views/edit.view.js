@@ -4,7 +4,8 @@ Vue.component('route-edit', {
 			queue: null,
 			somePlaceholder : string = null,
 			new_description: null,
-			rooms: null
+			rooms: null,
+			actions: null
 		}
 	},
 	methods: {
@@ -19,6 +20,10 @@ Vue.component('route-edit', {
 
 		change_rooms(){
 			console.log(rooms);
+		},
+
+		change_actions(){
+			console.log(actions);
 		},
 
 		delete_queue(){
@@ -83,6 +88,22 @@ Vue.component('route-edit', {
 	    	<md-button type="submit" class="md-primary">Genomför ändring</md-button>
 	    </md-card-actions>
     </form>
+
+    <form novalidate @submit.prevent="change_actions">
+	    <md-field>
+	      <label>Ändra möjliga actions</label>
+	      <md-input v-model="actions"></md-input>
+	    </md-field>
+	    <md-card-actions>
+	    	<md-button type="submit" class="md-primary">Genomför ändring</md-button>
+	    </md-card-actions>
+    </form>
+
+
+    <md-switch v-model="require_comment">Kräv kommentar</md-switch>
+    <md-switch v-model="require_action">Kräv action</md-switch>
+
+
 
     <md-card-actions>
 	    	<md-button v-on:click="delete_queue" type="submit" class="md-danger">Ta bort kön</md-button>

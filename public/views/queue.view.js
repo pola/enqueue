@@ -51,17 +51,6 @@ Vue.component('route-queue', {
 			// TODO: fixa allt som ska hända här: blinka i kön
 		},
 
-		/*in_queue(){
-			for (student in this.queue.students) {
-				if (this.$root.$data.profile.id === student.profile.id){
-					console.log("i kö");
-					return true;
-				}
-			}
-			console.log("ej i kö");
-			return false;
-		},*/
-
 		test (action) {
 
 			return "md-danger";
