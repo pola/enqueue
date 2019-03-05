@@ -6,15 +6,22 @@ const router = express.Router();
 router.get('/me', (req, res) => {
 	model.get_computer(req.connection.remoteAddress).then(location => {
 		if ('cas_user' in req.session) {
-			model.get_profile(req.session.cas_user).then((profile) => {	
-				res.json({
-					profile: profile,
-					location: location
+			model.get_profile(req.session.cas_user).then((profile) => {
+				profile.getQueues().then(queues => {
+					res.json({
+						profile: profile,
+						assisting_in: queues.map(q => ({
+							id: q.id,
+							name: q.name
+						})),
+						location: location
+					});
 				});
 			});
 		} else {
 			res.json({
 				profile: null,
+				assisting_in: [],
 				location: location
 			});
 		}
