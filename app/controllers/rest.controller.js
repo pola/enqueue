@@ -21,6 +21,13 @@ router.get('/me', (req, res) => {
 	});
 });
 
+// hämta alla rum
+router.get('/rooms', (req, res) => {
+	model.get_rooms().then(rooms => {
+		res.json(rooms);
+	});
+});
+
 // hämta alla lärarprofiler
 router.get('/admin/teachers', (req, res) => {
 	if (!('teacher' in req.session) || !req.session.teacher) {

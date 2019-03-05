@@ -114,6 +114,32 @@ exports.get_or_create_profile = (id, user_name, name) => {
 	});
 };
 
+exports.get_rooms = () => {
+	return new Promise((resolve, reject) => {
+		Room.findAll().then(rooms => {
+			Computer.findAll().then(computers => {
+				const result = [];
+				
+				for (const room of rooms) {
+					const computers_in_room = computers.filter(c => c.room_id === room.id).map(c => ({
+						id: c.id,
+						name: c.name,
+						ip: c.ip
+					}));
+					
+					result.push({
+						id: room.id,
+						name: room.name,
+						computers: computers_in_room
+					});
+				}
+				
+				resolve(result);
+			});
+		});
+	});
+};
+
 exports.get_teachers = () => {
 	return new Promise((resolve, reject) => {
 		Profile.findAll({ where: { teacher: true } }).then(teachers => {
