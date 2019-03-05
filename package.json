@@ -15,7 +15,9 @@
     "npm": "^6.7.0",
     "sequelize": "^4.42.0",
     "socket.io": "^2.2.0",
-    "vue-material": "^1.0.0-beta-10.2"
+    "vue-dropdowns": "^1.0.6",
+    "vue-material": "^1.0.0-beta-10.2",
+    "vuetify": "^1.5.4"
   },
   "devDependencies": {
     "node-sass": "^4.11.0",

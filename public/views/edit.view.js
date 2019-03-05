@@ -1,7 +1,8 @@
 Vue.component('route-edit', {
 	data() {
 		return {
-			queue: null
+			queue: null,
+			somePlaceholder : string = null
 		}
 	},
 	methods: {
@@ -15,6 +16,7 @@ Vue.component('route-edit', {
     // TODO: lägg till hantering av 404
 		fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
 			this.queue = queue;
+			somePlaceholder = queue.description;
 		});
 	},
 	template: `
@@ -24,6 +26,24 @@ Vue.component('route-edit', {
 			<h2> <span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>  {{ queue.name }} </h2> 
 		</div>
 	</div>
+
+	<!-- TODO: sätt tid för att tömma kön automatiskt -->
+	<!-- TODO: sätt tid för att öppna kön automatiskt -->
+	<!-- TODO: ange tillåtna salar -->
+	<!-- TODO: sätt tid för att tömma kön automatiskt -->
+	<!-- TODO: ändra köns beskrivning -->
+	<!-- TODO: ange vitlista -->
+
+
+	<md-field>
+      <label>Ändra beskrivning av kön</label>
+      <md-textarea v-model="textarea" :placeholder="somePlaceholder"></md-textarea>
+    </md-field>
+
+
+
+
+
 </div>
 	`
 });

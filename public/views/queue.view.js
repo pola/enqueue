@@ -88,6 +88,7 @@ Vue.component('route-queue', {
 	<div class="row">
 		<div class="col-md-4" :class="{ 'text-danger': queue.open === false }"> 
 			<h2> <span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>  {{ queue.name }} </h2> 
+											<!-- TODO: visa endast om admin --> 
 			<md-button v-on:click="redirect('/edit')" type="submit" class="md-primary"> Redigera kön </md-button>
 		</div>
 		<p class="col-md-8"> {{ queue.description }} </p>
@@ -95,7 +96,7 @@ Vue.component('route-queue', {
 	<div class="row">
 		<div class="col-md-3">
 			<div v-if="! $root.$data.profile">
-				<h4> För att kunna ställa dig i kö måste du logga in </h4>
+				<h4> För att kunna ställa dig i kön måste du logga in </h4>
 				<form novalidate @submit.prevent="login">
 					<md-card-actions>
 						<md-button type="submit" class="md-primary">Logga in</md-button>
@@ -130,6 +131,12 @@ Vue.component('route-queue', {
 					<md-button :disabled="!queue.open" v-on:click="enqueue" type="submit" class="md-primary">Gå med i kön</md-button>
 				</md-card-actions>
 
+											<!-- TODO: visa endast om admin SYNS INTE ???-->  
+				<div>
+					<v-select :items="['Broadcast','Broadcast till anställda', 'Töm kön']" label="Outline style"
+></v-select>
+				</div>
+
 				<md-card-actions>
 											<!-- TODO: visa endast om i kön -->
 					<md-button v-on:click="receiving_help" type="submit" class="md-primary">Får hjälp</md-button>
@@ -137,6 +144,9 @@ Vue.component('route-queue', {
 
 			</div>
 		</div>
+
+											<!-- TODO: assistenter ska kunna ta bort, markera får hjälp, flytta studenter, markera fel plats -->
+
 		<section class="col-md-7 col-md-offset-2">
 			<md-table md-card>
 				<md-table-toolbar>
