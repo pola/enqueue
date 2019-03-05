@@ -163,7 +163,7 @@ Vue.component('route-queue', {
 
 											<!-- TODO: visa endast om admin -->  
 				<md-field>
-					<md-select name="dropdown" id="dropdown" v-model="perform" placeholder="Alternativ">                    
+					<md-select name="dropdown" id="dropdown" v-model="perform" placeholder="Alternativ">
 						<md-option value="broadcast">Broadcast</md-option>
 						<md-option value="broadcast_faculty">Broadcast till anställda</md-option>
 						<md-option value="purge">Töm kön</md-option>
