@@ -173,7 +173,6 @@ Vue.component('route-queue', {
 		</div>
 
 											<!-- TODO: assistenter ska kunna ta bort, markera får hjälp, flytta studenter, markera fel plats -->
-<!-- :class="getClass(item)" md-selectable="single" testa detta i tablen! --> 
 		<section class="col-md-7 col-md-offset-2">
 			<md-table md-card>
 				<md-table-toolbar>
@@ -187,7 +186,7 @@ Vue.component('route-queue', {
 					</md-table-row>
 		      	</md-table-toolbar>
 
-				<md-table-row v-for="(user, index) in queue.students" :key="user.profile.id">
+				<md-table-row v-for="(user, index) in queue.students" :key="user.profile.id" :class="getClass(user)" md-selectable="single">
 					<md-table-cell> {{ index+1 }} </md-table-cell>
 					<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
 										<!-- VET EJ OM DETTA FUNKAR SOM DET SKA (AUTO)?? -->
