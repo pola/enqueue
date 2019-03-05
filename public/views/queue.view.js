@@ -6,7 +6,8 @@ Vue.component('route-queue', {
 			queue: null,
 			location: null,
 			comment: null,
-			action: null
+			action: null,
+			perform: null
 		}
 	},
 	methods: {
@@ -83,13 +84,49 @@ Vue.component('route-queue', {
 			}
 		});
 	},
+
+	computed:{
+		in_queue() {
+			for (student in this.queue.students) {
+				if (this.$root.$data.profile.id === student.profile.id){
+					console.log("i kö");
+					return true;
+				}
+			}
+			console.log("ej i kö");
+			return false;
+		}
+	}, 
+
+	watch: {
+    	perform: function(event) {
+    		if (event === "broadcast_faculty"){
+    			console.log("meddelande till anställda");
+    		}
+    		else if (event === "broadcast"){
+    			console.log("meddelande");
+    		}
+    		else if(event === "purge"){
+    			console.log("töm")
+    		}
+    		else if(event === "lock"){
+    			console.log("lås")
+    		}
+    		else if(event === "unlock"){
+    			console.log("öppna")
+    		}
+    	}
+  	},
+
 	template: `
 <div class="container" v-if="queue">
 	<div class="row">
 		<div class="col-md-4" :class="{ 'text-danger': queue.open === false }"> 
 			<h2> <span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>  {{ queue.name }} </h2> 
+
 											<!-- TODO: visa endast om admin --> 
 			<md-button v-on:click="redirect('/edit')" type="submit" class="md-primary"> Redigera kön </md-button>
+
 		</div>
 		<p class="col-md-8"> {{ queue.description }} </p>
 	</div>
@@ -106,7 +143,7 @@ Vue.component('route-queue', {
 			<div v-else>
 				<form novalidate >
 					<md-field>
-											<!-- TODO: fixa automatisk ifyllnad -->
+											<!-- TODO: fixa automatisk ifyllnad, hur ser jag att någon sitter på en skoldator? -->
 						<label for="location">Plats</label>
 						<md-input type="text" id="location" name="location" v-model="location" />
 					</md-field>
@@ -121,32 +158,33 @@ Vue.component('route-queue', {
 					<!--class="md-get-palette-color(green, A200)" -->
 						<md-radio v-model="action" :value="p_action.id" :class="'md-' + p_action.color"> {{ p_action.name }} </md-radio>
 					</div>
-
-					
 				</form>
 
 				<md-card-actions>
-											<!-- TODO: visa endast ena -->
-					<md-button v-on:click="dequeue" type="submit" class="md-primary">Lämna kön</md-button>
-					<md-button :disabled="!queue.open" v-on:click="enqueue" type="submit" class="md-primary">Gå med i kön</md-button>
+					<span v-if="in_queue === true">
+						<md-button v-on:click="receiving_help" type="submit" class="md-primary">Får hjälp</md-button>
+						<md-button v-on:click="dequeue" type="submit" class="md-primary">Lämna kön</md-button>
+					</span>
+					<span v-else>
+						<md-button v-if="in_queue === false" :disabled="!queue.open" v-on:click="enqueue" type="submit" class="md-primary">Gå med i kön</md-button>
+					</span>
 				</md-card-actions>
 
-											<!-- TODO: visa endast om admin SYNS INTE ???-->  
-				<div>
-					<v-select :items="['Broadcast','Broadcast till anställda', 'Töm kön']" label="Outline style"
-></v-select>
-				</div>
-
-				<md-card-actions>
-											<!-- TODO: visa endast om i kön -->
-					<md-button v-on:click="receiving_help" type="submit" class="md-primary">Får hjälp</md-button>
-				</md-card-actions>
-
+											<!-- TODO: visa endast om admin -->  
+				<md-field>
+					<md-select name="dropdown" id="dropdown" v-model="perform" placeholder="Alternativ">                    
+						<md-option value="broadcast">Broadcast</md-option>
+						<md-option value="broadcast_faculty">Broadcast till anställda</md-option>
+						<md-option value="purge">Töm kön</md-option>
+						<md-option v-if="!queue.open" value="lock">Lås kön</md-option>
+						<md-option v-if="queue.open" value="unlock">Öppna kön</md-option>
+					</md-select>
+				</md-field>
 			</div>
 		</div>
 
 											<!-- TODO: assistenter ska kunna ta bort, markera får hjälp, flytta studenter, markera fel plats -->
-
+<!-- :class="getClass(item)" md-selectable="single" testa detta i tablen! --> 
 		<section class="col-md-7 col-md-offset-2">
 			<md-table md-card>
 				<md-table-toolbar>

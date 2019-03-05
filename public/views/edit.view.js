@@ -19,7 +19,23 @@ Vue.component('route-edit', {
 
 		change_rooms(){
 			console.log(rooms);
+		},
+
+		delete_queue(){
+			console.log("delete");
+			fetch('/api/queues/' + this.queue.name, {
+        		method: "DELETE"
+    		}).then(res => {
+				if (res.status !== 200) {
+					alert('Kunde ej genomföra operationen');
+				}
+				else {
+					this.$router.push('/queues');
+				}
+			});
+
 		}
+
 
 	},
 	created() {
@@ -40,16 +56,18 @@ Vue.component('route-edit', {
 	</div>
 
 	<!-- TODO: sätt tid för att tömma kön automatiskt -->
+		<!-- https://puranjayjain.github.io/md-date-time-picker/ -->
+	
 	<!-- TODO: sätt tid för att öppna kön automatiskt -->
-	<!-- TODO: ange tillåtna salar -->
-	<!-- TODO: ändra köns beskrivning -->
+		<!-- https://www.npmjs.com/package/vue-datetime - även upprepning, ska man bara välja veckodagar + tid och låta det hända varje vecka??-->
+	
 	<!-- TODO: ange vitlista -->
 
 
 	<form novalidate @submit.prevent="change_description">
 		<md-field>
 	    	<label>Ändra beskrivning av kön</label>
-	    	<md-textarea id="new_description" name="new_description" v-model="new_description" :placeholder="somePlaceholder"></md-textarea>
+	    	<md-textarea id="new_description" name="new_description" v-model="new_description" placeholder="{{queue.description}}"></md-textarea>
 	    </md-field>
 	    <md-card-actions>
 	   		<md-button type="submit" class="md-primary">Genomför ändring</md-button>
@@ -57,23 +75,19 @@ Vue.component('route-edit', {
 	</form>
 
 	<form novalidate @submit.prevent="change_rooms">
-    <md-field>
-      <label>Ändra tillåtna salar (om inga anges kan studenterna sitta var som helst)</label>
-      <md-input v-model="rooms"></md-input>
-    </md-field>
-    <md-card-actions>
-    	<md-button type="submit" class="md-primary">Genomför ändring</md-button>
-    </md-card-actions>
+	    <md-field>
+	      <label>Ändra tillåtna salar (om inga anges kan studenterna sitta var som helst)</label>
+	      <md-input v-model="rooms"></md-input>
+	    </md-field>
+	    <md-card-actions>
+	    	<md-button type="submit" class="md-primary">Genomför ändring</md-button>
+	    </md-card-actions>
     </form>
-      
 
-
-
-
-
-
-
-
+    <md-card-actions>
+	    	<md-button v-on:click="delete_queue" type="submit" class="md-danger">Ta bort kön</md-button>
+	</md-card-actions>
+    
 </div>
 	`
 });
