@@ -126,14 +126,20 @@ router.get('/queues/:name', (req, res) => {
 		}
 
 		model.get_actions(queue).then(actions => {
-			res.json({
-				name: queue.name,
-				description: queue.description,
-				open: queue.open,
-				force_comment: queue.force_comment,
-				force_action: queue.force_action,
-				students: model.get_students(queue),
-				actions: actions
+			queue.getRooms().then(rooms => {
+				res.json({
+					name: queue.name,
+					description: queue.description,
+					open: queue.open,
+					force_comment: queue.force_comment,
+					force_action: queue.force_action,
+					students: model.get_students(queue),
+					actions: actions,
+					rooms: rooms.map(r => ({
+						id: r.id,
+						name: r.name
+					}))
+				});
 			});
 		});
 	});
@@ -219,7 +225,7 @@ router.post('/queues/:name/students', (req, res) => {
 		}
 
 		model.get_computer(req.connection.remoteAddress).then(computer => {
-			model.get_allowed_rooms(queue).then(rooms => {
+			queue.getRooms().then(rooms => {
 				// blir antingen en sträng eller en datorplats ({id: ..., name: ...})
 				var location;
 
@@ -713,7 +719,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 				keys.shift();
 
 				model.get_computer(req.connection.remoteAddress).then(computer => {
-					model.get_allowed_rooms(queue).then(rooms => {
+					queue.getRooms().then(rooms => {
 						// blir antingen en sträng eller en datorplats ({id: ..., name: ...})
 						var location;
 

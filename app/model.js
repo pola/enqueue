@@ -45,8 +45,8 @@ exports.setConnection = (connection2) => {
 	});
 
 	// För att koppla köer till rum
-	Queue.belongsToMany(Room, { as: 'Rooms', through: 'queues_rooms', foreignKey: 'room_id' });
-	Room.belongsToMany(Queue, { as: 'Queues', through: 'queues_rooms', foreignKey: 'queue_id' });
+	Queue.belongsToMany(Room, { as: 'Rooms', through: 'queues_rooms', foreignKey: 'queue_id' });
+	Room.belongsToMany(Queue, { as: 'Queues', through: 'queues_rooms', foreignKey: 'room_id' });
 
 	Computer = connection.define('computer', {
 		id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -359,15 +359,6 @@ exports.move_student_after = (queue, student, move_after) => {
 		exports.io_emit_update_queue_students(queue);
 	}
 };
-
-// TODO: den här ger alltid tillbaka alla rum, oberoende av vilken queue man skickar in som parameter
-exports.get_allowed_rooms = (queue) => Room.findAll({
-	where: { id: 1337 },
-	include: [{
-		model: Queue,
-		as: 'Queues'
-    }]
-});
 
 // används för att se om en användare, givet ett köobjekt och användarens ID, har lärar- eller assistenträttigheter i en kö
 exports.has_permission = (queue, profile_id) => {
