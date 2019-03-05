@@ -76,7 +76,11 @@ Vue.component('route-queue', {
 
 	computed:{
 		in_queue() {
-			for (student in this.queue.students) {
+			if (this.$root.$data.profile === null) {
+				return false;
+			}
+			
+			for (const student of this.queue.students) {
 				if (this.$root.$data.profile.id === student.profile.id){
 					console.log("i kö");
 					return true;
