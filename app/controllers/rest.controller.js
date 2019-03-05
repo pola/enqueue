@@ -4,18 +4,21 @@ const router = express.Router();
 
 // hämta profilen för den inloggade användaren
 router.get('/me', (req, res) => {
-	if ('cas_user' in req.session) {
-		model.get_profile(req.session.cas_user).then((profile) => {
-			model.get_computer(req.connection.remoteAddress).then(location => {
+	model.get_computer(req.connection.remoteAddress).then(location => {
+		if ('cas_user' in req.session) {
+			model.get_profile(req.session.cas_user).then((profile) => {	
 				res.json({
 					profile: profile,
 					location: location
 				});
 			});
-		});
-	} else {
-		res.json(null);
-	}
+		} else {
+			res.json({
+				profile: null,
+				location: location
+			});
+		}
+	});
 });
 
 // hämta alla lärarprofiler
