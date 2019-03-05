@@ -234,7 +234,15 @@ exports.get_actions = (queue) => {
 	});
 };
 
-exports.get_action_by_id = (id) => Action.findOne({ where: { id: id } });
+exports.get_action_by_id = (id) => {
+	if (id === null) {
+		return new Promise((resolve, reject) => {
+			resolve(null);
+		});
+	} else {
+		return Action.findOne({ where: { id: id } });
+	}
+}
 
 exports.get_action_by_name = (queue, name) => Action.findOne({ where: { queue_id: queue.id, name: name } });
 

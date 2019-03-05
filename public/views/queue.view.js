@@ -1,5 +1,3 @@
-// buggar: innan man loggar in får man ett error. Om man klickar snabbt hamnar man i kön 2 gånger.
-
 Vue.component('route-queue', {
 	data() {
 		return {
