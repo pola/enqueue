@@ -35,6 +35,11 @@ router.get('/rooms', (req, res) => {
 	});
 });
 
+// hämta alla färger som actions kan ha
+router.get('/colors', (req, res) => {
+	res.json(model.colors);
+});
+
 // hämta alla lärarprofiler
 router.get('/admin/teachers', (req, res) => {
 	if (!('teacher' in req.session) || !req.session.teacher) {

@@ -20,8 +20,6 @@ exports.setIo = (io2) => {
 	io = io2;
 };
 
-exports.get_io = () => io;
-
 exports.colors = ['primary', 'secondary', 'default', 'accent'];
 
 exports.setConnection = (connection2) => {
@@ -361,7 +359,7 @@ exports.has_permission = (queue, profile_id) => new Promise((resolve, reject) =>
 	});
 });
 
-// genväg för att uppdatera klienten om en ny lista på studenter
+// genväg för att uppdatera klienten om det finns en ny lista på studenter
 exports.io_emit_update_queue_students = (queue) => {
 	exports.io_emit_update_queue(queue, { students: students[queue.id] });
 };
