@@ -111,11 +111,11 @@ Vue.component('route-edit', {
 			fetch('/api/queues/'+ this.queue.id +'/actions', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ name: action.name, color: action.color })
+				body: JSON.stringify({ name: action_name, color: action_color })
 			}).then(res => {
 				console.log(res.status);
 				
-				if (res.status !== 201) {
+				if (res.status !== 200) {
 					res.json().then(j => {
 						console.log(j);
 					});
@@ -162,8 +162,8 @@ Vue.component('route-edit', {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					force_comment: queue.force_comment,
-					force_action: queue.force_action
+					force_comment: this.queue.force_comment,
+					force_action: this.queue.force_action
 				})
 			}).then(res => {
 				console.log(res.status);
@@ -310,13 +310,12 @@ Vue.component('route-edit', {
 		        <md-table-head>Färg</md-table-head>
 		        <md-table-head>Alternativ</md-table-head>
 		    </md-table-row>
-
 		    <md-table-row v-for="action in queue.actions" :key="action.id">
 		        <md-table-cell>{{ action.name }}</md-table-cell>
 		        <md-table-cell>{{ action.color }}</md-table-cell>
 		        <md-table-cell><md-button v-on:click="remove_action(action)" class="md-accent">Radera</md-button></md-table-cell>
 		    </md-table-row>
-	   	</md-table>
+	</md-table>
 
 	   	<br>
 
@@ -339,10 +338,8 @@ Vue.component('route-edit', {
 			</md-card-actions>
 		</form>
 
-    					<!-- TODO: kan de visa hur det är just nu? -->
-
-    <md-switch value="queue.force_action" v-model="queue.force_action">Kräv kommentar</md-switch>
-    <md-switch value="queue.force_comment" v-model="queue.force_comment">Kräv action</md-switch>
+    <md-switch v-model="queue.force_action">Kräv action</md-switch>
+    <md-switch v-model="queue.force_comment">Kräv kommentar</md-switch>
 
     <md-card-actions>
 		<md-button v-on:click="change_requirements" type="submit" class="md-primary">Genomför ändringar</md-button>
