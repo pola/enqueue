@@ -56,7 +56,7 @@ Vue.component('route-admin-dashboard', {
 
 		this.$root.$data.socket.on('teachers', teachers => {
 			this.teachers = teachers;
-    });
+    	});
 	},
 	template: `
 	<div class="text-box col-md-4 col-md-offset-4">

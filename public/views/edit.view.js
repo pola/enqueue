@@ -39,10 +39,36 @@ Vue.component('route-edit', {
 				}
 			});
 
-		}
-
+		},
 
 	},
+
+	computed: {
+		is_assistant_in_queue(){
+			// för att få tillgång till den här vyn måste personen vara  antingen vara en lärare
+			if (this.$root.$data.profile === null){
+				return false;
+			}
+
+			else if (this.$root.$data.profile.teacher === 1){
+				console.log("teacher");
+				return true;
+			}
+
+			// eller en assistent i den givla kön
+			profile_assistant_in = this.$root.$data.profile.assisting_in;
+			for (const queue of profile_assistant_in) {
+				if (this.queue === queue){
+					console.log("assistant");
+					console.log("är assistent");
+					return true;
+				}
+			}
+			console.log("not assistant");
+			return false;
+		}
+	}, 
+	
 	created() {
     // TODO: lägg till hantering av 404
 		fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
@@ -53,7 +79,7 @@ Vue.component('route-edit', {
 		});
 	},
 	template: `
-<div class="container" v-if="queue">
+<div class="container" v-if="queue && is_assistant_in_queue">
 	<div class="row">
 		<div class="col-md-4" :class="{ 'text-danger': queue.open === false }"> 
 			<h2> <span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>  {{ queue.name }} </h2> 

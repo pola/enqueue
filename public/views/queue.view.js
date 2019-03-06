@@ -57,7 +57,6 @@ Vue.component('route-queue', {
 		redirect( url ) {
 			this.$router.push('/queues/' + this.queue.name + '/edit');
 		}
-
 	},
 	created() {
     // TODO: lägg till hantering av 404
@@ -86,7 +85,39 @@ Vue.component('route-queue', {
 			}
 			console.log("ej i kö");
 			return false;
+		},
+
+		is_assistant_in_queue(){
+			// för att få tillgång till den här vyn måste personen vara  antingen vara en lärare
+
+			if (this.$root.$data.profile === null){
+				return false;
+			}
+
+			else if (this.$root.$data.profile.teacher === true){
+				console.log("teacher");
+				return true;
+			}
+
+			// eller en assistent i den givla kön
+			profile_assistant_in = this.$root.$data.assisting_in;
+
+			console.log(profile_assistant_in);
+
+
+			if (profile_assistant_in != []){
+				for (const queue of profile_assistant_in) {
+					if (this.queue === queue){
+						console.log("är assistent");
+						return true;
+					}
+				}
+
+			}
+			console.log("not assistant");
+			return false;
 		}
+
 	}, 
 
 	watch: {
@@ -115,8 +146,7 @@ Vue.component('route-queue', {
 		<div class="col-md-4" :class="{ 'text-danger': queue.open === false }"> 
 			<h2> <span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>  {{ queue.name }} </h2> 
 
-											<!-- TODO: visa endast om admin --> 
-			<md-button v-on:click="redirect('/edit')" type="submit" class="md-primary"> Redigera kön </md-button>
+			<md-button v-if="is_assistant_in_queue === true" v-on:click="redirect('/edit')" type="submit" class="md-primary"> Redigera kön </md-button>
 
 		</div>
 		<p class="col-md-8"> {{ queue.description }} </p>
@@ -161,7 +191,7 @@ Vue.component('route-queue', {
 					</span>
 				</md-card-actions>
 
-											<!-- TODO: visa endast om admin -->  
+											<!-- TODO: visa endast om admin - BLINKAR BARA??-->  
 				<md-field>
 					<md-select name="dropdown" id="dropdown" v-model="perform" placeholder="Alternativ">
 						<md-option value="broadcast">Broadcast</md-option>
