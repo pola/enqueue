@@ -91,6 +91,8 @@ exports.setConnection = (c) => {
 
 exports.get_profile = (id) => Profile.findOne({ where: { id: id } });
 
+exports.get_profile_by_user_name = (user_name) => Profile.findOne({ where: { user_name: user_name } });
+
 exports.get_or_create_profile = (id, user_name, name) => new Promise((resolve, reject) => {
 	Profile.findOrCreate({
 		where: { id: id },
@@ -352,6 +354,36 @@ exports.remove_room_from_queue = (room, queue) => new Promise((resolve, reject) 
 		} else {
 			exports.get_actions(queue).then(actions => {
 				exports.io_emit_update_queue(queue, { actions: actions });
+			});
+		
+			resolve(true);
+		}
+	});
+});
+
+exports.add_student_to_queue = (student, queue) => new Promise((resolve, reject) => {
+	student.addStudentInQueue(queue).then(result => {
+		if (result.length === 0) {
+			resolve(false);
+		} else {
+			// TODO: skicka bara den här uppdateringen till assistenter, lärare och studenten själv
+			queue.getStudents().then(students => {
+				exports.io_emit_update_queue(queue, { students: students });
+			});
+		
+			resolve(true);
+		}
+	});
+});
+
+exports.remove_student_from_queue = (student, queue) => new Promise((resolve, reject) => {
+	student.removeStudentInQueue(queue).then(result => {
+		if (result === 0) {
+			resolve(false);
+		} else {
+			// TODO: skicka bara den här uppdateringen till assistenter, lärare och studenten själv
+			queue.getStudents().then(students => {
+				exports.io_emit_update_queue(queue, { students: students });
 			});
 		
 			resolve(true);

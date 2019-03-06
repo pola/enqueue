@@ -785,6 +785,12 @@ router.get('/queues/:name/rooms', (req, res) => {
 
 // associera ett rum med en kö
 router.post('/queues/:name/rooms', (req, res) => {
+	if (!('cas_user' in req.session)) {
+		res.status(401);
+		res.end();
+		return;
+	}
+	
 	model.get_queue(req.params.name).then(queue => {
 		if (queue === null) {
 			res.status(404);
@@ -795,40 +801,94 @@ router.post('/queues/:name/rooms', (req, res) => {
 		if (!('room_id' in req.body) || typeof req.body.room_id !== 'number') {
 			res.status(400);
 			res.json({
-				error: 'INVALID_PARAMETER_ID',
+				error: 'INVALID_PARAMETER_ROOM_ID',
 				message: 'Missing or invalid id parameter.'
 			});
 			return;
 		}
 		
-		model.get_room(req.body.room_id).then(room => {
-			if (room === null) {
-				res.status(400);
-				res.json({
-					error: 'UNKNOWN_ROOM',
-					message: 'No room with the given ID exists.'
-				});
+		model.has_permission(queue, req.session.profile.id).then(has_permission => {
+			if (!has_permission) {
+				res.status(401);
+				res.end();
 				return;
 			}
-			
-			model.add_room_to_queue(room, queue).then(was_added => {
-				if (!was_added) {
+		
+			model.get_room(req.body.room_id).then(room => {
+				if (room === null) {
 					res.status(400);
 					res.json({
-						error: 'ALREADY_ASSOCIATED',
-						message: 'The room has already been associated to this queue.'
+						error: 'UNKNOWN_ROOM',
+						message: 'No room with the given ID exists.'
 					});
 					return;
 				}
+			
+				model.add_room_to_queue(room, queue).then(was_added => {
+					if (!was_added) {
+						res.status(400);
+						res.json({
+							error: 'ALREADY_ASSOCIATED',
+							message: 'The room has already been associated to this queue.'
+						});
+						return;
+					}
 				
-				res.status(201);
-				res.end();
+					res.status(201);
+					res.end();
+				});
 			});
 		});
 	});
 });
 
-// ge information om rum för en kö
+// ta bort en association mellan ett rum och en kö
+router.delete('/queues/:name/rooms/:room_id', (req, res) => {
+	if (!('cas_user' in req.session)) {
+		res.status(401);
+		res.end();
+		return;
+	}
+	
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+		
+		model.has_permission(queue, req.session.profile.id).then(has_permission => {
+			if (!has_permission) {
+				res.status(401);
+				res.end();
+				return;
+			}
+		
+			model.get_room(req.params.room_id).then(room => {
+				if (room === null) {
+					res.status(404);
+					return;
+				}
+			
+				model.remove_room_from_queue(room, queue).then(was_removed => {
+					if (!was_removed) {
+						res.status(400);
+						res.json({
+							error: 'NOT_ASSOCIATED',
+							message: 'The room is not associated with the queue.'
+						});
+						return;
+					}
+			
+					res.status(200);
+					res.end();
+				});
+			});
+		});
+	});
+});
+
+// ge information om vitlistade studenter för en kö
 router.get('/queues/:name/students', (req, res) => {
 	model.get_queue(req.params.name).then(queue => {
 		if (queue === null) {
@@ -858,8 +918,14 @@ router.get('/queues/:name/students', (req, res) => {
 	});
 });
 
-// ta bort en association mellan ett rum och en kö
-router.delete('/queues/:name/rooms/:room_id', (req, res) => {
+// vitlista en student
+router.post('/queues/:name/students', (req, res) => {
+	if (!('cas_user' in req.session)) {
+		res.status(401);
+		res.end();
+		return;
+	}
+	
 	model.get_queue(req.params.name).then(queue => {
 		if (queue === null) {
 			res.status(404);
@@ -867,24 +933,124 @@ router.delete('/queues/:name/rooms/:room_id', (req, res) => {
 			return;
 		}
 		
-		model.get_room(req.params.room_id).then(room => {
-			if (room === null) {
-				res.status(404);
+		if ('user_id' in req.body && 'user_name' in req.body) {
+			res.status(400);
+			res.json({
+				error: 'DUPLICATE_PARAMETERS',
+				message: 'Specify either user_id or user_name as parameter.'
+			});
+			return;
+		}
+		
+		var profile_promise = null;
+		
+		if ('user_id' in req.body) {
+			if (typeof req.body.user_id !== 'string') {
+				res.status(400);
+				res.json({
+					error: 'INVALID_PARAMETER_USER_ID',
+					message: 'Missing or invalid user_id parameter.'
+				});
 				return;
 			}
 			
-			model.remove_room_from_queue(room, queue).then(was_removed => {
-				if (!was_removed) {
-					res.status(400);
-					res.json({
-						error: 'NOT_ASSOCIATED',
-						message: 'The room is not associated with the queue.'
-					});
+			profile_promise = model.get_profile(req.body.user_id);
+		} else if ('user_name' in req.body) {
+			if (typeof req.body.user_name !== 'string') {
+				res.status(400);
+				res.json({
+					error: 'INVALID_PARAMETER_USER_NAME',
+					message: 'Missing or invalid user_name parameter.'
+				});
+				return;
+			}
+			
+			profile_promise = model.get_profile_by_user_name(req.body.user_name);
+		} else {
+			res.status(400);
+			res.json({
+				error: 'MISSING_PARAMETER',
+				message: 'Specify one of user_id and user_name as parameter.'
+			});
+			return;
+		}
+		
+		profile_promise.then(student => {
+			if (student === null) {
+				res.status(400);
+				res.json({
+					error: 'UNKNOWN_USER',
+					message: 'No student with the given ID exists.'
+				});
+				return;
+			}
+			
+			model.has_permission(queue, req.session.profile.id).then(has_permission => {
+				if (!has_permission) {
+					res.status(401);
+					res.end();
 					return;
 				}
 			
-				res.status(200);
+				model.add_student_to_queue(student, queue).then(was_added => {
+					if (!was_added) {
+						res.status(400);
+						res.json({
+							error: 'ALREADY_WHITELISTED',
+							message: 'The student is already on the whitelist for this queue.'
+						});
+						return;
+					}
+				
+					res.status(201);
+					res.end();
+				});
+			});
+		});
+	});
+});
+
+// ta bort en student från vitlistan i en kö
+router.delete('/queues/:name/students/:user_id', (req, res) => {
+	if (!('cas_user' in req.session)) {
+		res.status(401);
+		res.end();
+		return;
+	}
+	
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+		
+		model.has_permission(queue, req.session.profile.id).then(has_permission => {
+			if (!has_permission) {
+				res.status(401);
 				res.end();
+				return;
+			}
+			
+			model.get_profile(req.params.user_id).then(student => {
+				if (student === null) {
+					res.status(404);
+					return;
+				}
+			
+				model.remove_student_from_queue(student, queue).then(was_removed => {
+					if (!was_removed) {
+						res.status(400);
+						res.json({
+							error: 'NOT_WHITELISTED',
+							message: 'The student is not on the whitelist for this queue.'
+						});
+						return;
+					}
+			
+					res.status(200);
+					res.end();
+				});
 			});
 		});
 	});
