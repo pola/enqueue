@@ -338,6 +338,38 @@ router.post('/queues/:name/students', (req, res) => {
 	});
 });
 
+// töm kön som assistent
+router.delete('/queues/:name/students', (req, res) => {
+	if (!('cas_user' in req.session)) {
+		res.status(401);
+		res.end();
+		return;
+	}
+
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+		
+		model.has_permission(queue, req.session.profile.id).then(has_permission => {
+			if (!has_permission) {
+				res.status(401);
+				res.end();
+				return;
+			}
+
+			model.get_students(queue).length = 0;
+
+			res.status(200);
+			res.end();
+
+			model.io_emit_update_queue_students(queue);
+		});
+	});
+});
+
 // lämna kön (om det är en själv) eller sparka ut någon (som assistent)
 router.delete('/queues/:name/students/:id', (req, res) => {
 	if (!('cas_user' in req.session)) {

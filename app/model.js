@@ -306,9 +306,7 @@ exports.delete_action = (queue, action) => {
 	});
 };
 
-exports.get_students = queue => {
-	return students[queue.id];
-};
+exports.get_students = queue => students[queue.id];
 
 exports.add_student = (queue, profile, comment, location, action) => {
 	students[queue.id].push({
