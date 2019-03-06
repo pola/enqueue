@@ -139,3 +139,31 @@ fetch('/api/queues/tilpro/actions/12', {
 		});
 	}
 });
+
+// associera ett befintligt rum med en kö
+fetch('/api/queues/tilpro/rooms', {
+	method: 'POST',
+	headers: { 'Content-Type': 'application/json' },
+	body: JSON.stringify({ room_id: 3 })
+}).then(res => {
+	console.log(res.status);
+	
+	if (res.status !== 201) {
+		res.json().then(j => {
+			console.log(j);
+		});
+	}
+});
+
+// ta bort en association mellan ett rum och en kö
+fetch('/api/queues/tilpro/rooms/3', {
+	method: 'DELETE'
+}).then(res => {
+	console.log(res.status);
+	
+	if (res.status !== 200) {
+		res.json().then(j => {
+			console.log(j);
+		});
+	}
+});

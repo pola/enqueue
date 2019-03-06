@@ -332,12 +332,30 @@ exports.move_student_after = (queue, student, move_after) => {
 };
 
 exports.add_room_to_queue = (room, queue) => new Promise((resolve, reject) => {
-	room.addQueue(queue).then(() => {
-		exports.get_actions(queue).then(actions => {
-			exports.io_emit_update_queue(queue, { actions: actions });
-		});
+	room.addQueue(queue).then(result => {
+		if (result.length === 0) {
+			resolve(false);
+		} else {
+			exports.get_actions(queue).then(actions => {
+				exports.io_emit_update_queue(queue, { actions: actions });
+			});
 		
-		resolve();
+			resolve(true);
+		}
+	});
+});
+
+exports.remove_room_from_queue = (room, queue) => new Promise((resolve, reject) => {
+	room.removeQueue(queue).then(result => {
+		if (result === 0) {
+			resolve(false);
+		} else {
+			exports.get_actions(queue).then(actions => {
+				exports.io_emit_update_queue(queue, { actions: actions });
+			});
+		
+			resolve(true);
+		}
 	});
 });
 
