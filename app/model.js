@@ -363,7 +363,7 @@ exports.has_permission = (queue, profile_id) => new Promise((resolve, reject) =>
 
 // genväg för att uppdatera klienten om en ny lista på studenter
 exports.io_emit_update_queue_students = (queue) => {
-	io_emit_update_queue(queue, { students: students[queue.id] });
+	exports.io_emit_update_queue(queue, { students: students[queue.id] });
 };
 
 // generellt uppdateringsanrop för klienterna när någonting ändras i en kö
