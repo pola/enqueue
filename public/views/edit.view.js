@@ -5,6 +5,8 @@ Vue.component('route-edit', {
 
 			rooms: null,
 
+			colors: null,
+
 			user_name: null,
 			assistants: [],
 
@@ -20,8 +22,6 @@ Vue.component('route-edit', {
 		},
 
 		change_description(){
-
-
 			fetch('/api/queues/' + this.queue.id, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
@@ -111,11 +111,11 @@ Vue.component('route-edit', {
 			fetch('/api/queues/'+ this.queue.id +'/actions', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ name: action_name, color: action_color })
+				body: JSON.stringify({ name: this.action_name, color: this.action_color })
 			}).then(res => {
 				console.log(res.status);
 				
-				if (res.status !== 200) {
+				if (res.status !== 201) {
 					res.json().then(j => {
 						console.log(j);
 					});
@@ -131,7 +131,7 @@ Vue.component('route-edit', {
 			}).then(res => {
 				console.log(res.status);
 				
-				if (res.status !== 201) {
+				if (res.status !== 200) {
 					res.json().then(j => {
 						console.log(j);
 					});
@@ -210,10 +210,21 @@ Vue.component('route-edit', {
 			assistants = [];
 		});
 
+		fetch('/api/colors').then(res => res.json()).then(colors => {
+			this.colors = colors;
+		});
+
 		fetch('/api/rooms').then(res => res.json()).then(rooms => {
 			this.rooms = rooms;
 		});
+
+		this.$root.$data.socket.on('update_queue', data => {
+			for (var k of Object.keys(data.changes)) {
+   				this.queue[k] = data.changes[k];
+			}
+		});
 	},
+
 	template: `
 <div class="container" v-if="queue && is_assistant_in_queue">
 	<div class="row">
@@ -327,9 +338,11 @@ Vue.component('route-edit', {
 				<md-input type="text" id="action_name" v-model="action_name" />
 			</md-field>
 
-								<!-- TODO: dropdown med möjliga färger istället? -->
 			<md-field>
 				<label for="action_color">Färg på action</label>
+			    <md-select v-model="action_color" name="Color" id="action_color">
+           			<md-option v-for="color in colors" :value="color">{{ color }}</md-option>
+
 				<md-input type="text" id="action_color" v-model="action_color" />
 			</md-field>
 

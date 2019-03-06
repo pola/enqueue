@@ -68,12 +68,6 @@ Vue.component('route-queue', {
 			}
 		});
 
-		this.$root.$data.socket.on('update_queue_students', data => {
-			if (data.id == this.queue.id) {
-				this.queue.students = data.students;
-			}
-		});
-
 		this.$root.$data.socket.on('update_queue', data => {
 			for (var k of Object.keys(data.changes)) {
    				this.queue[k] = data.changes[k];
@@ -131,11 +125,21 @@ Vue.component('route-queue', {
     		}
     		else if(event === "purge"){
     			console.log("töm")
+
+    			fetch('/api/queues/' + this.queue.id + '/students',{
+    				method: 'DELETE'
+    			}).then(res => {
+    				if (res.status !== 200) {
+						res.json().then(j => {
+							console.log(j);
+						});
+					}
+    			});
     		}
     		else if(event === "lock"){
     			console.log("lås")
 
-    			fetch('/api/queues/tilpro', {
+    			fetch('/api/queues/' + this.queue.id, {
 					method: 'PATCH',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
@@ -154,7 +158,7 @@ Vue.component('route-queue', {
     		else if(event === "unlock"){
     			console.log("öppna")
 
-    			fetch('/api/queues/tilpro', {
+    			fetch('/api/queues/' + this.queue.name, {
 					method: 'PATCH',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
