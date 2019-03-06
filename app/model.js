@@ -15,16 +15,14 @@ var connection = null;
 var locked_time_slots = {};
 var students = {};
 
-exports.setIo = (io2) => {
-	// TOOD: kan det här bli finare?
-	io = io2;
+exports.setIo = (i) => {
+	io = i;
 };
 
 exports.colors = ['primary', 'secondary', 'default', 'accent'];
 
-exports.setConnection = (connection2) => {
-	// TOOD: kan det här bli finare?
-	connection = connection2;
+exports.setConnection = (c) => {
+	connection = c;
 
 	Queue = connection.define('queue', {
 		id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true},
@@ -84,12 +82,6 @@ exports.setConnection = (connection2) => {
 			for (const queue of queues) {
 				students[queue.id] = [];
 			}
-		});
-
-		Queue.findOne({ where: { name: 'tilpro' } }).then(queue => {
-			Profile.findOne({ where: { id: 'u1tm1nqn' } }).then(profile => {
-
-			});
 		});
 	});
 };
