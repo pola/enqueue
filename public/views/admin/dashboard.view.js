@@ -35,10 +35,10 @@ Vue.component('route-admin-dashboard', {
 		},
 		add_queue() {
 			fetch('/api/queues', {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: this.queue_name })
-    	}).then(res => {
+		        method: "POST",
+		        headers: { "Content-Type": "application/json" },
+		        body: JSON.stringify({ name: this.queue_name })
+	    	}).then(res => {
 				if (res.status === 400) {
 					alert('Namnet är ogiltigt.');
 				} else if (res.status === 201) {
