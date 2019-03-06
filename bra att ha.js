@@ -58,6 +58,19 @@ fetch('/api/queues/prutt/students/u1tm1nqn', {
 	}
 });
 
+// töm en kö
+fetch('/api/queues/tilpro/students', {
+	method: 'DELETE'
+}).then(res => {
+	console.log(res.status);
+	
+	if (res.status !== 200) {
+		res.json().then(j => {
+			console.log(j);
+		});
+	}
+});
+
 // lämna en kö
 fetch('/api/queues/prutt/students/u1tm1nqn', {
 	method: 'DELETE'
