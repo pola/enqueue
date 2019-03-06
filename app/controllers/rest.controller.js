@@ -93,6 +93,7 @@ router.delete('/admin/teachers/:id', (req, res) => {
 router.get('/queues', (req, res) => {
 	model.get_queues().then(queues => {
 		res.json(queues.map(queue => ({
+			id: queue.id,
 			name: queue.name,
 			open: queue.open,
 			queuing_count: model.get_students(queue).length
