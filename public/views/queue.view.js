@@ -159,7 +159,6 @@ Vue.component('route-queue', {
 			<div v-else>
 				<form novalidate >
 					<md-field>
-											<!-- TODO: fixa automatisk ifyllnad, hur ser jag att någon sitter på en skoldator? -->
 						<label for="location">Plats</label>
 						<md-input :disabled="$root.$data.location !== null" type="text" id="location" name="location" v-model="location" />
 					</md-field>
@@ -169,7 +168,6 @@ Vue.component('route-queue', {
 						<md-input :required="queue.force_comment" type="text" id="comment" name="comment" v-model="comment" />
 					</md-field>
 
-											<!-- TODO: krav på att man väljer en --> 
 					<div v-for="p_action in queue.actions">
 					<!--class="md-get-palette-color(green, A200)" -->
 						<md-radio v-model="action" :value="p_action.id" :class="'md-' + p_action.color"> {{ p_action.name }} </md-radio>
@@ -198,7 +196,6 @@ Vue.component('route-queue', {
 				</md-field>
 			</div>
 		</div>
-
 											<!-- TODO: assistenter ska kunna ta bort, markera får hjälp, flytta studenter, markera fel plats -->
 		<section  class="col-md-7 col-md-offset-2">
 			<md-table md-card>
@@ -216,7 +213,6 @@ Vue.component('route-queue', {
 				<md-table-row v-for="(user, index) in queue.students" :key="user.profile.id"  md-selectable="single">
 					<md-table-cell> {{ index+1 }} </md-table-cell>
 					<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
-										<!-- VET EJ OM DETTA FUNKAR SOM DET SKA (AUTO)?? -->
 					<md-table-cell> <span v-if="$root.$data.location === null"> {{ user.location }} </span> <span v-else> {{ $root.$data.location.name }}  </span></md-table-cell>
 					<md-table-cell> <span v-if="user.action" style="color: red;" > {{ user.action.name }} </span>  </md-table-cell>
 					<md-table-cell> <span v-if="user.comment"> {{ user.comment }} </span> </md-table-cell>

@@ -122,10 +122,13 @@ Vue.component('route-edit', {
 		fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
 			this.queue = queue;
 			description = queue.description;
-			rooms = queue.rooms;
 			assistants = [];
 			require_comment = true;
 			require_action = queue.force_action;
+		});
+
+		fetch('/api/rooms').then(res => res.json()).then(rooms => {
+			this.rooms = rooms;
 		});
 	},
 	template: `
@@ -194,10 +197,10 @@ Vue.component('route-edit', {
 	</form>
 
 	<form novalidate @submit.prevent="change_rooms">
-	    <md-field>
-	      <label>Ändra tillåtna salar (om inga anges kan studenterna sitta var som helst)</label>
-	      <md-input v-model="queue.rooms"></md-input>
-	    </md-field>
+	    <label>Ändra tillåtna salar (om inga anges kan studenterna sitta var som helst)</label>
+	    <br>
+	    <md-checkbox v-for="room in rooms" :key="room.id" v-model="rooms" :value="room.id">{{room.name}}</md-checkbox>
+
 	    <md-card-actions>
 	    	<md-button type="submit" class="md-primary">Genomför ändring</md-button>
 	    </md-card-actions>
