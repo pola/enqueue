@@ -5,7 +5,8 @@ Vue.component('route-queue', {
 			location: null,
 			comment: null,
 			action: null,
-			perform: null
+			perform: null,
+			disable_location: null
 		}
 	},
 	methods: {
@@ -62,7 +63,11 @@ Vue.component('route-queue', {
     // TODO: lägg till hantering av 404
 		fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
 			this.queue = queue;
+			if (this.$root.$data.location !== null){
+				this.location = this.$root.$data.location.name;
+			}
 		});
+
 
 		this.$root.$data.socket.on('update_queue_students', data => {
 			if (data.id == this.queue.id) {
@@ -79,42 +84,32 @@ Vue.component('route-queue', {
 			
 			for (const student of this.queue.students) {
 				if (this.$root.$data.profile.id === student.profile.id){
-					console.log("i kö");
 					return true;
 				}
 			}
-			console.log("ej i kö");
 			return false;
 		},
 
 		is_assistant_in_queue(){
-			// för att få tillgång till den här vyn måste personen vara  antingen vara en lärare
-
+			// för att få tillgång till admin måste personen vara  antingen vara en lärare
 			if (this.$root.$data.profile === null){
 				return false;
 			}
-
 			else if (this.$root.$data.profile.teacher === true){
-				console.log("teacher");
 				return true;
 			}
 
 			// eller en assistent i den givla kön
 			profile_assistant_in = this.$root.$data.assisting_in;
 
-			console.log(profile_assistant_in);
-
-
 			if (profile_assistant_in != []){
 				for (const queue of profile_assistant_in) {
 					if (this.queue === queue){
-						console.log("är assistent");
 						return true;
 					}
 				}
 
 			}
-			console.log("not assistant");
 			return false;
 		}
 
@@ -166,7 +161,7 @@ Vue.component('route-queue', {
 					<md-field>
 											<!-- TODO: fixa automatisk ifyllnad, hur ser jag att någon sitter på en skoldator? -->
 						<label for="location">Plats</label>
-						<md-input type="text" id="location" name="location" v-model="location" />
+						<md-input :disabled="$root.$data.location !== null" type="text" id="location" name="location" v-model="location" />
 					</md-field>
 
 					<md-field>
@@ -191,9 +186,9 @@ Vue.component('route-queue', {
 					</span>
 				</md-card-actions>
 
-											<!-- TODO: visa endast om admin - BLINKAR BARA??-->  
+											<!-- TODO: BLINKAR BARA??-->  
 				<md-field>
-					<md-select name="dropdown" id="dropdown" v-model="perform" placeholder="Alternativ">
+					<md-select name="dropdown" id="dropdown" v-model="perform" v-if="is_assistant_in_queue === true" placeholder="Alternativ">
 						<md-option value="broadcast">Broadcast</md-option>
 						<md-option value="broadcast_faculty">Broadcast till anställda</md-option>
 						<md-option value="purge">Töm kön</md-option>
@@ -205,7 +200,7 @@ Vue.component('route-queue', {
 		</div>
 
 											<!-- TODO: assistenter ska kunna ta bort, markera får hjälp, flytta studenter, markera fel plats -->
-		<section class="col-md-7 col-md-offset-2">
+		<section  class="col-md-7 col-md-offset-2">
 			<md-table md-card>
 				<md-table-toolbar>
 				  	<md-table-row>
@@ -222,7 +217,7 @@ Vue.component('route-queue', {
 					<md-table-cell> {{ index+1 }} </md-table-cell>
 					<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
 										<!-- VET EJ OM DETTA FUNKAR SOM DET SKA (AUTO)?? -->
-					<md-table-cell> <span v-if="typeof(user.location) === 'string'"> {{ user.location }} </span> <span v-else> {{ user.location.computer }}  </span></md-table-cell>
+					<md-table-cell> <span v-if="$root.$data.location === null"> {{ user.location }} </span> <span v-else> {{ $root.$data.location.name }}  </span></md-table-cell>
 					<md-table-cell> <span v-if="user.action" style="color: red;" > {{ user.action.name }} </span>  </md-table-cell>
 					<md-table-cell> <span v-if="user.comment"> {{ user.comment }} </span> </md-table-cell>
 					<md-table-cell>{{ user.entered_at }} </md-table-cell>
