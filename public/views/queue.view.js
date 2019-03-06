@@ -68,12 +68,18 @@ Vue.component('route-queue', {
 			}
 		});
 
-
 		this.$root.$data.socket.on('update_queue_students', data => {
 			if (data.id == this.queue.id) {
 				this.queue.students = data.students;
 			}
 		});
+
+		this.$root.$data.socket.on('update_queue', data => {
+			for (var k of Object.keys(data.changes)) {
+   				this.queue[k] = data.changes[k];
+			}
+		});
+
 	},
 
 	computed:{
@@ -128,9 +134,41 @@ Vue.component('route-queue', {
     		}
     		else if(event === "lock"){
     			console.log("lås")
+
+    			fetch('/api/queues/tilpro', {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						open: false,
+					})
+				}).then(res => {
+					console.log(res.status);
+	
+					if (res.status !== 200) {
+						res.json().then(j => {
+							console.log(j);
+						});
+					}
+				});
     		}
     		else if(event === "unlock"){
     			console.log("öppna")
+
+    			fetch('/api/queues/tilpro', {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						open: true,
+					})
+				}).then(res => {
+					console.log(res.status);
+	
+					if (res.status !== 200) {
+						res.json().then(j => {
+							console.log(j);
+						});
+					}
+				});
     		}
     	}
   	},
@@ -190,8 +228,8 @@ Vue.component('route-queue', {
 						<md-option value="broadcast">Broadcast</md-option>
 						<md-option value="broadcast_faculty">Broadcast till anställda</md-option>
 						<md-option value="purge">Töm kön</md-option>
-						<md-option v-if="!queue.open" value="lock">Lås kön</md-option>
-						<md-option v-if="queue.open" value="unlock">Öppna kön</md-option>
+						<md-option v-if="queue.open" value="lock">Lås kön</md-option>
+						<md-option v-if="!queue.open" value="unlock">Öppna kön</md-option>
 					</md-select>
 				</md-field>
 			</div>

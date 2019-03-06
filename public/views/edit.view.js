@@ -2,11 +2,8 @@ Vue.component('route-edit', {
 	data() {
 		return {
 			queue: null,
-			description: null,
+
 			rooms: null,
-			actions: null,
-			require_comment: null,
-			require_action: null,
 
 			user_name: null,
 			assistants: [],
@@ -23,7 +20,23 @@ Vue.component('route-edit', {
 		},
 
 		change_description(){
-			console.log(new_description);
+
+
+			fetch('/api/queues/' + this.queue.id, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					description: this.queue.description
+				})
+			}).then(res => {
+				console.log(res.status);
+				
+				if (res.status !== 200) {
+					res.json().then(j => {
+						console.log(j);
+					});
+				}
+			});
 		},
 
 		change_rooms(){
@@ -31,22 +44,32 @@ Vue.component('route-edit', {
 		},
 
 		change_actions(){
-			console.log(actions);
+
+			fetch('/api/queues/'+ this.queue.id + '/actions', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ name: this.action_name, color: this.action_color })
+			}).then(res => {
+				console.log(res.status);
+	
+				if (res.status !== 201) {
+					res.json().then(j => {
+						console.log(j);
+					});
+				}
+				else {
+					this.action_name = null;
+					this.action_color = null;
+				}
+			});
 		},
 
 		delete_queue(){
 			console.log("delete");
-			fetch('/api/queues/' + this.queue.name, {
-        		method: "DELETE"
-    		}).then(res => {
-				if (res.status !== 201) {
-					res.json().then (data => {
-							alert(data.message);
-					});
-				}
-				else {
-					this.$router.push('/queues');
-				}
+			fetch('/api/queues/' + this.queue.id, {
+				method: 'DELETE'
+			}).then(res => {
+				console.log(res.status);
 			});
 		},
 
@@ -84,10 +107,73 @@ Vue.component('route-edit', {
 
 		add_action(){
 			console.log("add action");
+
+			fetch('/api/queues/'+ this.queue.id +'/actions', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ name: action.name, color: action.color })
+			}).then(res => {
+				console.log(res.status);
+				
+				if (res.status !== 201) {
+					res.json().then(j => {
+						console.log(j);
+					});
+				}
+			});
 		},
 
-		remove_action(){
+		remove_action(action){
 			console.log("remove action");
+
+			fetch('/api/queues/'+ this.queue.id +'/actions/' + action.id, {
+				method: 'DELETE'
+			}).then(res => {
+				console.log(res.status);
+				
+				if (res.status !== 201) {
+					res.json().then(j => {
+						console.log(j);
+					});
+				}
+			});
+		},
+
+		change_name(){
+			fetch('/api/queues/' + this.queue.id, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					name: this.queue.name
+				})
+			}).then(res => {
+				console.log(res.status);
+				
+				if (res.status !== 200) {
+					res.json().then(j => {
+						console.log(j);
+					});
+				} 
+			});
+		},
+
+		change_requirements(){
+			fetch('/api/queues/' + this.queue.id, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					force_comment: queue.force_comment,
+					force_action: queue.force_action
+				})
+			}).then(res => {
+				console.log(res.status);
+				
+				if (res.status !== 200) {
+					res.json().then(j => {
+						console.log(j);
+					});
+				}
+			});
 		}	
 
 	},
@@ -121,10 +207,7 @@ Vue.component('route-edit', {
     // TODO: lägg till hantering av 404
 		fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
 			this.queue = queue;
-			description = queue.description;
 			assistants = [];
-			require_comment = true;
-			require_action = queue.force_action;
 		});
 
 		fetch('/api/rooms').then(res => res.json()).then(rooms => {
@@ -135,9 +218,20 @@ Vue.component('route-edit', {
 <div class="container" v-if="queue && is_assistant_in_queue">
 	<div class="row">
 		<div class="col-md-4" :class="{ 'text-danger': queue.open === false }"> 
-			<h2> <span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>  {{ queue.name }} </h2> 
+			<h2> <span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>  {{ this.queue.name }} </h2> 
 		</div>
 	</div>
+
+	<form novalidate @submit.prevent="change_name">
+		<md-field>
+	    	<label>Ändra köns namn</label>
+	    	<md-textarea id="new_name" name="new_name" v-model="queue.name"></md-textarea>
+	    </md-field>
+	    <md-card-actions>
+	   		<md-button type="submit" class="md-primary">Genomför ändring</md-button>
+	   	</md-card-actions>
+	</form>
+
 
 	<!-- vy endast för lärare - lägg till och ta bort assistenter -->
 	<div v-if="$root.$data.profile.teacher === true">
@@ -217,7 +311,7 @@ Vue.component('route-edit', {
 		        <md-table-head>Alternativ</md-table-head>
 		    </md-table-row>
 
-		    <md-table-row v-for="action in actions" :key="action.id">
+		    <md-table-row v-for="action in queue.actions" :key="action.id">
 		        <md-table-cell>{{ action.name }}</md-table-cell>
 		        <md-table-cell>{{ action.color }}</md-table-cell>
 		        <md-table-cell><md-button v-on:click="remove_action(action)" class="md-accent">Radera</md-button></md-table-cell>
@@ -247,9 +341,12 @@ Vue.component('route-edit', {
 
     					<!-- TODO: kan de visa hur det är just nu? -->
 
-    <md-switch value="require_action" v-model="require_action">Kräv kommentar</md-switch>
-    <md-switch value="require_comment" v-model="require_comment">Kräv action</md-switch>
+    <md-switch value="queue.force_action" v-model="queue.force_action">Kräv kommentar</md-switch>
+    <md-switch value="queue.force_comment" v-model="queue.force_comment">Kräv action</md-switch>
 
+    <md-card-actions>
+		<md-button v-on:click="change_requirements" type="submit" class="md-primary">Genomför ändringar</md-button>
+	</md-card-actions>
 
 
     <md-card-actions>
