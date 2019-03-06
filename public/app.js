@@ -18,6 +18,8 @@ const app = new Vue({
 	router,
 	data: {
 		profile: null,
+		location: null,
+		assisting_in: null,
 		socket: io().connect()
 	},
 	methods: {
