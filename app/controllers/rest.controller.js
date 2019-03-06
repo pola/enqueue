@@ -142,13 +142,17 @@ router.get('/queues/:name', (req, res) => {
 			queue.getRooms().then(rooms => {
 				queue.getStudents().then(students => {
 					queue.getStudents().then(students => {
-						model.has_permission(queue, ('profile' in req.session) ? req.session.profile.id : null).then(has_permission => {
+						model.has_permission(queue, 'profile' in req.session ? req.session.profile.id : null).then(has_permission => {
+							const students_count = students.length;
+							
 							if (!has_permission) {
-								if ('profile' in req.session) {
-									students = students.filter(s => s.id === req.session.profile.id);
-								} else {
-									students = [];
-								}
+								students = students.map(s => {
+									if ('profile' in req.session && req.session.profile.id === s.id) {
+										return s;
+									} else {
+										return null;
+									}
+								});
 							}
 						
 							res.json({
@@ -168,11 +172,11 @@ router.get('/queues/:name', (req, res) => {
 									id: r.id,
 									name: r.name
 								})),
-								students: students.map(s => ({
+								students: students.map(s => s === null ? null : {
 									id: s.id,
 									user_name: s.user_name,
 									name: s.name
-								}))
+								})
 							});
 						});
 					});
@@ -897,22 +901,23 @@ router.get('/queues/:name/students', (req, res) => {
 			return;
 		}
 		
-		if (!('profile' in req.session)) {
-			res.json([]);
-			res.end();
-		}
-		
 		queue.getStudents().then(students => {
-			model.has_permission(queue, req.session.profile.id).then(has_permission => {
+			model.has_permission(queue, 'profile' in req.session ? req.session.profile.id : null).then(has_permission => {
 				if (!has_permission) {
-					students = students.filter(s => s.id === req.session.profile.id);
+					students = students.map(s => {
+						if ('profile' in req.session && req.session.profile.id === s.id) {
+							return s;
+						} else {
+							return null;
+						}
+					});
 				}
 				
-				res.json(students.map(s => ({
+				res.json(students.map(s => s === null ? null : {
 					id: s.id,
 					user_name: s.user_name,
 					name: s.name
-				})));
+				}));
 			});
 		});
 	});
