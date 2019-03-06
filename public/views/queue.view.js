@@ -188,7 +188,7 @@ Vue.component('route-queue', {
 					</md-table-row>
 		      	</md-table-toolbar>
 
-				<md-table-row v-for="(user, index) in queue.students" :key="user.profile.id" :class="getClass(user)" md-selectable="single">
+				<md-table-row v-for="(user, index) in queue.students" :key="user.profile.id"  md-selectable="single">
 					<md-table-cell> {{ index+1 }} </md-table-cell>
 					<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
 										<!-- VET EJ OM DETTA FUNKAR SOM DET SKA (AUTO)?? -->
