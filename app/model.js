@@ -7,13 +7,12 @@ var Queue = null;
 var Room = null;
 var Computer = null;
 var Profile = null;
-var QueueStudent = null;
 var Action = null;
 
 var io = null;
 var connection = null;
 var locked_time_slots = {};
-var students = {};
+var queuing = {};
 
 exports.setIo = (i) => {
 	io = i;
@@ -25,7 +24,7 @@ exports.setConnection = (c) => {
 	connection = c;
 
 	Queue = connection.define('queue', {
-		id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true},
+		id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
 		name : Sequelize.STRING,
 		description: Sequelize.STRING,
 		open: Sequelize.BOOLEAN,
@@ -37,7 +36,7 @@ exports.setConnection = (c) => {
 
 	Room = connection.define('room', {
 		id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
-		name : Sequelize.STRING
+		name: Sequelize.STRING
 	});
 
 	// För att koppla köer till rum
@@ -46,7 +45,7 @@ exports.setConnection = (c) => {
 
 	Computer = connection.define('computer', {
 		id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
-		name : Sequelize.STRING,
+		name: Sequelize.STRING,
 		ip: Sequelize.STRING
 	});
 
@@ -54,15 +53,19 @@ exports.setConnection = (c) => {
 	Computer.belongsTo(Room, { foreignKey: 'room_id' });
 
 	Profile = connection.define('profile', {
-		id: { type: Sequelize.STRING, primaryKey: true}, // u1-numret
+		id: { type: Sequelize.STRING, primaryKey: true }, // u1-numret
 		user_name: Sequelize.STRING,
 		name: Sequelize.STRING,
 		teacher: Sequelize.BOOLEAN
 	});
 
-	// För att koppla assistenter till köeer
+	// För att koppla assistenter till köer
 	Queue.belongsToMany(Profile, { as: 'Assistants', through: 'queues_assistants', foreignKey: 'assistant_id' });
-	Profile.belongsToMany(Queue, { as: 'Queues', through: 'queues_assistants', foreignKey: 'queue_id' });
+	Profile.belongsToMany(Queue, { as: 'AssistantInQueues', through: 'queues_assistants', foreignKey: 'queue_id' });
+
+	// För att koppla vitlistade studenter till köer
+	Queue.belongsToMany(Profile, { as: 'Students', through: 'queues_students', foreignKey: 'student_id' });
+	Profile.belongsToMany(Queue, { as: 'StudentInQueues', through: 'queues_students', foreignKey: 'queue_id' });
 
 	// T ex present och help
 	Action = connection.define('actions', {
@@ -80,7 +83,7 @@ exports.setConnection = (c) => {
 	connection.sync().then(() => {
 		Queue.findAll().then(queues => {
 			for (const queue of queues) {
-				students[queue.id] = [];
+				queuing[queue.id] = [];
 			}
 		});
 	});
@@ -129,11 +132,7 @@ exports.get_rooms = () => new Promise((resolve, reject) => {
 	});
 });
 
-exports.get_teachers = () => new Promise((resolve, reject) => {
-	Profile.findAll({ where: { teacher: true } }).then(teachers => {
-		resolve(teachers);
-	});
-});
+exports.get_teachers = () => Profile.findAll({ where: { teacher: true } });
 
 exports.add_teacher = (user_name) => new Promise((resolve, reject) => {
 	Profile.findOne({ where: {user_name: user_name} }).then(profile => {
@@ -191,7 +190,7 @@ exports.get_or_create_queue = (name) => new Promise((resolve, reject) => {
 		}
 	}).spread((queue, created) => {
 		if (created) {
-			students[queue.id] = [];
+			queuing[queue.id] = [];
 
 			Action.bulkCreate([{
 				name: "Help",
@@ -212,7 +211,7 @@ exports.get_or_create_queue = (name) => new Promise((resolve, reject) => {
 
 exports.delete_queue = (queue) => new Promise((resolve, reject) => {
 	Queue.destroy({ where: { id: queue.id } }).then(() => {
-		delete students[queue.id];
+		delete queuing[queue.id];
 
 		io.emit('delete_queue', queue.id);
 
@@ -222,9 +221,10 @@ exports.delete_queue = (queue) => new Promise((resolve, reject) => {
 
 exports.get_computer = ip => Computer.findOne({
 	where: { ip: ip },
-	include: [
-		{ model: Room, as: Room.rooms }
-	]
+	include: [{
+		model: Room,
+		as: Room.rooms
+	}]
 });
 
 exports.get_actions = (queue) => new Promise((resolve, reject) => {
@@ -281,10 +281,10 @@ exports.delete_action = (queue, action) => new Promise((resolve, reject) => {
 	});
 });
 
-exports.get_students = queue => students[queue.id];
+exports.get_queuing = queue => queuing[queue.id];
 
 exports.add_student = (queue, profile, comment, location, action) => {
-	students[queue.id].push({
+	queuing[queue.id].push({
 		profile: profile,
 		entered_at: Date.now(),
 		comment: comment,
@@ -293,11 +293,11 @@ exports.add_student = (queue, profile, comment, location, action) => {
 		receiving_help_from: null
 	});
 
-	exports.io_emit_update_queue_students(queue);
+	exports.io_emit_update_queuing(queue);
 };
 
 exports.move_student_after = (queue, student, move_after) => {
-	const s = exports.get_students(queue);
+	const s = exports.get_queuing(queue);
 	var remove_index = null;
 
 	for (var i = 0; i < s.length; i++) {
@@ -316,7 +316,7 @@ exports.move_student_after = (queue, student, move_after) => {
 		s.splice(remove_index, 1);
 		s.unshift(student);
 
-		exports.io_emit_update_queue_students(queue);
+		exports.io_emit_update_queuing(queue);
 	} else {
 		for (var i = 0; i < s.length; i++) {
 			if (s[i].profile.id === move_after) {
@@ -327,7 +327,7 @@ exports.move_student_after = (queue, student, move_after) => {
 
 		s.splice(remove_index, 1);
 
-		exports.io_emit_update_queue_students(queue);
+		exports.io_emit_update_queuing(queue);
 	}
 };
 
@@ -374,14 +374,10 @@ exports.has_permission = (queue, profile_id) => new Promise((resolve, reject) =>
 });
 
 // genväg för att uppdatera klienten om det finns en ny lista på studenter
-exports.io_emit_update_queue_students = (queue) => {
-	exports.io_emit_update_queue(queue, { students: students[queue.id] });
-};
+exports.io_emit_update_queuing = (queue) => exports.io_emit_update_queue(queue, { queuing: queuing[queue.id] });
 
 // generellt uppdateringsanrop för klienterna när någonting ändras i en kö
-exports.io_emit_update_queue = (queue, changes) => {
-	io.emit('update_queue', {
-		queue: queue.id,
-		changes: changes
-	});
-};
+exports.io_emit_update_queue = (queue, changes) => io.emit('update_queue', {
+	queue: queue.id,
+	changes: changes
+});

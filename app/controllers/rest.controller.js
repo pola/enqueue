@@ -6,8 +6,8 @@ const router = express.Router();
 router.get('/me', (req, res) => {
 	model.get_computer(req.connection.remoteAddress).then(location => {
 		if ('cas_user' in req.session) {
-			model.get_profile(req.session.cas_user).then((profile) => {
-				profile.getQueues().then(queues => {
+			model.get_profile(req.session.cas_user).then(profile => {
+				profile.getAssistantInQueues().then(queues => {
 					res.json({
 						profile: profile,
 						assisting_in: queues.map(q => ({
@@ -101,7 +101,7 @@ router.get('/queues', (req, res) => {
 			id: queue.id,
 			name: queue.name,
 			open: queue.open,
-			queuing_count: model.get_students(queue).length
+			queuing_count: model.get_queuing(queue).length
 		})));
 	});
 });
@@ -147,7 +147,7 @@ router.get('/queues/:name', (req, res) => {
 					open: queue.open,
 					force_comment: queue.force_comment,
 					force_action: queue.force_action,
-					students: model.get_students(queue),
+					queuing: model.get_queuing(queue),
 					actions: actions.map(a => ({
 						id: a.id,
 						name: a.name,
@@ -192,7 +192,7 @@ router.delete('/queues/:name', (req, res) => {
 });
 
 // ny student i kön
-router.post('/queues/:name/students', (req, res) => {
+router.post('/queues/:name/queuing', (req, res) => {
 	if (!('cas_user' in req.session)) {
 		res.status(401);
 		res.end();
@@ -325,7 +325,7 @@ router.post('/queues/:name/students', (req, res) => {
 					}
 					
 					// man kan inte gå in i en kö som man redan står i (då får man PUT:a med ny data)
-					for (const student of model.get_students(queue)) {
+					for (const student of model.get_queuing(queue)) {
 						if (student.profile.id === req.session.profile.id) {
 							res.status(400);
 							res.json({
@@ -348,7 +348,7 @@ router.post('/queues/:name/students', (req, res) => {
 });
 
 // töm kön som assistent
-router.delete('/queues/:name/students', (req, res) => {
+router.delete('/queues/:name/queuing', (req, res) => {
 	if (!('cas_user' in req.session)) {
 		res.status(401);
 		res.end();
@@ -369,18 +369,18 @@ router.delete('/queues/:name/students', (req, res) => {
 				return;
 			}
 
-			model.get_students(queue).length = 0;
+			model.get_queuing(queue).length = 0;
 
 			res.status(200);
 			res.end();
 
-			model.io_emit_update_queue_students(queue);
+			model.io_emit_update_queuing(queue);
 		});
 	});
 });
 
 // lämna kön (om det är en själv) eller sparka ut någon (som assistent)
-router.delete('/queues/:name/students/:id', (req, res) => {
+router.delete('/queues/:name/queuing/:id', (req, res) => {
 	if (!('cas_user' in req.session)) {
 		res.status(401);
 		res.end();
@@ -395,25 +395,25 @@ router.delete('/queues/:name/students/:id', (req, res) => {
 		}
 
 		var found = false;
-		const students = model.get_students(queue);
+		const queuing = model.get_queuing(queue);
 
-		for (var i = 0; i < students.length; i++) {
-			if (students[i].profile.id === req.params.id) {
+		for (var i = 0; i < queuing.length; i++) {
+			if (queuing[i].profile.id === req.params.id) {
 				found = true;
 
 				model.has_permission(queue, req.session.profile.id).then(has_permission => {
-					if (students[i].profile.id !== req.session.profile.id && !has_permission) {
+					if (queuing[i].profile.id !== req.session.profile.id && !has_permission) {
 						res.status(401);
 						res.end();
 						return;
 					}
 
-					students.splice(i, 1);
+					queuing.splice(i, 1);
 
 					res.status(200);
 					res.end();
 
-					model.io_emit_update_queue_students(queue);
+					model.io_emit_update_queuing(queue);
 				});
 
 				break;
@@ -604,7 +604,7 @@ const update_queue = (queue, changes, req, res, keys) => {
 };
 
 // ändra en student i kön
-router.patch('/queues/:name/students/:id', (req, res) => {
+router.patch('/queues/:name/queuing/:id', (req, res) => {
 	if (!('cas_user' in req.session)) {
 		res.status(401);
 		res.end();
@@ -621,7 +621,7 @@ router.patch('/queues/:name/students/:id', (req, res) => {
 		// hitta vilken student i kön det berör
 		var student = null;
 
-		for (const s of model.get_students(queue)) {
+		for (const s of model.get_queuing(queue)) {
 			if (s.profile.id === req.params.id) {
 				student = s;
 				break;
@@ -866,7 +866,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 		res.status(200);
 		res.end();
 
-		model.io_emit_update_queue_students(queue);
+		model.io_emit_update_queuing(queue);
 	} else {
 		const key = keys[0];
 
@@ -1009,7 +1009,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 				if (req.body.move_after !== null) {
 					var found = null;
 
-					for (const s of model.get_students(queue)) {
+					for (const s of model.get_queuing(queue)) {
 						if (s.profile.id === req.body.move_after) {
 							found = true;
 							break;
