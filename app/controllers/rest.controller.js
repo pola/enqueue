@@ -136,6 +136,7 @@ router.get('/queues/:name', (req, res) => {
 		model.get_actions(queue).then(actions => {
 			queue.getRooms().then(rooms => {
 				res.json({
+					id: queue.id,
 					name: queue.name,
 					description: queue.description,
 					open: queue.open,
