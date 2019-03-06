@@ -270,7 +270,11 @@ exports.delete_action = (queue, action) => new Promise((resolve, reject) => {
 				exports.io_emit_update_queue(queue, { force_action: false });
 			}
 
-			io.emit('delete_action', action.id);
+			exports.io_emit_update_queue(queue, { actions: actions.map(a => ({
+				id: a.id,
+				name: a.name,
+				color: a.color
+			}))});
 
 			resolve();
 		});
