@@ -792,19 +792,49 @@ router.post('/queues/:name/rooms', (req, res) => {
 				return;
 			}
 			
-			room.hasQueue(queue).then(already_added => {
-				if (already_added) {
+			model.add_room_to_queue(room, queue).then(was_added => {
+				if (!was_added) {
 					res.status(400);
 					res.json({
 						error: 'ALREADY_ASSOCIATED',
-						message: 'The room has already been added to this queue.'
+						message: 'The room has already been associated to this queue.'
 					});
 					return;
 				}
 				
-				model.add_room_to_queue(room, queue);
-			
 				res.status(201);
+				res.end();
+			});
+		});
+	});
+});
+
+// ta bort en association mellan ett rum och en kö
+router.delete('/queues/:name/rooms/:room_id', (req, res) => {
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+		
+		model.get_room(req.params.room_id).then(room => {
+			if (room === null) {
+				res.status(404);
+				return;
+			}
+			
+			model.remove_room_from_queue(room, queue).then(was_removed => {
+				if (!was_removed) {
+					res.status(400);
+					res.json({
+						error: 'NOT_ASSOCIATED',
+						message: 'The room is not associated with the queue.'
+					});
+					return;
+				}
+			
+				res.status(200);
 				res.end();
 			});
 		});
