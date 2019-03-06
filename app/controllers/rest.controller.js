@@ -140,23 +140,42 @@ router.get('/queues/:name', (req, res) => {
 
 		model.get_actions(queue).then(actions => {
 			queue.getRooms().then(rooms => {
-				res.json({
-					id: queue.id,
-					name: queue.name,
-					description: queue.description,
-					open: queue.open,
-					force_comment: queue.force_comment,
-					force_action: queue.force_action,
-					queuing: model.get_queuing(queue),
-					actions: actions.map(a => ({
-						id: a.id,
-						name: a.name,
-						color: a.color
-					})),
-					rooms: rooms.map(r => ({
-						id: r.id,
-						name: r.name
-					}))
+				queue.getStudents().then(students => {
+					queue.getStudents().then(students => {
+						model.has_permission(queue, ('profile' in req.session) ? req.session.profile.id : null).then(has_permission => {
+							if (!has_permission) {
+								if ('profile' in req.session) {
+									students = students.filter(s => s.id === req.session.profile.id);
+								} else {
+									students = [];
+								}
+							}
+						
+							res.json({
+								id: queue.id,
+								name: queue.name,
+								description: queue.description,
+								open: queue.open,
+								force_comment: queue.force_comment,
+								force_action: queue.force_action,
+								queuing: model.get_queuing(queue),
+								actions: actions.map(a => ({
+									id: a.id,
+									name: a.name,
+									color: a.color
+								})),
+								rooms: rooms.map(r => ({
+									id: r.id,
+									name: r.name
+								})),
+								students: students.map(s => ({
+									id: s.id,
+									user_name: s.user_name,
+									name: s.name
+								}))
+							});
+						});
+					});
 				});
 			});
 		});
@@ -804,6 +823,36 @@ router.post('/queues/:name/rooms', (req, res) => {
 				
 				res.status(201);
 				res.end();
+			});
+		});
+	});
+});
+
+// ge information om rum för en kö
+router.get('/queues/:name/students', (req, res) => {
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+		
+		if (!('profile' in req.session)) {
+			res.json([]);
+			res.end();
+		}
+		
+		queue.getStudents().then(students => {
+			model.has_permission(queue, req.session.profile.id).then(has_permission => {
+				if (!has_permission) {
+					students = students.filter(s => s.id === req.session.profile.id);
+				}
+				
+				res.json(students.map(s => ({
+					id: s.id,
+					user_name: s.user_name,
+					name: s.name
+				})));
 			});
 		});
 	});

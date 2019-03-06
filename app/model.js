@@ -361,16 +361,20 @@ exports.remove_room_from_queue = (room, queue) => new Promise((resolve, reject) 
 
 // används för att se om en användare, givet ett köobjekt och användarens ID, har lärar- eller assistenträttigheter i en kö
 exports.has_permission = (queue, profile_id) => new Promise((resolve, reject) => {
-	Profile.findOne({ where: { id: profile_id }}).then(profile => {
-		if (profile.teacher) {
-			resolve(true);
-			return;
-		}
+	if (profile_id === null) {
+		resolve(false);
+	} else {
+		Profile.findOne({ where: { id: profile_id }}).then(profile => {
+			if (profile.teacher) {
+				resolve(true);
+				return;
+			}
 
-		profile.hasQueue(queue).then(result => {
-			resolve(result);
+			profile.hasAssistantInQueue(queue).then(result => {
+				resolve(result);
+			});
 		});
-	});
+	}
 });
 
 // genväg för att uppdatera klienten om det finns en ny lista på studenter
