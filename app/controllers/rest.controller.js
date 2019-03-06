@@ -143,7 +143,11 @@ router.get('/queues/:name', (req, res) => {
 					force_comment: queue.force_comment,
 					force_action: queue.force_action,
 					students: model.get_students(queue),
-					actions: actions,
+					actions: actions.map(a => ({
+						id: a.id,
+						name: a.name,
+						color: a.color
+					})),
 					rooms: rooms.map(r => ({
 						id: r.id,
 						name: r.name
@@ -629,6 +633,25 @@ router.patch('/queues/:name/students/:id', (req, res) => {
 	});
 });
 
+// ge information om actions för en kö
+router.get('/queues/:name/actions', (req, res) => {
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+
+		model.get_actions(queue).then(actions => {
+			res.json(actions.map(a => ({
+				id: a.id,
+				name: a.name,
+				color: a.color
+			})));
+		});
+	});
+});
+
 // lägg till en ny action
 router.post('/queues/:name/actions', (req, res) => {
 	if (!('cas_user' in req.session)) {
@@ -712,6 +735,71 @@ router.delete('/queues/:name/actions/:id', (req, res) => {
 
 			model.delete_action(queue, action).then(() => {
 				res.status(200);
+				res.end();
+			});
+		});
+	});
+});
+
+// ge information om rum för en kö
+router.get('/queues/:name/rooms', (req, res) => {
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+
+		queue.getRooms().then(rooms => {
+			res.json(rooms.map(r => ({
+				id: r.id,
+				name: r.name
+			})));
+		});
+	});
+});
+
+// associera ett rum med en kö
+router.post('/queues/:name/rooms', (req, res) => {
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+		
+		if (!('room_id' in req.body) || typeof req.body.room_id !== 'number') {
+			res.status(400);
+			res.json({
+				error: 'INVALID_PARAMETER_ID',
+				message: 'Missing or invalid id parameter.'
+			});
+			return;
+		}
+		
+		model.get_room(req.body.room_id).then(room => {
+			if (room === null) {
+				res.status(400);
+				res.json({
+					error: 'UNKNOWN_ROOM',
+					message: 'No room with the given ID exists.'
+				});
+				return;
+			}
+			
+			room.hasQueue(queue).then(already_added => {
+				if (already_added) {
+					res.status(400);
+					res.json({
+						error: 'ALREADY_ASSOCIATED',
+						message: 'The room has already been added to this queue.'
+					});
+					return;
+				}
+				
+				model.add_room_to_queue(room, queue);
+			
+				res.status(201);
 				res.end();
 			});
 		});

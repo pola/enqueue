@@ -114,6 +114,9 @@ exports.get_or_create_profile = (id, user_name, name) => {
 	});
 };
 
+exports.get_room = id => Room.findOne({ where: { id: id } });
+
+// ger alla tillgängliga rum och deras tillhörande datorer
 exports.get_rooms = () => {
 	return new Promise((resolve, reject) => {
 		Room.findAll().then(rooms => {
@@ -355,6 +358,16 @@ exports.move_student_after = (queue, student, move_after) => {
 		exports.io_emit_update_queue_students(queue);
 	}
 };
+
+exports.add_room_to_queue = (room, queue) => new Promise((resolve, reject) => {
+	room.addQueue(queue).then(() => {
+		exports.get_actions(queue).then(actions => {
+			exports.io_emit_update_queue(queue, { actions: actions });
+		});
+		
+		resolve();
+	});
+});
 
 // används för att se om en användare, givet ett köobjekt och användarens ID, har lärar- eller assistenträttigheter i en kö
 exports.has_permission = (queue, profile_id) => {
