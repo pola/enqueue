@@ -194,7 +194,7 @@ exports.get_queues = () => {
 	});
 };
 
-exports.get_queue = (name) => Queue.findOne({ where: { name: name } });
+exports.get_queue = (name_or_id) => /^([0-9]+)$/.test(name_or_id) ? Queue.findOne({ where: { id: parseInt(name_or_id) } }) : Queue.findOne({ where: { name: name_or_id } });
 
 exports.get_or_create_queue = (name) => {
 	return new Promise((resolve, reject) => {
@@ -242,8 +242,6 @@ exports.delete_queue = (queue) => {
 		});
 	});
 };
-
-exports.get_queue = name => Queue.findOne({ where: { name: name } });
 
 exports.get_computer = ip => Computer.findOne({
 	where: { ip: ip },
