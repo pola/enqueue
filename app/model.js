@@ -98,153 +98,137 @@ exports.setConnection = (connection2) => {
 
 exports.get_profile = (id) => Profile.findOne({ where: { id: id } });
 
-exports.get_or_create_profile = (id, user_name, name) => {
-	return new Promise((resolve, reject) => {
-		Profile.findOrCreate({
-			where: { id: id },
-			defaults: {
-				id: id,
-				user_name: user_name,
-				name: name,
-				teacher: false
-			}
-		}).spread((profile, created) => {
-			 resolve(profile);
-		});
+exports.get_or_create_profile = (id, user_name, name) => new Promise((resolve, reject) => {
+	Profile.findOrCreate({
+		where: { id: id },
+		defaults: {
+			id: id,
+			user_name: user_name,
+			name: name,
+			teacher: false
+		}
+	}).spread((profile, created) => {
+		 resolve(profile);
 	});
-};
+});
 
 exports.get_room = id => Room.findOne({ where: { id: id } });
 
 // ger alla tillgängliga rum och deras tillhörande datorer
-exports.get_rooms = () => {
-	return new Promise((resolve, reject) => {
-		Room.findAll().then(rooms => {
-			Computer.findAll().then(computers => {
-				const result = [];
+exports.get_rooms = () => new Promise((resolve, reject) => {
+	Room.findAll().then(rooms => {
+		Computer.findAll().then(computers => {
+			const result = [];
+			
+			for (const room of rooms) {
+				const computers_in_room = computers.filter(c => c.room_id === room.id).map(c => ({
+					id: c.id,
+					name: c.name,
+					ip: c.ip
+				}));
 				
-				for (const room of rooms) {
-					const computers_in_room = computers.filter(c => c.room_id === room.id).map(c => ({
-						id: c.id,
-						name: c.name,
-						ip: c.ip
-					}));
-					
-					result.push({
-						id: room.id,
-						name: room.name,
-						computers: computers_in_room
-					});
-				}
-				
-				resolve(result);
+				result.push({
+					id: room.id,
+					name: room.name,
+					computers: computers_in_room
+				});
+			}
+			
+			resolve(result);
+		});
+	});
+});
+
+exports.get_teachers = () => new Promise((resolve, reject) => {
+	Profile.findAll({ where: { teacher: true } }).then(teachers => {
+		resolve(teachers);
+	});
+});
+
+exports.add_teacher = (user_name) => new Promise((resolve, reject) => {
+	Profile.findOne({ where: {user_name: user_name} }).then(profile => {
+		if (profile === null) {
+			reject();
+		} else {
+			profile.teacher = true;
+			profile.save().then(() => {
+				Profile.findAll({ where: { teacher: true } }).then(teachers => {
+					io.sockets.emit('teachers', teachers);
+				});
 			});
-		});
-	});
-};
 
-exports.get_teachers = () => {
-	return new Promise((resolve, reject) => {
-		Profile.findAll({ where: { teacher: true } }).then(teachers => {
-			resolve(teachers);
-		});
+			resolve(profile);
+		}
 	});
-}
+});
 
-exports.add_teacher = (user_name) => {
-	return new Promise((resolve, reject) => {
-		Profile.findOne({ where: {user_name: user_name} }).then(profile => {
-			if (profile === null) {
-				reject();
-			} else {
-				profile.teacher = true;
-				profile.save().then(() => {
-					Profile.findAll({ where: { teacher: true } }).then(teachers => {
-						io.sockets.emit('teachers', teachers);
-					});
+exports.remove_teacher = (id) => new Promise((resolve, reject) => {
+	Profile.findOne({ where: { id: id } }).then(profile => {
+		if (profile === null) {
+			reject();
+		} else {
+			profile.teacher = false;
+			profile.save().then(() => {
+				Profile.findAll({ where: { teacher: true } }).then(teachers => {
+					io.sockets.emit('teachers', teachers);
 				});
+			});
 
-				resolve(profile);
-			}
-		});
+			resolve();
+		}
 	});
-};
+});
 
-exports.remove_teacher = (id) => {
-	return new Promise((resolve, reject) => {
-		Profile.findOne({ where: { id: id } }).then(profile => {
-			if (profile === null) {
-				reject();
-			} else {
-				profile.teacher = false;
-				profile.save().then(() => {
-					Profile.findAll({ where: { teacher: true } }).then(teachers => {
-						io.sockets.emit('teachers', teachers);
-					});
-				});
-
-				resolve();
-			}
-		});
+exports.get_queues = () => new Promise((resolve, reject) => {
+	Queue.findAll().then(queues => {
+		resolve(queues);
 	});
-};
-
-exports.get_queues = () => {
-	return new Promise((resolve, reject) => {
-		Queue.findAll().then(queues => {
-			resolve(queues);
-		});
-	});
-};
+});
 
 exports.get_queue = (name_or_id) => /^([0-9]+)$/.test(name_or_id) ? Queue.findOne({ where: { id: parseInt(name_or_id) } }) : Queue.findOne({ where: { name: name_or_id } });
 
-exports.get_or_create_queue = (name) => {
-	return new Promise((resolve, reject) => {
-		Queue.findOrCreate({
-			where: { name: name },
-			defaults: {
-				name : name,
-				description: null,
-				open: false,
-				auto_open: null,
-				auto_purge: null,
-				force_comment: true,
-				force_action: true,
-				queuing: []
-			}
-		}).spread((queue, created) => {
-			if (created === true){
-				students[queue.id] = [];
+exports.get_or_create_queue = (name) => new Promise((resolve, reject) => {
+	Queue.findOrCreate({
+		where: { name: name },
+		defaults: {
+			name : name,
+			description: null,
+			open: false,
+			auto_open: null,
+			auto_purge: null,
+			force_comment: true,
+			force_action: true
+		}
+	}).spread((queue, created) => {
+		if (created) {
+			students[queue.id] = [];
 
-				Action.bulkCreate([
-					{ name: "Help",
-					color: "primary",
-				 	queue_id: queue.id },
-					{ name: "Present",
-					color: "accent",
-				 	queue_id: queue.id }
-				]).then(() => {
-					resolve(queue);
-				});
-			} else{
+			Action.bulkCreate([{
+				name: "Help",
+				color: "primary",
+			 	queue_id: queue.id
+			 }, {
+				name: "Present",
+				color: "accent",
+				queue_id: queue.id
+			}]).then(() => {
 				resolve(queue);
-			}
-		});
+			});
+		} else {
+			resolve(queue);
+		}
 	});
-};
+});
 
-exports.delete_queue = (queue) => {
-	return new Promise((resolve, reject) => {
-		Queue.destroy({ where: { id: queue.id } }).then(() => {
-			delete students[queue.id];
+exports.delete_queue = (queue) => new Promise((resolve, reject) => {
+	Queue.destroy({ where: { id: queue.id } }).then(() => {
+		delete students[queue.id];
 
-			io.emit('delete_queue', queue.id);
+		io.emit('delete_queue', queue.id);
 
-			resolve();
-		});
+		resolve();
 	});
-};
+});
 
 exports.get_computer = ip => Computer.findOne({
 	where: { ip: ip },
@@ -253,13 +237,11 @@ exports.get_computer = ip => Computer.findOne({
 	]
 });
 
-exports.get_actions = (queue) => {
-	return new Promise((resolve, reject) => {
-		Action.findAll({ where: { queue_id: queue.id } }).then(actions => {
-			resolve(actions);
-		});
+exports.get_actions = (queue) => new Promise((resolve, reject) => {
+	Action.findAll({ where: { queue_id: queue.id } }).then(actions => {
+		resolve(actions);
 	});
-};
+});
 
 exports.get_action_by_id = (id) => {
 	if (id === null) {
@@ -273,41 +255,37 @@ exports.get_action_by_id = (id) => {
 
 exports.get_action_by_name = (queue, name) => Action.findOne({ where: { queue_id: queue.id, name: name } });
 
-exports.create_action = (queue, name, color) => {
-	return new Promise((resolve, reject) => {
-		Action.create({
-			queue_id: queue.id,
-			name: name,
-			color: color
-		}).then(action => {
-			exports.get_actions(queue).then(actions => {
-				exports.io_emit_update_queue(queue, { actions: actions });
-			});
+exports.create_action = (queue, name, color) => new Promise((resolve, reject) => {
+	Action.create({
+		queue_id: queue.id,
+		name: name,
+		color: color
+	}).then(action => {
+		exports.get_actions(queue).then(actions => {
+			exports.io_emit_update_queue(queue, { actions: actions });
+		});
 
-			resolve(action);
+		resolve(action);
+	});
+});
+
+exports.delete_action = (queue, action) => new Promise((resolve, reject) => {
+	action.destroy().then(() => {
+		exports.get_actions(queue).then(actions => {
+			// tvinga inte studenterna att välja en action om vi inte längre har några actions
+			if (actions.length === 0 && queue.force_action) {
+				queue.force_action = false;
+				queue.save();
+
+				exports.io_emit_update_queue(queue, { force_action: false });
+			}
+
+			io.emit('delete_action', action.id);
+
+			resolve();
 		});
 	});
-};
-
-exports.delete_action = (queue, action) => {
-	return new Promise((resolve, reject) => {
-		action.destroy().then(() => {
-			exports.get_actions(queue).then(actions => {
-				// tvinga inte studenterna att välja en action om vi inte längre har några actions
-				if (actions.length === 0 && queue.force_action) {
-					queue.force_action = false;
-					queue.save();
-
-					exports.io_emit_update_queue(queue, { force_action: false });
-				}
-
-				io.emit('delete_action', action.id);
-
-				resolve();
-			});
-		});
-	});
-};
+});
 
 exports.get_students = queue => students[queue.id];
 
@@ -370,28 +348,25 @@ exports.add_room_to_queue = (room, queue) => new Promise((resolve, reject) => {
 });
 
 // används för att se om en användare, givet ett köobjekt och användarens ID, har lärar- eller assistenträttigheter i en kö
-exports.has_permission = (queue, profile_id) => {
-	return new Promise((resolve, reject) => {
-		Profile.findOne({ where: { id: profile_id }}).then(profile => {
-			if (profile.teacher) {
-				resolve(true);
-				return;
-			}
+exports.has_permission = (queue, profile_id) => new Promise((resolve, reject) => {
+	Profile.findOne({ where: { id: profile_id }}).then(profile => {
+		if (profile.teacher) {
+			resolve(true);
+			return;
+		}
 
-			profile.hasQueue(queue).then(result => {
-				resolve(result);
-			});
+		profile.hasQueue(queue).then(result => {
+			resolve(result);
 		});
 	});
-}
+});
 
+// genväg för att uppdatera klienten om en ny lista på studenter
 exports.io_emit_update_queue_students = (queue) => {
-	io.emit('update_queue_students', {
-		queue: queue.id,
-		students: students[queue.id]
-	});
+	io_emit_update_queue(queue, { students: students[queue.id] });
 };
 
+// generellt uppdateringsanrop för klienterna när någonting ändras i en kö
 exports.io_emit_update_queue = (queue, changes) => {
 	io.emit('update_queue', {
 		queue: queue.id,

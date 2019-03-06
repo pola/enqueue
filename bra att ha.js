@@ -133,7 +133,7 @@ fetch('/api/queues/tilpro/actions/12', {
 }).then(res => {
 	console.log(res.status);
 	
-	if (res.status !== 201) {
+	if (res.status !== 200) {
 		res.json().then(j => {
 			console.log(j);
 		});

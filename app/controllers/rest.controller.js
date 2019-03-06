@@ -128,7 +128,7 @@ router.post('/queues', (req, res) => {
 router.get('/queues/:name', (req, res) => {
 	model.get_queue(req.params.name).then(queue => {
 		if (queue === null) {
-			res.status(401);
+			res.status(404);
 			res.end();
 			return;
 		}
