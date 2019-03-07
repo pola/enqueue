@@ -6,7 +6,8 @@ Vue.component('route-queue', {
 			comment: null,
 			action: null,
 			perform: null,
-			disable_location: null
+			disable_location: null,
+			active: null
 		}
 	},
 	methods: {
@@ -50,16 +51,20 @@ Vue.component('route-queue', {
 		},
 
 		test (action) {
-
 			return "md-danger";
 		},
 
-		redirect( url ) {
-			this.$router.push('/queues/' + this.queue.name + '/edit');
+		redirect (url) {
+			if (url === "edit"){
+				this.$router.push('/queues/' + this.queue.name + '/edit');
+			}
+			else if (url === "queues"){
+				this.$router.push('/queues/');
+			}
+			
 		}
 	},
 	created() {
-    // TODO: lägg till hantering av 404
 		fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
 			this.queue = queue;
 			if (this.$root.$data.location !== null){
@@ -77,6 +82,7 @@ Vue.component('route-queue', {
 
 	computed:{
 		in_queue() {
+			// testar om den inloggade profilen står i kön
 			if (this.$root.$data.profile === null) {
 				return false;
 			}
@@ -110,7 +116,30 @@ Vue.component('route-queue', {
 
 			}
 			return false;
-		}
+		},
+
+		allowed_in_queue() {
+			// om listan av vitlistade studenter är tom får alla tillgång till kön
+  			if(this.queue.students === []){
+  				return true;
+  			}
+
+  			// assistenter i kön kan alltid se kön
+			if(this.is_assistant_in_queue === true){
+				return true;
+			}
+
+  			// om det finns en vitlista och personen finns med i den får den tillgång till kön
+  			for (student in this.queue.students){
+				if (this.$root.$data.profile.id === student.id){
+					return true;
+				}
+			}
+
+			// om det finns en vitlista men personen varken är assistent eller en del av listan nekas tillgång till kön
+			this.active = true;
+			return false;     
+      }
 
 	}, 
 
@@ -182,7 +211,7 @@ Vue.component('route-queue', {
 		<div class="col-md-4" :class="{ 'text-danger': queue.open === false }"> 
 			<h2> <span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>  {{ queue.name }} </h2> 
 
-			<md-button v-if="is_assistant_in_queue === true" v-on:click="redirect('/edit')" type="submit" class="md-primary"> Redigera kön </md-button>
+			<md-button v-if="is_assistant_in_queue === true" v-on:click="redirect('edit')" type="submit" class="md-primary"> Redigera kön </md-button>
 
 		</div>
 		<p class="col-md-8"> {{ queue.description }} </p>
@@ -196,6 +225,14 @@ Vue.component('route-queue', {
 						<md-button type="submit" class="md-primary">Logga in</md-button>
 					</md-card-actions>
 				</form>
+			</div>
+			<div v-else-if="allowed_in_queue === false">
+				<md-dialog-alert
+      				:md-active.sync="active"
+      				md-content="Detta är en vitlistad kö som du inte kan gå med i."
+      				md-confirm-text="OK!"
+      				@md-closed="redirect('queues')"/>
+      			<!-- <md-button class="md-accent md-raised" @click="active = false">Alert</md-button> -->
 			</div>
 			<div v-else>
 				<form novalidate >
