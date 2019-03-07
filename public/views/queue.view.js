@@ -2,6 +2,7 @@ Vue.component('route-queue', {
 	data() {
 		return {
 			queue: null,
+			students: null,
 			location: null,
 			comment: null,
 			action: null,
@@ -72,6 +73,10 @@ Vue.component('route-queue', {
 			}
 		});
 
+		fetch('/api/queues/' + this.$route.params.name + '/students').then(res => res.json()).then(students => {
+			this.students = students;
+		});
+
 		this.$root.$data.socket.on('update_queue', data => {
 			for (var k of Object.keys(data.changes)) {
    				this.queue[k] = data.changes[k];
@@ -118,28 +123,55 @@ Vue.component('route-queue', {
 			return false;
 		},
 
-		allowed_in_queue() {
-			// om listan av vitlistade studenter är tom får alla tillgång till kön
-  			if(this.queue.students === []){
+		has_white_list() {
+			if(this.students === []){
+  				return false;
+  			}
+  			else {
   				return true;
   			}
+		},
 
-  			// assistenter i kön kan alltid se kön
-			if(this.is_assistant_in_queue === true){
-				return true;
-			}
-
-  			// om det finns en vitlista och personen finns med i den får den tillgång till kön
-  			for (student in this.queue.students){
+		profile_in_white_list() {
+			console.log(this.students);
+			for (student in this.students){
+				console.log("profile.id " + this.$root.$data.profile.id);
+				console.log("student.id " + student.id); 
 				if (this.$root.$data.profile.id === student.id){
 					return true;
 				}
 			}
+			return false;
+		},
 
-			// om det finns en vitlista men personen varken är assistent eller en del av listan nekas tillgång till kön
-			this.active = true;
-			return false;     
-      }
+		allowed_in_queue() {
+			// om listan av vitlistade studenter är tom får alla tillgång till kön
+			console.log("has_white_list = " + this.has_white_list);
+  			// assistenter i kön kan alltid se kön
+  			console.log("is_assistant_in_queue = " + this.is_assistant_in_queue);
+			// om det finns en vitlista och personen finns med i den får den tillgång till kön
+			console.log("profile_in_white_list = " + this.profile_in_white_list);
+
+  			allowed = (!this.has_white_list || this.is_assistant_in_queue || this.profile_in_white_list);
+
+  			this.active = !allowed;
+  			return allowed;
+      	},
+
+      	has_white_list_and_profile_in_it() {
+      		return (this.has_white_list && this.profile_in_white_list);
+      	},
+
+      	view_entire_queue(){
+      		return (!this.has_white_list || this.is_assistant_in_queue);
+      	},
+
+      	profile_queuing: function() {
+       		return this.queue.queuing.filter(function(u) {
+         		return u.id === this.$root.$data.profile.id;
+     		})
+     	}
+
 
 	}, 
 
@@ -288,7 +320,17 @@ Vue.component('route-queue', {
 					</md-table-row>
 		      	</md-table-toolbar>
 
-				<md-table-row v-for="(user, index) in queue.queuing" :key="user.profile.id"  md-selectable="single">
+				<md-table-row v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id"  md-selectable="single">
+					<md-table-cell> {{ index+1 }} </md-table-cell>
+					<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
+					<md-table-cell> <span v-if="$root.$data.location === null"> {{ user.location }} </span> <span v-else> {{ $root.$data.location.name }}  </span></md-table-cell>
+					<md-table-cell> <span v-if="user.action" style="color: red;" > {{ user.action.name }} </span>  </md-table-cell>
+					<md-table-cell> <span v-if="user.comment"> {{ user.comment }} </span> </md-table-cell>
+					<md-table-cell>{{ user.entered_at }} </md-table-cell>
+				</md-table-row>
+
+											<!-- ej testat! -->
+				<md-table-row v-else-if="has_white_list_and_profile_in_it === true" v-for="(user, index) in profile_queuing" :key="user.profile.id"  md-selectable="single">
 					<md-table-cell> {{ index+1 }} </md-table-cell>
 					<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
 					<md-table-cell> <span v-if="$root.$data.location === null"> {{ user.location }} </span> <span v-else> {{ $root.$data.location.name }}  </span></md-table-cell>

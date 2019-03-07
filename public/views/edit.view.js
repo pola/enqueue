@@ -7,8 +7,10 @@ Vue.component('route-edit', {
 
 			colors: null,
 
-			user_name: null,
+			user_name_assistant: null,
 			assistants: [],
+
+			user_name_student: null,
 
 			action_name: null,
 			action_color: null
@@ -91,7 +93,7 @@ Vue.component('route-edit', {
 			});*/
 		},
 
-		remove_assistant(assistant){
+		remove_assistant (assistant){
 			console.log("remove assistant");
 
 			/*fetch('/api/queues/' + this.queue.name + '/assistant/' + assistant.id, {
@@ -105,7 +107,39 @@ Vue.component('route-edit', {
 			});*/
 		},
 
-		add_action(){
+		add_student () {
+			fetch('/api/queues/'+ this.queue.id +'/students', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ user_name: user_name_student }) // mpola, jark etc.
+			}).then(res => {
+				console.log(res.status);
+				
+				if (res.status !== 201) {
+					res.json().then(j => {
+						console.log(j);
+					});
+				} else {
+					this.user_name_student = '';
+				}
+			});
+		},
+
+		remove_student (student) {
+			fetch('/api/queues/' + this.queue.id + ' /students/' + student.id, {
+				method: 'DELETE'
+			}).then(res => {
+				console.log(res.status);
+				
+				if (res.status !== 200) {
+					res.json().then(j => {
+						console.log(j);
+					});
+				}
+			});
+		},
+
+		add_action (){
 			console.log("add action");
 
 			fetch('/api/queues/'+ this.queue.id +'/actions', {
@@ -270,8 +304,8 @@ Vue.component('route-edit', {
 
 		<form novalidate @submit.prevent="add_assistant">
 			<md-field>
-				<label for="user_name">KTH-användarnamn</label>
-				<md-input type="text" id="user_name" v-model="user_name" />
+				<label for="user_name_assistant">KTH-användarnamn</label>
+				<md-input type="text" id="user_name_assistant" v-model="user_name_assistant" />
 			</md-field>
 
 			<md-card-actions>
@@ -281,6 +315,42 @@ Vue.component('route-edit', {
 	</div>
 
 	<br>
+
+	<md-table md-card>
+	    <md-table-toolbar>
+	        <h1 class="md-title">Studenter i vitlistan</h1>
+	        <h4 class="md-title">Om listan är tom får alla gå med i kön</h4>
+
+	    </md-table-toolbar>
+
+	    <md-table-row>
+	        <md-table-head>Användarnamn</md-table-head>
+	        <md-table-head>Namn</md-table-head>
+	        <md-table-head>Alternativ</md-table-head>
+	    </md-table-row>
+
+	    <md-table-row v-for="student in queue.students" :key="student.id">
+	        <md-table-cell>{{ student.user_name }}</md-table-cell>
+	        <md-table-cell>{{ student.name }}</md-table-cell>
+	        <md-table-cell><md-button v-on:click="remove_student(student)" class="md-accent">Radera</md-button></md-table-cell>
+	    </md-table-row>
+   	</md-table>
+
+   	<br>
+
+   	<h4>Lägg till en ny student i vitlistan</h4>
+
+	<form novalidate @submit.prevent="add_student">
+		<md-field>
+			<label for="user_name_student">KTH-användarnamn</label>
+			<md-input type="text" id="user_name_student" v-model="user_name_student" />
+		</md-field>
+
+		<md-card-actions>
+			<md-button type="submit" class="md-primary">Lägg till student</md-button>
+		</md-card-actions>
+	</form>
+
 
 	<!-- TODO: sätt tid för att tömma kön automatiskt -->
 		<!-- https://puranjayjain.github.io/md-date-time-picker/ -->
@@ -342,8 +412,7 @@ Vue.component('route-edit', {
 				<label for="action_color">Färg på action</label>
 			    <md-select v-model="action_color" name="Color" id="action_color">
            			<md-option v-for="color in colors" :value="color">{{ color }}</md-option>
-
-				<md-input type="text" id="action_color" v-model="action_color" />
+           		</md-select>
 			</md-field>
 
 			<md-card-actions>
