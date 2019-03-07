@@ -74,7 +74,7 @@ Vue.component('route-queue', {
 
 		// ändrar data om en kö (inklusive t.ex. queuing-listan)
 		this.$root.$data.socket.on('update_queue', data => {
-			if (data.queue === this.queue.id) {
+			if (data.queue !== this.queue.id) {
 				return;
 			}
 			
@@ -85,7 +85,7 @@ Vue.component('route-queue', {
 
 		// ändrar data om en specifik köande student inuti queuing-listan
 		this.$root.$data.socket.on('update_queue_queuing_student', data => {
-			if (data.queue === this.queue.id) {
+			if (data.queue !== this.queue.id) {
 				return;
 			}
 			
