@@ -142,41 +142,48 @@ router.get('/queues/:name', (req, res) => {
 			queue.getRooms().then(rooms => {
 				queue.getStudents().then(students => {
 					queue.getStudents().then(students => {
-						model.has_permission(queue, 'profile' in req.session ? req.session.profile.id : null).then(has_permission => {
-							const students_count = students.length;
+						queue.getAssistants().then(assistants => {
+							model.has_permission(queue, 'profile' in req.session ? req.session.profile.id : null).then(has_permission => {
+								const students_count = students.length;
 							
-							if (!has_permission) {
-								students = students.map(s => {
-									if ('profile' in req.session && req.session.profile.id === s.id) {
-										return s;
-									} else {
-										return null;
-									}
-								});
-							}
+								if (!has_permission) {
+									students = students.map(s => {
+										if ('profile' in req.session && req.session.profile.id === s.id) {
+											return s;
+										} else {
+											return null;
+										}
+									});
+								}
 						
-							res.json({
-								id: queue.id,
-								name: queue.name,
-								description: queue.description,
-								open: queue.open,
-								force_comment: queue.force_comment,
-								force_action: queue.force_action,
-								queuing: model.get_queuing(queue),
-								actions: actions.map(a => ({
-									id: a.id,
-									name: a.name,
-									color: a.color
-								})),
-								rooms: rooms.map(r => ({
-									id: r.id,
-									name: r.name
-								})),
-								students: students.map(s => s === null ? null : {
-									id: s.id,
-									user_name: s.user_name,
-									name: s.name
-								})
+								res.json({
+									id: queue.id,
+									name: queue.name,
+									description: queue.description,
+									open: queue.open,
+									force_comment: queue.force_comment,
+									force_action: queue.force_action,
+									queuing: model.get_queuing(queue),
+									actions: actions.map(a => ({
+										id: a.id,
+										name: a.name,
+										color: a.color
+									})),
+									rooms: rooms.map(r => ({
+										id: r.id,
+										name: r.name
+									})),
+									students: students.map(s => s === null ? null : {
+										id: s.id,
+										user_name: s.user_name,
+										name: s.name
+									}),
+									assistants: assistants.map(a => ({
+										id: a.id,
+										user_name: a.user_name,
+										name: a.name
+									}))
+								});
 							});
 						});
 					});
@@ -1057,6 +1064,25 @@ router.delete('/queues/:name/students/:user_id', (req, res) => {
 					res.end();
 				});
 			});
+		});
+	});
+});
+
+// ge information om assistenter för en kö
+router.get('/queues/:name/assistants', (req, res) => {
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+		
+		queue.getAssistants().then(assistants => {
+			res.json(assistants.map(a => ({
+				id: a.id,
+				user_name: a.user_name,
+				name: a.name
+			})));
 		});
 	});
 });
