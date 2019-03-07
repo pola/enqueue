@@ -118,13 +118,18 @@ Vue.component('route-queue', {
 			return false;
 		},
 
-		has_white_list() {
-			if(this.students === []){
-  				return false;
-  			}
-  			else {
-  				return true;
-  			}
+		blocked_by_whitelist() {
+			if (this.queue.students.length === 0) {
+				return false;
+			}
+			
+			for (const student of this.queue.students) {
+				if (student !== null && student.id === this.$root.$data.profile.id) {
+					return false;
+				}
+			}
+			
+			return true;
 		},
 
 		profile_in_white_list() {
@@ -251,7 +256,7 @@ Vue.component('route-queue', {
 					</md-card-actions>
 				</form>
 			</div>
-			<div v-else-if="has_white_list_and_profile_in_it">
+			<div v-else-if="blocked_by_whitelist">
 				<h4>Den här kön kan du inte ställa dig i.</h4>
 			</div>
 			<div v-else>
