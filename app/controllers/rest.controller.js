@@ -1087,6 +1087,144 @@ router.get('/queues/:name/assistants', (req, res) => {
 	});
 });
 
+// lägg till en assistent
+router.post('/queues/:name/assistants', (req, res) => {
+	if (!('cas_user' in req.session)) {
+		res.status(401);
+		res.end();
+		return;
+	}
+	
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+		
+		if ('user_id' in req.body && 'user_name' in req.body) {
+			res.status(400);
+			res.json({
+				error: 'DUPLICATE_PARAMETERS',
+				message: 'Specify either user_id or user_name as parameter.'
+			});
+			return;
+		}
+		
+		var profile_promise = null;
+		
+		if ('user_id' in req.body) {
+			if (typeof req.body.user_id !== 'string') {
+				res.status(400);
+				res.json({
+					error: 'INVALID_PARAMETER_USER_ID',
+					message: 'Missing or invalid user_id parameter.'
+				});
+				return;
+			}
+			
+			profile_promise = model.get_profile(req.body.user_id);
+		} else if ('user_name' in req.body) {
+			if (typeof req.body.user_name !== 'string') {
+				res.status(400);
+				res.json({
+					error: 'INVALID_PARAMETER_USER_NAME',
+					message: 'Missing or invalid user_name parameter.'
+				});
+				return;
+			}
+			
+			profile_promise = model.get_profile_by_user_name(req.body.user_name);
+		} else {
+			res.status(400);
+			res.json({
+				error: 'MISSING_PARAMETER',
+				message: 'Specify one of user_id and user_name as parameter.'
+			});
+			return;
+		}
+		
+		profile_promise.then(assistant => {
+			if (assistant === null) {
+				res.status(400);
+				res.json({
+					error: 'UNKNOWN_USER',
+					message: 'No user with the given ID exists.'
+				});
+				return;
+			}
+			
+			model.has_permission(queue, req.session.profile.id).then(has_permission => {
+				if (!has_permission) {
+					res.status(401);
+					res.end();
+					return;
+				}
+			
+				model.add_assistant_to_queue(assistant, queue).then(was_added => {
+					if (!was_added) {
+						res.status(400);
+						res.json({
+							error: 'ALREADY_ASSISTANT',
+							message: 'The user is already an assistant for this queue.'
+						});
+						return;
+					}
+				
+					res.status(201);
+					res.end();
+				});
+			});
+		});
+	});
+});
+
+// ta bort en assistent från en kö
+router.delete('/queues/:name/assistants/:user_id', (req, res) => {
+	if (!('cas_user' in req.session)) {
+		res.status(401);
+		res.end();
+		return;
+	}
+	
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+		
+		model.has_permission(queue, req.session.profile.id).then(has_permission => {
+			if (!has_permission) {
+				res.status(401);
+				res.end();
+				return;
+			}
+			
+			model.get_profile(req.params.user_id).then(assistant => {
+				if (assistant === null) {
+					res.status(404);
+					return;
+				}
+			
+				model.remove_assistant_from_queue(assistant, queue).then(was_removed => {
+					if (!was_removed) {
+						res.status(400);
+						res.json({
+							error: 'NOT_ASSISTANT',
+							message: 'The user is not an assistant for this queue.'
+						});
+						return;
+					}
+			
+					res.status(200);
+					res.end();
+				});
+			});
+		});
+	});
+});
+
 const update_student = (queue, student, changes, req, res, keys) => {
 	if (keys.length === 0) {
 		const changes_keys = Object.keys(changes);

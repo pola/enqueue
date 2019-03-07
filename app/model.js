@@ -391,6 +391,34 @@ exports.remove_student_from_queue = (student, queue) => new Promise((resolve, re
 	});
 });
 
+exports.add_assistant_to_queue = (assistant, queue) => new Promise((resolve, reject) => {
+	assistant.addAssistantInQueue(queue).then(result => {
+		if (result.length === 0) {
+			resolve(false);
+		} else {
+			queue.getAssistants().then(assistants => {
+				exports.io_emit_update_queue(queue, { assistants: assistants });
+			});
+		
+			resolve(true);
+		}
+	});
+});
+
+exports.remove_assistant_from_queue = (assistant, queue) => new Promise((resolve, reject) => {
+	assistant.removeAssistantInQueue(queue).then(result => {
+		if (result === 0) {
+			resolve(false);
+		} else {
+			queue.getAssistants().then(assistants => {
+				exports.io_emit_update_queue(queue, { assistants: assistants });
+			});
+		
+			resolve(true);
+		}
+	});
+});
+
 // används för att se om en användare, givet ett köobjekt och användarens ID, har lärar- eller assistenträttigheter i en kö
 exports.has_permission = (queue, profile_id) => new Promise((resolve, reject) => {
 	if (profile_id === null) {
