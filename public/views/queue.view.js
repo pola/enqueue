@@ -239,7 +239,7 @@ Vue.component('route-queue', {
 			<md-button v-if="is_assistant_in_queue === true" v-on:click="redirect('edit')" type="submit" class="md-primary"> Redigera kön </md-button>
 
 		</div>
-		<p class="col-md-8"> {{ queue.description }} </p>
+		<p class="col-md-8" style="white-space: pre-line;">{{ queue.description }}</p>
 	</div>
 	<div class="row">
 		<div class="col-md-3">
