@@ -2,7 +2,6 @@ Vue.component('route-queue', {
 	data() {
 		return {
 			queue: null,
-			students: null,
 			location: null,
 			comment: null,
 			action: null,
@@ -73,10 +72,6 @@ Vue.component('route-queue', {
 			}
 		});
 
-		fetch('/api/queues/' + this.$route.params.name + '/students').then(res => res.json()).then(students => {
-			this.students = students;
-		});
-
 		this.$root.$data.socket.on('update_queue', data => {
 			for (var k of Object.keys(data.changes)) {
    				this.queue[k] = data.changes[k];
@@ -133,14 +128,12 @@ Vue.component('route-queue', {
 		},
 
 		profile_in_white_list() {
-			console.log(this.students);
-			for (student in this.students){
-				console.log("profile.id " + this.$root.$data.profile.id);
-				console.log("student.id " + student.id); 
-				if (this.$root.$data.profile.id === student.id){
+			for (const student of this.queue.students) {
+				if (student !== null && this.$root.$data.profile.id === student.id){
 					return true;
 				}
 			}
+			
 			return false;
 		},
 
@@ -258,13 +251,8 @@ Vue.component('route-queue', {
 					</md-card-actions>
 				</form>
 			</div>
-			<div v-else-if="allowed_in_queue === false">
-				<md-dialog-alert
-      				:md-active.sync="active"
-      				md-content="Detta är en vitlistad kö som du inte kan gå med i."
-      				md-confirm-text="OK!"
-      				@md-closed="redirect('queues')"/>
-      			<!-- <md-button class="md-accent md-raised" @click="active = false">Alert</md-button> -->
+			<div v-else-if="has_white_list_and_profile_in_it">
+				<h4>Den här kön kan du inte ställa dig i.</h4>
 			</div>
 			<div v-else>
 				<form novalidate >
