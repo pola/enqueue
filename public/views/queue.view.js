@@ -15,7 +15,6 @@ Vue.component('route-queue', {
 			// TODO: skicka tillbaka till kön!
 		},
 		enqueue(){
-			console.log("häääär");
 				fetch('/api/queues/' + this.queue.name + '/students', {
         			method: "POST",
         			headers: { "Content-Type": "application/json" },
