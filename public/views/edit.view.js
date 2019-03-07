@@ -126,7 +126,7 @@ Vue.component('route-edit', {
 		},
 
 		remove_student (student) {
-			fetch('/api/queues/' + this.queue.id + ' /students/' + student.id, {
+			fetch('/api/queues/' + this.queue.id + '/students/' + student.id, {
 				method: 'DELETE'
 			}).then(res => {
 				console.log(res.status);
