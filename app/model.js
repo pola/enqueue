@@ -292,7 +292,7 @@ exports.add_student = (queue, profile, comment, location, action) => {
 		comment: comment,
 		location: location,
 		action: action,
-		receiving_help_from: null
+		handlers: []
 	});
 
 	exports.io_emit_update_queuing(queue);
@@ -444,4 +444,9 @@ exports.io_emit_update_queuing = (queue) => exports.io_emit_update_queue(queue, 
 exports.io_emit_update_queue = (queue, changes) => io.emit('update_queue', {
 	queue: queue.id,
 	changes: changes
+});
+
+exports.io_emit_update_queue_queuing_student = (queue, student) => io.emit('update_queue_queuing_student', {
+	queue: queue.id,
+	student: student
 });

@@ -212,3 +212,18 @@ fetch('/api/queues/tilpro/students/u1w7eri0', {
 		});
 	}
 });
+
+// markera att man hjälper en student (eller att man hjälper sig själv)
+fetch('/api/queues/tilpro/queuing/u1tm1nqn', {
+	method: 'PATCH',
+	headers: { 'Content-Type': 'application/json' },
+	body: JSON.stringify({ is_handling: true }) // använd false för att markera att man inte längre hjälper till
+}).then(res => {
+	console.log(res.status);
+	
+	if (res.status !== 200) {
+		res.json().then(j => {
+			console.log(j);
+		});
+	}
+});

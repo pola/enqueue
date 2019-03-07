@@ -72,9 +72,31 @@ Vue.component('route-queue', {
 			}
 		});
 
+		// ändrar data om en kö (inklusive t.ex. queuing-listan)
 		this.$root.$data.socket.on('update_queue', data => {
+			if (data.queue === this.queue.id) {
+				return;
+			}
+			
 			for (var k of Object.keys(data.changes)) {
    				this.queue[k] = data.changes[k];
+			}
+		});
+
+		// ändrar data om en specifik köande student inuti queuing-listan
+		this.$root.$data.socket.on('update_queue_queuing_student', data => {
+			if (data.queue === this.queue.id) {
+				return;
+			}
+			
+			for (const queuing_student of this.queue.queuing) {
+				if (queuing_student.profile.id === data.student.profile.id) {
+					for (const k of Object.keys(data.student)) {
+						queuing_student[k] = data.student[k];
+					}
+					
+   					break;
+   				}
 			}
 		});
 

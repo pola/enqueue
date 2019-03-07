@@ -1239,9 +1239,23 @@ const update_student = (queue, student, changes, req, res, keys) => {
 		}
 
 		// spara ändringarna
+		var update_entire_queue = false;
+		
 		for (const changes_key of changes_keys) {
 			if (changes_key === 'move_after') {
 				model.move_student_after(queue, student, changes.move_after);
+				update_entire_queue = true;
+			} else if (changes_key === 'handlers') {
+				if (changes[changes_key].is_handling) {
+					student.handlers.push(changes[changes_key].profile);
+				} else {
+					for (var i = 0; i < student.handlers.length; i++) {
+						if (student.handlers[i].id === changes[changes_key].profile.id) {
+							student.handlers.splice(i, 1);
+							break;
+						}
+					}
+				}
 			} else {
 				student[changes_key] = changes[changes_key];
 			}
@@ -1250,7 +1264,11 @@ const update_student = (queue, student, changes, req, res, keys) => {
 		res.status(200);
 		res.end();
 
-		model.io_emit_update_queuing(queue);
+		if (update_entire_queue) {
+			model.io_emit_update_queuing(queue);
+		} else {
+			model.io_emit_update_queue_queuing_student(queue, student);
+		}
 	} else {
 		const key = keys[0];
 
@@ -1411,6 +1429,54 @@ const update_student = (queue, student, changes, req, res, keys) => {
 				}
 
 				changes.move_after = req.body.move_after;
+				update_student(queue, student, changes, req, res, keys);
+			});
+		} else if (key === 'is_handling' && typeof req.body.is_handling === 'boolean') {
+			keys.shift();
+
+			model.has_permission(queue, req.session.profile.id).then(has_permission => {
+				if (!has_permission && student.profile.id !== req.session.profile.id) {
+					res.status(401);
+					res.end();
+					return;
+				}
+				
+				var currently_handling = false;
+				
+				for (const handler of student.handlers) {
+					if (handler.id === req.session.profile.id) {
+						currently_handling = true;
+						break;
+					}
+				}
+				
+				if (currently_handling && req.body.is_handling) {
+					res.status(400);
+					res.json({
+						error: 'ALREADY_HANDLING',
+						message: 'You are already handling the specified student.'
+					});
+					return;
+				}
+				
+				if (!currently_handling && !req.body.is_handling) {
+					res.status(400);
+					res.json({
+						error: 'NOT_HELPING',
+						message: 'You are not handling the specified student.'
+					});
+					return;
+				}
+				
+				changes.handlers = {
+					profile: {
+						id: req.session.profile.id,
+						user_name: req.session.profile.user_name,
+						name: req.session.profile.name
+					},
+					is_handling: req.body.is_handling
+				};
+				
 				update_student(queue, student, changes, req, res, keys);
 			});
 		} else {
