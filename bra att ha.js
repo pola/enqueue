@@ -167,3 +167,46 @@ fetch('/api/queues/tilpro/rooms/3', {
 		});
 	}
 });
+
+// lägg till en student på vitlistan genom u1-nummer
+fetch('/api/queues/tilpro/students', {
+	method: 'POST',
+	headers: { 'Content-Type': 'application/json' },
+	body: JSON.stringify({ user_id: 'u1w7eri0' })
+}).then(res => {
+	console.log(res.status);
+	
+	if (res.status !== 201) {
+		res.json().then(j => {
+			console.log(j);
+		});
+	}
+});
+
+// lägg till en student på vitlistan genom användarnamn (KTH:s)
+fetch('/api/queues/tilpro/students', {
+	method: 'POST',
+	headers: { 'Content-Type': 'application/json' },
+	body: JSON.stringify({ user_name: 'lk' }) // mpola, jark etc.
+}).then(res => {
+	console.log(res.status);
+	
+	if (res.status !== 201) {
+		res.json().then(j => {
+			console.log(j);
+		});
+	}
+});
+
+// ta bort en student från vitlistan, alltid baserat på u1-nummer
+fetch('/api/queues/tilpro/students/u1w7eri0', {
+	method: 'DELETE'
+}).then(res => {
+	console.log(res.status);
+	
+	if (res.status !== 200) {
+		res.json().then(j => {
+			console.log(j);
+		});
+	}
+});

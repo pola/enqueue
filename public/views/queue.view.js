@@ -15,7 +15,7 @@ Vue.component('route-queue', {
 			// TODO: skicka tillbaka till kön!
 		},
 		enqueue(){
-				fetch('/api/queues/' + this.queue.name + '/students', {
+				fetch('/api/queues/' + this.queue.name + '/queuing', {
         			method: "POST",
         			headers: { "Content-Type": "application/json" },
         			body: JSON.stringify({ 	
@@ -32,7 +32,7 @@ Vue.component('route-queue', {
 		},
 
 		dequeue(){
-			fetch('/api/queues/' + this.queue.name + '/students/' + this.$root.$data.profile.id, {
+			fetch('/api/queues/' + this.queue.name + '/queuing/' + this.$root.$data.profile.id, {
         		method: "DELETE"
     		}).then(res => {
 				if (res.status !== 200) {
@@ -81,7 +81,7 @@ Vue.component('route-queue', {
 				return false;
 			}
 			
-			for (const student of this.queue.students) {
+			for (const student of this.queue.queuing) {
 				if (this.$root.$data.profile.id === student.profile.id){
 					return true;
 				}
@@ -251,7 +251,7 @@ Vue.component('route-queue', {
 					</md-table-row>
 		      	</md-table-toolbar>
 
-				<md-table-row v-for="(user, index) in queue.students" :key="user.profile.id"  md-selectable="single">
+				<md-table-row v-for="(user, index) in queue.queuing" :key="user.profile.id"  md-selectable="single">
 					<md-table-cell> {{ index+1 }} </md-table-cell>
 					<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
 					<md-table-cell> <span v-if="$root.$data.location === null"> {{ user.location }} </span> <span v-else> {{ $root.$data.location.name }}  </span></md-table-cell>

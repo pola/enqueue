@@ -37,5 +37,4 @@ fetch('/api/me').then(res => res.json()).then(me => {
 	app.$data.profile = me.profile;
 	app.$data.location = me.location;
 	app.$data.assisting_in = me.assisting_in;
-	//app.$data.profile = profile;
 })
