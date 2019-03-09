@@ -44,11 +44,10 @@ Vue.component('route-queue', {
 			});
 		},
 
-		receiving_help(){
+		receiving_help(student){
 			console.log("får hjälp");
 
-<<<<<<< HEAD
-			fetch('/api/queues/tilpro/queuing/u1tm1nqn', {
+			fetch('/api/queues/tilpro/queuing/' + student.id, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ is_handling: true }) // använd false för att markera att man inte längre hjälper till
@@ -158,6 +157,10 @@ Vue.component('route-queue', {
 			if (this.queue.students.length === 0) {
 				return false;
 			}
+
+			if (this.is_assistant_in_queue === true) {
+				return false;
+			}
 			
 			for (const student of this.queue.students) {
 				if (student !== null && student.id === this.$root.$data.profile.id) {
@@ -220,11 +223,7 @@ Vue.component('route-queue', {
     		else if(event === "purge"){
     			console.log("töm")
 
-<<<<<<< HEAD
     			fetch('/api/queues/' + this.queue.id + '/queuing',{
-=======
-    			fetch('/api/queues/' + this.queue.id + '/students',{
->>>>>>> 5866e65a6e2165445a435b2495e34e8c9adfb366
     				method: 'DELETE'
     			}).then(res => {
     				if (res.status !== 200) {
@@ -319,7 +318,7 @@ Vue.component('route-queue', {
 
 				<md-card-actions>
 					<span v-if="in_queue === true">
-						<md-button v-on:click="receiving_help" type="submit" class="md-primary">Får hjälp</md-button>
+						<md-button v-on:click="receiving_help($root.$data.profile)" type="submit" class="md-primary">Får hjälp</md-button>
 						<md-button v-on:click="dequeue" type="submit" class="md-primary">Lämna kön</md-button>
 					</span>
 					<span v-else>
@@ -327,7 +326,6 @@ Vue.component('route-queue', {
 					</span>
 				</md-card-actions>
 
-											<!-- TODO: BLINKAR BARA??-->  
 				<md-field>
 					<md-select name="dropdown" id="dropdown" v-model="perform" v-if="is_assistant_in_queue === true" placeholder="Alternativ">
 						<md-option value="broadcast">Broadcast</md-option>

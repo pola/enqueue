@@ -3,8 +3,6 @@ Vue.component('route-edit', {
 		return {
 			queue: null,
 
-			rooms: null,
-
 			colors: null,
 
 			user_name_assistant: null,
@@ -13,7 +11,11 @@ Vue.component('route-edit', {
 			user_name_student: null,
 
 			action_name: null,
-			action_color: null
+			action_color: null,
+
+			room: null,
+
+			rooms: null
 
 		}
 	},
@@ -41,8 +43,58 @@ Vue.component('route-edit', {
 			});
 		},
 
-		change_rooms(){
-			console.log(rooms);
+		change_room(event){
+
+			// event motsvarar det klickade rummets id
+			// kolla om det rummet är kopplat till kön:
+				// om nej: koppla
+				// om ja: koppla bort
+			console.log(this.queue.rooms);
+
+			if (this.room_is_associated(event) === true){
+				fetch('/api/queues/'+ this.queue.name +'/rooms/' + event, {
+					method: 'DELETE'
+				}).then(res => {
+					console.log(res.status);
+					
+					if (res.status !== 200) {
+						res.json().then(j => {
+							console.log(j);
+						});
+					}
+				});
+			}
+
+			else{
+				fetch('/api/queues/'+ this.queue.name +'/rooms', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ room_id: event })
+				}).then(res => {
+					console.log(res.status);
+					
+					if (res.status !== 201) {
+						res.json().then(j => {
+							console.log(j);
+						});
+					}
+				});
+
+			}
+			console.log(this.queue.rooms);
+		},
+
+		room_is_associated(id){
+			console.log(id);
+			for (room of this.queue.rooms){
+				console.log(room.id);
+				if (room.id === id){
+					console.log("ja");
+					return true;
+				}
+			}
+			console.log("nej");
+			return false;
 		},
 
 		change_actions(){
@@ -78,40 +130,42 @@ Vue.component('route-edit', {
 		add_assistant(){
 			console.log("add assistant");
 
-			/*fetch('/api/queues/' + this.queue.name + '/assistant', {
-		        method: "POST",
-		        headers: { "Content-Type": "application/json" },
-		        body: JSON.stringify({ user_name: this.user_name })
-    		}).then(res => {
+			fetch('/api/queues/'+ this.queue.id +'/assistants', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ user_name: this.user_name_assistant }) // mpola, jark etc.
+			}).then(res => {
+				console.log(res.status);
+				
 				if (res.status !== 201) {
-					res.json().then (data => {
-							alert(data.message);
+					res.json().then(j => {
+						console.log(j);
 					});
-				} else  {
-					this.user_name = '';
+				} else {
+					this.user_name_assistant = '';
 				}
-			});*/
+			});
 		},
 
 		remove_assistant (assistant){
-			console.log("remove assistant");
-
-			/*fetch('/api/queues/' + this.queue.name + '/assistant/' + assistant.id, {
-        		method: "DELETE"
-    		}).then(res => {
-				if (res.status !== 201) {
-					res.json().then (data => {
-						alert(data.message);
+			fetch('/api/queues/' + this.queue.id + '/assistants/' + assistant.id, {
+				method: 'DELETE'
+			}).then(res => {
+				console.log(res.status);
+				
+				if (res.status !== 200) {
+					res.json().then(j => {
+						console.log(j);
 					});
 				}
-			});*/
+			});
 		},
 
 		add_student () {
 			fetch('/api/queues/'+ this.queue.id +'/students', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ user_name: user_name_student }) // mpola, jark etc.
+				body: JSON.stringify({ user_name: this.user_name_student }) // mpola, jark etc.
 			}).then(res => {
 				console.log(res.status);
 				
@@ -123,6 +177,7 @@ Vue.component('route-edit', {
 					this.user_name_student = '';
 				}
 			});
+
 		},
 
 		remove_student (student) {
@@ -238,7 +293,6 @@ Vue.component('route-edit', {
 	}, 
 
 	created() {
-    // TODO: lägg till hantering av 404
 		fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
 			this.queue = queue;
 			assistants = [];
@@ -291,7 +345,7 @@ Vue.component('route-edit', {
 		        <md-table-head>Alternativ</md-table-head>
 		    </md-table-row>
 
-		    <md-table-row v-for="assistant in assistants" :key="assistant.id">
+		    <md-table-row v-for="assistant in queue.assistants" :key="assistant.id">
 		        <md-table-cell>{{ assistant.user_name }}</md-table-cell>
 		        <md-table-cell>{{ assistant.name }}</md-table-cell>
 		        <md-table-cell><md-button v-on:click="remove_assistant(assistant)" class="md-accent">Radera</md-button></md-table-cell>
@@ -358,7 +412,6 @@ Vue.component('route-edit', {
 	<!-- TODO: sätt tid för att öppna kön automatiskt -->
 		<!-- https://www.npmjs.com/package/vue-datetime - även upprepning, ska man bara välja veckodagar + tid och låta det hända varje vecka??-->
 	
-	<!-- TODO: ange vitlista -->
 
 
 	<form novalidate @submit.prevent="change_description">
@@ -374,7 +427,7 @@ Vue.component('route-edit', {
 	<form novalidate @submit.prevent="change_rooms">
 	    <label>Ändra tillåtna salar (om inga anges kan studenterna sitta var som helst)</label>
 	    <br>
-	    <md-checkbox v-for="room in rooms" :key="room.id" v-model="rooms" :value="room.id">{{room.name}}</md-checkbox>
+	    <md-checkbox v-for="room in rooms" :key="room.id" v-on:change="change_room" :value="room.id">{{room.name}}</md-checkbox>
 
 	    <md-card-actions>
 	    	<md-button type="submit" class="md-primary">Genomför ändring</md-button>
@@ -409,6 +462,7 @@ Vue.component('route-edit', {
 			</md-field>
 
 			<md-field>
+								<!-- TODO: fel - blir en extra ruta varje gång man klickar -->
 				<label for="action_color">Färg på action</label>
 			    <md-select v-model="action_color" name="Color" id="action_color">
            			<md-option v-for="color in colors" :value="color">{{ color }}</md-option>

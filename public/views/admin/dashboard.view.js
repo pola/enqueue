@@ -38,11 +38,7 @@ Vue.component('route-admin-dashboard', {
 		        method: "POST",
 		        headers: { "Content-Type": "application/json" },
 		        body: JSON.stringify({ name: this.queue_name })
-<<<<<<< HEAD
-    		}).then(res => {
-=======
 	    	}).then(res => {
->>>>>>> 5866e65a6e2165445a435b2495e34e8c9adfb366
 				if (res.status === 400) {
 					alert('Namnet är ogiltigt.');
 				} else if (res.status === 201) {
