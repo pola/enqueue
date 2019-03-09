@@ -38,7 +38,11 @@ Vue.component('route-admin-dashboard', {
 		        method: "POST",
 		        headers: { "Content-Type": "application/json" },
 		        body: JSON.stringify({ name: this.queue_name })
+<<<<<<< HEAD
     		}).then(res => {
+=======
+	    	}).then(res => {
+>>>>>>> 5866e65a6e2165445a435b2495e34e8c9adfb366
 				if (res.status === 400) {
 					alert('Namnet är ogiltigt.');
 				} else if (res.status === 201) {
@@ -56,27 +60,27 @@ Vue.component('route-admin-dashboard', {
 
 		this.$root.$data.socket.on('teachers', teachers => {
 			this.teachers = teachers;
-    });
+    	});
 	},
 	template: `
 	<div class="text-box col-md-4 col-md-offset-4">
 		<md-table md-card>
-      <md-table-toolbar>
-        <h1 class="md-title">Befintliga lärare</h1>
-      </md-table-toolbar>
+	      <md-table-toolbar>
+	        <h1 class="md-title">Befintliga lärare</h1>
+	      </md-table-toolbar>
 
-      <md-table-row>
-        <md-table-head>Användarnamn</md-table-head>
-        <md-table-head>Namn</md-table-head>
-        <md-table-head>Alternativ</md-table-head>
-      </md-table-row>
+	      <md-table-row>
+	        <md-table-head>Användarnamn</md-table-head>
+	        <md-table-head>Namn</md-table-head>
+	        <md-table-head>Alternativ</md-table-head>
+	      </md-table-row>
 
-      <md-table-row v-for="teacher in teachers" :key="teacher.id">
-        <md-table-cell>{{ teacher.user_name }}</md-table-cell>
-        <md-table-cell>{{ teacher.name }}</md-table-cell>
-        <md-table-cell><md-button v-if="teacher.id !== $root.$data.profile.id" v-on:click="remove_teacher(teacher)" class="md-accent">Radera</md-button></md-table-cell>
-      </md-table-row>
-    </md-table>
+	      <md-table-row v-for="teacher in teachers" :key="teacher.id">
+	        <md-table-cell>{{ teacher.user_name }}</md-table-cell>
+	        <md-table-cell>{{ teacher.name }}</md-table-cell>
+	        <md-table-cell><md-button v-if="teacher.id !== $root.$data.profile.id" v-on:click="remove_teacher(teacher)" class="md-accent">Radera</md-button></md-table-cell>
+	      </md-table-row>
+   		</md-table>
 
 
 		<h1>Lägg till en ny lärare</h1>

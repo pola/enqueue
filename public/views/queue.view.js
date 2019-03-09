@@ -47,6 +47,7 @@ Vue.component('route-queue', {
 		receiving_help(){
 			console.log("får hjälp");
 
+<<<<<<< HEAD
 			fetch('/api/queues/tilpro/queuing/u1tm1nqn', {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
@@ -219,7 +220,11 @@ Vue.component('route-queue', {
     		else if(event === "purge"){
     			console.log("töm")
 
+<<<<<<< HEAD
     			fetch('/api/queues/' + this.queue.id + '/queuing',{
+=======
+    			fetch('/api/queues/' + this.queue.id + '/students',{
+>>>>>>> 5866e65a6e2165445a435b2495e34e8c9adfb366
     				method: 'DELETE'
     			}).then(res => {
     				if (res.status !== 200) {
