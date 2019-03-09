@@ -14,7 +14,7 @@ Vue.component('route-edit', {
 			action_color: null,
 
 			room: null,
-
+			clicked_rooms: [],
 			rooms: null
 
 		}
@@ -49,7 +49,8 @@ Vue.component('route-edit', {
 			// kolla om det rummet är kopplat till kön:
 				// om nej: koppla
 				// om ja: koppla bort
-			console.log(this.queue.rooms);
+			console.log(event);
+			//console.log(this.queue.rooms);
 
 			if (this.room_is_associated(event) === true){
 				fetch('/api/queues/'+ this.queue.name +'/rooms/' + event, {
@@ -81,7 +82,7 @@ Vue.component('route-edit', {
 				});
 
 			}
-			console.log(this.queue.rooms);
+			//console.log(this.queue.rooms);
 		},
 
 		room_is_associated(id){
@@ -427,7 +428,9 @@ Vue.component('route-edit', {
 	<form novalidate @submit.prevent="change_rooms">
 	    <label>Ändra tillåtna salar (om inga anges kan studenterna sitta var som helst)</label>
 	    <br>
-	    <md-checkbox v-for="room in rooms" :key="room.id" v-on:change="change_room" :value="room.id">{{room.name}}</md-checkbox>
+	    								<!-- TODO: fel - blir en extra ruta varje gång man klickar -->
+	    								<!-- TODO: fel - massa fel :D  -->
+	    <md-checkbox v-for="room in rooms" :key="room.id" v-on:change="change_room"  :value="room.id">{{room.name}}</md-checkbox>
 
 	    <md-card-actions>
 	    	<md-button type="submit" class="md-primary">Genomför ändring</md-button>
@@ -462,7 +465,6 @@ Vue.component('route-edit', {
 			</md-field>
 
 			<md-field>
-								<!-- TODO: fel - blir en extra ruta varje gång man klickar -->
 				<label for="action_color">Färg på action</label>
 			    <md-select v-model="action_color" name="Color" id="action_color">
            			<md-option v-for="color in colors" :value="color">{{ color }}</md-option>
