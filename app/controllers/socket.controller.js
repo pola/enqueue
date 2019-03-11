@@ -4,7 +4,11 @@ module.exports = (socket, io) =>
 {
 	socket.on('broadcast', data => {
 		console.log(data);
-		if (!('queue' in data) || !('message' in data) || typeof data.queue !== 'number' || typeof data.message !== 'string') {
+		if (!('queue' in data) || !('message' in data)) {
+			return;
+		}
+		
+		if (typeof data.queue !== 'number' || typeof data.message !== 'string') {
 			return;
 		}
 		
