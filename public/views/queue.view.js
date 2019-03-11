@@ -155,6 +155,16 @@ Vue.component('route-queue', {
 			}
 		});
 
+		// tar emot ett broadcastmeddelande för en kö
+		this.$root.$data.socket.on('broadcast', data => {
+			if (data.queue !== this.queue.id) {
+				return;
+			}
+			
+			// TODO: använd någon snyggare popup, kanske från Material UI?
+			alert(data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>');
+		});
+
 	},
 
 	computed:{
@@ -260,7 +270,10 @@ Vue.component('route-queue', {
     			console.log("meddelande till anställda");
     		}
     		else if (event === "broadcast"){
-    			console.log("meddelande");
+    			this.$root.$data.socket.emit('broadcast', {
+    				queue: this.queue.id,
+    				message: 'meddelande'
+    			});
     		}
     		else if(event === "purge"){
     			console.log("töm")
