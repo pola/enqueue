@@ -20,24 +20,33 @@ Vue.component('route-queue', {
 		on_select (item) {
 			// håller koll på om en student är klickad på sen inte eller inte, och uppdaterar listan av "klickade" studenter
 			
-			if (this.selected_students === []) {
-				this.selected_students.push(item);
-				return;
+			if (this.student_clicked(item) === true) {
+				for (i = 0; i < this.selected_students.length; i++){
+					if (item.id === this.selected_students[i].id) {
+						this.selected_students.splice(i,1);
+					}
+				}
+			} else {
+        		this.selected_students.push(item);
 			}
+      	},
 
-			for (i = 0; i < this.selected_students.length; i++){
-				if (item.id === this.selected_students[i].id) {
-					this.selected_students.splice(i,1);
-					return;
-				} 
-			}
-
-        	this.selected_students.push(item);
-        	return;
+      	student_clicked(student){
+      		if (this.selected_students === []) {
+      			return false;
+      		} else {
+      			for (i = 0; i < this.selected_students.length; i++){
+					if (student.id === this.selected_students[i].id) {
+						return true;
+					}
+				}
+				return false;
+      		}
       	},
 
       	move_student_first(student) {
-			fetch('/api/queues/prutt/students/' + student.id, {
+      		console.log(student.profile.id);
+			fetch('/api/queues/' + this.queue.name + '/students/' + student.profile.id, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ move_after: null })
@@ -75,7 +84,8 @@ Vue.component('route-queue', {
 		},
 
 		dequeue(student){
-			fetch('/api/queues/' + this.queue.name + '/queuing/' + this.student.id, {
+			console.log(student);
+			fetch('/api/queues/' + this.queue.name + '/queuing/' + student.profile.id, {
         		method: "DELETE"
     		}).then(res => {
 				if (res.status !== 200) {
@@ -87,9 +97,30 @@ Vue.component('route-queue', {
 		},
 
 		receiving_help(student){
-			console.log("får hjälp");
+			
 
-			fetch('/api/queues/tilpro/queuing/' + student.id, {
+			for (handler in student.handlers){
+				if (handler.id === this.$root.$data.profile.id){
+					fetch('/api/queues/tilpro/queuing/' + student.profile.id, {
+						method: 'PATCH',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ is_handling: false }) // använd false för att markera att man inte längre hjälper till
+					}).then(res => {
+						console.log(res.status);
+			
+						if (res.status !== 200) {
+							res.json().then(j => {
+								console.log(j);
+							});
+						} else {
+							console.log("får inte hjälp");
+						}
+					});
+					return;
+				}
+			}
+
+			fetch('/api/queues/tilpro/queuing/' + student.profile.id, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ is_handling: true }) // använd false för att markera att man inte längre hjälper till
@@ -100,9 +131,11 @@ Vue.component('route-queue', {
 					res.json().then(j => {
 						console.log(j);
 					});
+				} else {
+					console.log("får hjälp");
 				}
 			});
-			// TODO: fixa allt som ska hända här: blinka i kön
+			// TODO: blinka i kön
 		},
 
 		test (action) {
@@ -341,7 +374,7 @@ Vue.component('route-queue', {
 		<p class="col-md-8" style="white-space: pre-line;">{{ queue.description }}</p>
 	</div>
 	<div class="row">
-		<div class="col-md-3">
+		<div class="col-md-2">
 			<div v-if="! $root.$data.profile">
 				<h4> För att kunna ställa dig i kön måste du logga in </h4>
 				<form novalidate @submit.prevent="login">
@@ -373,8 +406,9 @@ Vue.component('route-queue', {
 
 				<md-card-actions>
 					<span v-if="in_queue === true">
-						<md-button v-on:click="receiving_help($root.$data.profile)" type="submit" class="md-primary">Får hjälp</md-button>
-						<md-button v-on:click="dequeue(($root.$data.profile))" type="submit" class="md-primary">Lämna kön</md-button>
+						<md-button v-on:click="receiving_help($root.$data
+						)" type="submit" class="md-primary">Får hjälp</md-button>
+						<md-button v-on:click="dequeue(($root.$data))" type="submit" class="md-primary">Lämna kön</md-button>
 					</span>
 					<span v-else>
 						<md-button v-if="in_queue === false" :disabled="!queue.open" v-on:click="enqueue" type="submit" class="md-primary">Gå med i kön</md-button>
@@ -393,7 +427,7 @@ Vue.component('route-queue', {
 			</div>
 		</div>
 											<!-- TODO: assistenter ska kunna ta bort, markera får hjälp, flytta studenter, markera fel plats -->
-		<section  class="col-md-7 col-md-offset-2">
+		<section  class="col-md-8 col-md-offset-2">
 			<md-table md-card @md-selected="on_select">
 				<md-table-toolbar>
 				  	<md-table-row>
@@ -406,24 +440,40 @@ Vue.component('route-queue', {
 					</md-table-row>
 		      	</md-table-toolbar>
 
-				<md-table-row v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id" md-selectable="single" v-on:click="on_select(user)">
-					<md-table-cell> {{ index+1 }} </md-table-cell>
-					<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
-					<md-table-cell> <span v-if="$root.$data.location === null"> {{ user.location }} </span> <span v-else> {{ $root.$data.location.name }}  </span></md-table-cell>
-					<md-table-cell> <span v-if="user.action" style="color: red;" > {{ user.action.name }} </span>  </md-table-cell>
-					<md-table-cell> <span v-if="user.comment"> {{ user.comment }} </span> </md-table-cell>
-					<md-table-cell>{{ user.entered_at }} </md-table-cell>
-				</md-table-row>
+		      	<span v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id">
+					<md-table-row md-selectable="single" v-on:click="on_select(user)" :class="{ 'background-color: blue': user.is_handling === true }">
+						<md-table-cell> {{ index+1 }} </md-table-cell>
+						<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
+						<md-table-cell> <span v-if="$root.$data.location === null"> {{ user.location }} </span> <span v-else> {{ $root.$data.location.name }}  </span></md-table-cell>
+						<md-table-cell> <span v-if="user.action" style="color: red;" > {{ user.action.name }} </span>  </md-table-cell>
+						<md-table-cell> <span v-if="user.comment"> {{ user.comment }} </span> </md-table-cell>
+						<md-table-cell>{{ user.entered_at }} </md-table-cell>
+					</md-table-row>
+					
+					<md-table-row v-if="student_clicked(user)">
+						<md-table-cell> <md-button class="md-icon-button" v-on:click="dequeue(user)"><i class="material-icons">highlight_off</i></md-button> </md-table-cell>
+						<md-table-cell> <md-button class="md-icon-button" v-on:click="notify(user)"><i class="material-icons">drafts</i></md-button> </md-table-cell>
+						<md-table-cell> <md-button class="md-icon-button" v-on:click="receiving_help(user)"><i class="material-icons">check_circle_outline</i></md-button> </md-table-cell>
+						<md-table-cell> <md-button class="md-icon-button" v-on:click="bad_location(user)"><i class="material-icons">location_off</i></md-button> </md-table-cell>
+						<md-table-cell> <md-button class="md-icon-button" v-on:click="move_student_first(user)"><i class="material-icons">forward</i></md-button> </md-table-cell>
+						<md-table-cell> <md-button class="md-icon-button" v-on:click="move_after(user)"><i class="material-icons">redo</i></md-button> </md-table-cell>
+					</md-table-row>
+
+				</span>
+
+				<span v-else-if="has_white_list_and_profile_in_it === true" v-for="(user, index) in profile_queuing" :key="user.profile.id">
+					<md-table-row  md-selectable="single" v-on:click="on_select(user)" :class="{ 'background-color: blue': user.is_handling === true }">
+						<md-table-cell> {{ index+1 }} </md-table-cell>
+						<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
+						<md-table-cell> <span v-if="$root.$data.location === null"> {{ user.location }} </span> <span v-else> {{ $root.$data.location.name }}  </span></md-table-cell>
+						<md-table-cell> <span v-if="user.action" style="color: red;" > {{ user.action.name }} </span>  </md-table-cell>
+						<md-table-cell> <span v-if="user.comment"> {{ user.comment }} </span> </md-table-cell>
+						<md-table-cell>{{ user.entered_at }} </md-table-cell>
+					</md-table-row>
+				</span>
 
 											<!-- ej testat! -->
-				<md-table-row v-else-if="has_white_list_and_profile_in_it === true" v-for="(user, index) in profile_queuing" :key="user.profile.id"  md-selectable="single" v-on:click="on_select(user)">
-					<md-table-cell> {{ index+1 }} </md-table-cell>
-					<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
-					<md-table-cell> <span v-if="$root.$data.location === null"> {{ user.location }} </span> <span v-else> {{ $root.$data.location.name }}  </span></md-table-cell>
-					<md-table-cell> <span v-if="user.action" style="color: red;" > {{ user.action.name }} </span>  </md-table-cell>
-					<md-table-cell> <span v-if="user.comment"> {{ user.comment }} </span> </md-table-cell>
-					<md-table-cell>{{ user.entered_at }} </md-table-cell>
-				</md-table-row>
+				
 			</md-table>
 		</section>
 	</div>
