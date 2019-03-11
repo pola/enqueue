@@ -2,7 +2,7 @@ Vue.component('route-edit', {
 	data() {
 		return {
 			queue: null,
-
+			
 			colors: null,
 
 			user_name_assistant: null,
@@ -41,17 +41,9 @@ Vue.component('route-edit', {
 			});
 		},
 
-		change_room(event){
-
-			// event motsvarar det klickade rummets id
-			// kolla om det rummet är kopplat till kön:
-				// om nej: koppla
-				// om ja: koppla bort
-			console.log(event);
-			//console.log(this.queue.rooms);
-
-			if (this.room_is_associated(event) === true){
-				fetch('/api/queues/'+ this.queue.name +'/rooms/' + event, {
+		change_room(room_id){
+			if (this.queue.rooms.map(r => r.id).includes(room_id)) {
+				fetch('/api/queues/'+ this.queue.name +'/rooms/' + room_id, {
 					method: 'DELETE'
 				}).then(res => {
 					console.log(res.status);
@@ -64,11 +56,11 @@ Vue.component('route-edit', {
 				});
 			}
 
-			else{
+			else {
 				fetch('/api/queues/'+ this.queue.name +'/rooms', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ room_id: event })
+					body: JSON.stringify({ room_id: room_id })
 				}).then(res => {
 					console.log(res.status);
 					
@@ -80,20 +72,21 @@ Vue.component('route-edit', {
 				});
 
 			}
-
 		},
-
-		room_is_associated(id){
-			console.log(id);
-			for (room of this.queue.rooms){
-				console.log(room.id);
-				if (room.id === id){
-					console.log("ja");
-					return true;
+		
+		update_clicked_rooms() {
+			if (this.queue === null || this.existing_rooms === null) {
+				return;
+			}
+			
+			const clicked_rooms = this.queue.rooms.map(r => r.id);
+			this.clicked_rooms = [];
+			
+			for (const room of this.existing_rooms) {
+				if (clicked_rooms.includes(room.id)) {
+					this.clicked_rooms.push(room.id);
 				}
 			}
-			console.log("nej");
-			return false;
 		},
 
 		change_actions(){
@@ -294,10 +287,9 @@ Vue.component('route-edit', {
 	created() {
 		fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
 			this.queue = queue;
+			
 			if (queue.rooms.length > 0){
-				for (idx = 0; idx < queue.rooms.length; idx++){
-					this.clicked_rooms.push(queue.rooms[idx].id);
-				}
+				this.update_clicked_rooms();
 			}
 		});
 
@@ -307,17 +299,22 @@ Vue.component('route-edit', {
 
 		fetch('/api/rooms').then(res => res.json()).then(rooms => {
 			this.existing_rooms = rooms;
+			this.update_clicked_rooms();
 		});
 
 		this.$root.$data.socket.on('update_queue', data => {
 			for (var k of Object.keys(data.changes)) {
    				this.queue[k] = data.changes[k];
+   				
+   				if (k === 'rooms') {
+   					this.update_clicked_rooms();
+   				}
 			}
 		});
 	},
 
 	template: `
-<div class="container" v-if="queue && is_assistant_in_queue">
+<div class="container" v-if="queue !== null && colors !== null && existing_rooms !== null && is_assistant_in_queue">
 	<div class="row">
 		<div class="col-md-4" :class="{ 'text-danger': queue.open === false }"> 
 			<h2> <span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>  {{ this.queue.name }} </h2> 
@@ -430,7 +427,7 @@ Vue.component('route-edit', {
 	    <label>Ändra tillåtna salar (om inga anges kan studenterna sitta var som helst)</label>
 	    <br>
 	    								<!-- TODO: fel - massa fel :D  -->
-	    <md-checkbox v-for="room in existing_rooms" v-model="clicked_rooms" v-on:change="change_room(room.id)" :key="room.id" :indeterminate="true" :value="room.id">{{room.name}}</md-checkbox>
+	    <md-checkbox v-for="room in existing_rooms" v-model="clicked_rooms" v-on:change="change_room(room.id)" :key="room.id" :value="room.id">{{room.name}}</md-checkbox>
 
 	    <md-card-actions>
 	    	<md-button type="submit" class="md-primary">Genomför ändring</md-button>
@@ -467,7 +464,7 @@ Vue.component('route-edit', {
 			<md-field>
 				<label for="action_color">Färg på action</label>
 			    <md-select v-model="action_color" name="Color" id="action_color">
-           			<md-option v-for="color in colors" :value="color">{{ color }}</md-option>
+           			<md-option v-for="color in colors" :value="color" :key="color">{{ color }}</md-option>
            		</md-select>
 			</md-field>
 
