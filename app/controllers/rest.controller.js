@@ -155,7 +155,20 @@ router.get('/queues/:name', (req, res) => {
 										}
 									});
 								}
-						
+								
+								var queuing = model.get_queuing(queue);
+								
+								console.log(req.session);
+								
+								if (!('profile' in req.session)) {
+									queuing = queuing.map(s => {
+										s.profile.user_name = null;
+										s.profile.name = null;
+										
+										return s;
+									});
+								} 
+								
 								res.json({
 									id: queue.id,
 									name: queue.name,
@@ -163,7 +176,7 @@ router.get('/queues/:name', (req, res) => {
 									open: queue.open,
 									force_comment: queue.force_comment,
 									force_action: queue.force_action,
-									queuing: model.get_queuing(queue),
+									queuing: queuing,
 									actions: actions.map(a => ({
 										id: a.id,
 										name: a.name,
@@ -366,7 +379,13 @@ router.post('/queues/:name/queuing', (req, res) => {
 						}
 					}
 					
-					model.add_student(queue, req.session.profile, req.body.comment, location, action);
+					const profile = {
+						id: req.session.profile.id,
+						user_name: req.session.profile.user_name,
+						name: req.session.profile.name
+					};
+					
+					model.add_student(queue, profile, req.body.comment, location, action);
 					
 					res.status(201);
 					res.end();
