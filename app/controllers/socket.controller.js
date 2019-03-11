@@ -4,7 +4,7 @@ module.exports = (socket, io) =>
 {
 	socket.on('broadcast', data => {
 		console.log(data);
-		if (!('queue' in data) || !('message' in data)) {
+		if (!data.hasOwnProperty('queue') || !data.hasOwnProperty('message')) {
 			socket.emit('broadcast_status', {
 				success: false,
 				queue: null,
@@ -24,7 +24,7 @@ module.exports = (socket, io) =>
 			return;
 		}
 		
-		if (!('profile' in socket.handshake.session)) {
+		if (!socket.handshake.session.hasOwnProperty('profile')) {
 			socket.emit('broadcast_status', {
 				success: false,
 				queue: null,
@@ -78,7 +78,7 @@ module.exports = (socket, io) =>
 	});
 	
 	socket.on('notify', data => {
-		if (!('queue' in data) || !('message' in data) || !('recipient' in data)) {
+		if (!data.hasOwnProperty('queue') || !data.hasOwnProperty('message') || !data.hasOwnProperty('recipient')) {
 			socket.emit('notify_status', {
 				success: false,
 				queue: null,
@@ -98,7 +98,7 @@ module.exports = (socket, io) =>
 			return;
 		}
 		
-		if (!('profile' in socket.handshake.session)) {
+		if (!socket.handshake.session.hasOwnProperty('profile')) {
 			socket.emit('notify_status', {
 				success: false,
 				queue: null,
@@ -151,7 +151,7 @@ module.exports = (socket, io) =>
 				for (const k of Object.keys(io.sockets.sockets)) {
 					const socket = io.sockets.sockets[k];
 					
-					if ('profile' in socket.handshake.session && socket.handshake.session.profile.id === queuing_student.profile.id) {
+					if (socket.handshake.session.hasOwnProperty('profile') && socket.handshake.session.profile.id === queuing_student.profile.id) {
 						socket.emit('notify', {
 							queue: queue.id,
 							message: data.message,
