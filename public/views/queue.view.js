@@ -46,7 +46,7 @@ Vue.component('route-queue', {
 
       	move_student_first(student) {
       		console.log(student.profile.id);
-			fetch('/api/queues/' + this.queue.name + '/students/' + student.profile.id, {
+			fetch('/api/queues/' + this.queue.name + '/queuing/' + student.profile.id, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ move_after: null })
@@ -97,9 +97,11 @@ Vue.component('route-queue', {
 		},
 
 		receiving_help(student){
-			
 
-			for (handler in student.handlers){
+		const profile = this.queue.queuing.find(profile => profile.id === student.id);
+		console.log(profile.handlers);
+			for (i = 0; i < profile.handlers.length; i ++){
+				const handler = profile.handlers[i];
 				if (handler.id === this.$root.$data.profile.id){
 					fetch('/api/queues/tilpro/queuing/' + student.profile.id, {
 						method: 'PATCH',
