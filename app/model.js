@@ -338,8 +338,14 @@ exports.add_room_to_queue = (room, queue) => new Promise((resolve, reject) => {
 		if (result.length === 0) {
 			resolve(false);
 		} else {
-			exports.get_actions(queue).then(actions => {
-				exports.io_emit_update_queue(queue, { actions: actions });
+			// uppdatera klienterna med den nya rumslistan via websockets
+			queue.getRooms().then(rooms => {
+				exports.io_emit_update_queue(queue, {
+					rooms: rooms.map(r => ({
+						id: r.id,
+						name: r.name
+					})
+				)});
 			});
 		
 			resolve(true);
@@ -352,8 +358,14 @@ exports.remove_room_from_queue = (room, queue) => new Promise((resolve, reject) 
 		if (result === 0) {
 			resolve(false);
 		} else {
-			exports.get_actions(queue).then(actions => {
-				exports.io_emit_update_queue(queue, { actions: actions });
+			// uppdatera klienterna med den nya rumslistan via websockets
+			queue.getRooms().then(rooms => {
+				exports.io_emit_update_queue(queue, {
+					rooms: rooms.map(r => ({
+						id: r.id,
+						name: r.name
+					})
+				)});
 			});
 		
 			resolve(true);
