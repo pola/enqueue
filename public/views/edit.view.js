@@ -467,7 +467,7 @@ Vue.component('route-edit', {
 			<md-field>
 				<label for="action_color">Färg på action</label>
 			    <md-select v-model="action_color" name="Color" id="action_color">
-           			<md-option v-for="color in colors" :value="color">{{ color }}</md-option>
+           			<md-option v-for="color in colors" :value="color" :key="color">{{ color }}</md-option>
            		</md-select>
 			</md-field>
 
