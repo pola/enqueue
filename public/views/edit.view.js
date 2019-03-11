@@ -6,16 +6,14 @@ Vue.component('route-edit', {
 			colors: null,
 
 			user_name_assistant: null,
-			assistants: [],
 
 			user_name_student: null,
 
 			action_name: null,
 			action_color: null,
 
-			room: null,
 			clicked_rooms: [],
-			rooms: null
+			existing_rooms: null
 
 		}
 	},
@@ -82,7 +80,7 @@ Vue.component('route-edit', {
 				});
 
 			}
-			//console.log(this.queue.rooms);
+			console.log(this.queue.rooms);
 		},
 
 		room_is_associated(id){
@@ -296,7 +294,11 @@ Vue.component('route-edit', {
 	created() {
 		fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
 			this.queue = queue;
-			assistants = [];
+			if (queue.rooms.length > 0){
+				for (idx = 0; idx < queue.rooms.length; idx++){
+					this.clicked_rooms.push(queue.rooms[idx].id);
+				}
+			}
 		});
 
 		fetch('/api/colors').then(res => res.json()).then(colors => {
@@ -304,7 +306,7 @@ Vue.component('route-edit', {
 		});
 
 		fetch('/api/rooms').then(res => res.json()).then(rooms => {
-			this.rooms = rooms;
+			this.existing_rooms = rooms;
 		});
 
 		this.$root.$data.socket.on('update_queue', data => {
@@ -331,7 +333,6 @@ Vue.component('route-edit', {
 	   		<md-button type="submit" class="md-primary">Genomför ändring</md-button>
 	   	</md-card-actions>
 	</form>
-
 
 	<!-- vy endast för lärare - lägg till och ta bort assistenter -->
 	<div v-if="$root.$data.profile.teacher === true">
@@ -428,9 +429,8 @@ Vue.component('route-edit', {
 	<form novalidate @submit.prevent="change_rooms">
 	    <label>Ändra tillåtna salar (om inga anges kan studenterna sitta var som helst)</label>
 	    <br>
-	    								<!-- TODO: fel - blir en extra ruta varje gång man klickar -->
 	    								<!-- TODO: fel - massa fel :D  -->
-	    <md-checkbox v-for="room in rooms" :key="room.id" v-on:change="change_room"  :value="room.id">{{room.name}}</md-checkbox>
+	    <md-checkbox v-for="room in existing_rooms" v-model="clicked_rooms" v-on:change="change_room(room.id)" :key="room.id" :indeterminate="true" :value="room.id">{{room.name}}</md-checkbox>
 
 	    <md-card-actions>
 	    	<md-button type="submit" class="md-primary">Genomför ändring</md-button>
