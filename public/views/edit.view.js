@@ -2,7 +2,7 @@ Vue.component('route-edit', {
 	data() {
 		return {
 			queue: null,
-
+			
 			colors: null,
 
 			user_name_assistant: null,
@@ -317,7 +317,7 @@ Vue.component('route-edit', {
 	},
 
 	template: `
-<div class="container" v-if="queue && is_assistant_in_queue">
+<div class="container" v-if="queue !== null && colors !== null && existing_rooms !== null && is_assistant_in_queue">
 	<div class="row">
 		<div class="col-md-4" :class="{ 'text-danger': queue.open === false }"> 
 			<h2> <span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>  {{ this.queue.name }} </h2> 
