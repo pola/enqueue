@@ -162,10 +162,15 @@ router.get('/queues/:name', (req, res) => {
 								
 								if (!('profile' in req.session)) {
 									queuing = queuing.map(s => {
-										s.profile.user_name = null;
-										s.profile.name = null;
+										const s_copy = Object.assign({}, s);
 										
-										return s;
+										s_copy.profile = {
+											id: s.profile.id,
+											user_name: null,
+											name: null
+										};
+										
+										return s_copy;
 									});
 								} 
 								
