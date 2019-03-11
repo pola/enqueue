@@ -1398,7 +1398,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 					});
 				}
 			}
-		} else if (key === 'move_after' && typeof req.body.move_after === 'number') {
+		} else if (key === 'move_after' && (typeof req.body.move_after === 'string' || req.body.move_after === null)) {
 			keys.shift();
 
 			model.has_permission(queue, req.session.profile.id).then(has_permission => {
