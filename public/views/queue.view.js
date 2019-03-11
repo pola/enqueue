@@ -7,7 +7,8 @@ Vue.component('route-queue', {
 			action: null,
 			perform: null,
 			disable_location: null,
-			active: null
+			active: null,
+			selected_students: []
 		}
 	},
 	methods: {
@@ -15,6 +16,47 @@ Vue.component('route-queue', {
 			window.location = '/login';
 			// TODO: skicka tillbaka till kön!
 		},
+
+		on_select (item) {
+			// håller koll på om en student är klickad på sen inte eller inte, och uppdaterar listan av "klickade" studenter
+			
+			if (this.selected_students === []) {
+				this.selected_students.push(item);
+				return;
+			}
+
+			for (i = 0; i < this.selected_students.length; i++){
+				if (item.id === this.selected_students[i].id) {
+					this.selected_students.splice(i,1);
+					return;
+				} 
+			}
+
+        	this.selected_students.push(item);
+        	return;
+      	},
+
+      	move_student_first(student) {
+			fetch('/api/queues/prutt/students/' + student.id, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ move_after: null })
+			}).then(res => {
+				console.log(res.status);
+				
+				if (res.status !== 200) {
+					res.json().then(j => {
+						console.log(j);
+					});
+				}
+			});
+      	},
+
+      	place_student_after_after_other_student() {
+
+      	},
+
+
 		enqueue(){
 				fetch('/api/queues/' + this.queue.name + '/queuing', {
         			method: "POST",
@@ -32,8 +74,8 @@ Vue.component('route-queue', {
 				});
 		},
 
-		dequeue(){
-			fetch('/api/queues/' + this.queue.name + '/queuing/' + this.$root.$data.profile.id, {
+		dequeue(student){
+			fetch('/api/queues/' + this.queue.name + '/queuing/' + this.student.id, {
         		method: "DELETE"
     		}).then(res => {
 				if (res.status !== 200) {
@@ -319,7 +361,7 @@ Vue.component('route-queue', {
 				<md-card-actions>
 					<span v-if="in_queue === true">
 						<md-button v-on:click="receiving_help($root.$data.profile)" type="submit" class="md-primary">Får hjälp</md-button>
-						<md-button v-on:click="dequeue" type="submit" class="md-primary">Lämna kön</md-button>
+						<md-button v-on:click="dequeue(($root.$data.profile))" type="submit" class="md-primary">Lämna kön</md-button>
 					</span>
 					<span v-else>
 						<md-button v-if="in_queue === false" :disabled="!queue.open" v-on:click="enqueue" type="submit" class="md-primary">Gå med i kön</md-button>
@@ -339,7 +381,7 @@ Vue.component('route-queue', {
 		</div>
 											<!-- TODO: assistenter ska kunna ta bort, markera får hjälp, flytta studenter, markera fel plats -->
 		<section  class="col-md-7 col-md-offset-2">
-			<md-table md-card>
+			<md-table md-card @md-selected="on_select">
 				<md-table-toolbar>
 				  	<md-table-row>
 					  	<md-table-head>#</md-table-head>
@@ -351,7 +393,7 @@ Vue.component('route-queue', {
 					</md-table-row>
 		      	</md-table-toolbar>
 
-				<md-table-row v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id"  md-selectable="single">
+				<md-table-row v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id" md-selectable="single" v-on:click="on_select(user)">
 					<md-table-cell> {{ index+1 }} </md-table-cell>
 					<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
 					<md-table-cell> <span v-if="$root.$data.location === null"> {{ user.location }} </span> <span v-else> {{ $root.$data.location.name }}  </span></md-table-cell>
@@ -361,7 +403,7 @@ Vue.component('route-queue', {
 				</md-table-row>
 
 											<!-- ej testat! -->
-				<md-table-row v-else-if="has_white_list_and_profile_in_it === true" v-for="(user, index) in profile_queuing" :key="user.profile.id"  md-selectable="single">
+				<md-table-row v-else-if="has_white_list_and_profile_in_it === true" v-for="(user, index) in profile_queuing" :key="user.profile.id"  md-selectable="single" v-on:click="on_select(user)">
 					<md-table-cell> {{ index+1 }} </md-table-cell>
 					<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
 					<md-table-cell> <span v-if="$root.$data.location === null"> {{ user.location }} </span> <span v-else> {{ $root.$data.location.name }}  </span></md-table-cell>

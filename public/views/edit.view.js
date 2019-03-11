@@ -80,7 +80,7 @@ Vue.component('route-edit', {
 				});
 
 			}
-			console.log(this.queue.rooms);
+
 		},
 
 		room_is_associated(id){
