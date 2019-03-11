@@ -198,6 +198,16 @@ Vue.component('route-queue', {
 			alert(data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>');
 		});
 
+		// tar emot ett broadcastmeddelande för en kö
+		this.$root.$data.socket.on('notify', data => {
+			if (data.queue !== this.queue.id) {
+				return;
+			}
+			
+			// TODO: använd någon snyggare popup, kanske från Material UI?
+			alert('personligt meddelande:\n' + data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>');
+		});
+
 	},
 
 	computed:{
@@ -301,6 +311,11 @@ Vue.component('route-queue', {
     	perform: function(event) {
     		if (event === "broadcast_faculty"){
     			console.log("meddelande till anställda");
+    			this.$root.$data.socket.emit('notify', {
+    				queue: this.queue.id,
+    				message: 'meddelande',
+    				recipient: 'u1tm1nqn'
+    			});
     		}
     		else if (event === "broadcast"){
     			this.$root.$data.socket.emit('broadcast', {
