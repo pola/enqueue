@@ -352,7 +352,6 @@ exports.move_student_after = (queue, student, move_after) => {
 	}
 
 	if (remove_index === null) {
-		console.log('!!!');
 		return;
 	}
 

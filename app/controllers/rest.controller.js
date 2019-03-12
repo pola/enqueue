@@ -191,8 +191,6 @@ router.get('/queues/:name', (req, res) => {
 								
 								var queuing = model.get_queuing(queue);
 								
-								console.log(req.session);
-								
 								if (!req.session.hasOwnProperty('profile')) {
 									queuing = queuing.map(s => {
 										const s_copy = Object.assign({}, s);

@@ -3,7 +3,6 @@ const model = require('../model.js');
 module.exports = (socket, io) =>
 {
 	socket.on('broadcast', data => {
-		console.log(data);
 		if (!data.hasOwnProperty('queue') || !data.hasOwnProperty('message')) {
 			socket.emit('broadcast_status', {
 				success: false,
