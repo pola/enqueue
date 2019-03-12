@@ -13,8 +13,9 @@ Vue.component('route-edit', {
 			action_color: null,
 
 			clicked_rooms: [],
-			existing_rooms: null
+			existing_rooms: null,
 
+			selectedTime: null
 		}
 	},
 	methods: {
@@ -255,6 +256,10 @@ Vue.component('route-edit', {
 					});
 				}
 			});
+		},
+
+		set_auto_open(){
+			console.log(this.selectedTime);
 		}	
 
 	},
@@ -479,6 +484,10 @@ Vue.component('route-edit', {
     <md-card-actions>
 		<md-button v-on:click="change_requirements" type="submit" class="md-primary">Genomför ändringar</md-button>
 	</md-card-actions>
+
+	<h4>Välj en dag och tid då kön automatiskt ska öppnas</h4>
+	<input class="form-control" type="text" v-model="selectedTime" placeholder="YYYY-MM-DD HH:MM" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}" required autofocus>
+	<md-button v-on:click="set_auto_open">Välj tid</md-button>
 
 
     <md-card-actions>

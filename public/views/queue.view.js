@@ -7,89 +7,19 @@ Vue.component('route-queue', {
 			action: null,
 			perform: null,
 			disable_location: null,
-			active: null,
 			selected_students: [],
-			prompt_move_student: false		}
+			prompt_move_student: false,
+			notify_active: false,
+			broadcast_active: false,
+			broadcast_message: null,
+			notification_message: null
+		}
 	},
 	methods: {
 		login(){
 			window.location = '/login';
 			// TODO: skicka tillbaka till kön!
 		},
-
-		on_select (item) {
-			// håller koll på om en student är klickad på sen inte eller inte, och uppdaterar listan av "klickade" studenter
-			
-			if (this.student_clicked(item) === true) {
-				for (i = 0; i < this.selected_students.length; i++){
-					if (item.id === this.selected_students[i].id) {
-						this.selected_students.splice(i,1);
-					}
-				}
-			} else {
-        		this.selected_students.push(item);
-			}
-      	},
-
-      	student_clicked(student){
-      		if (this.selected_students === []) {
-      			return false;
-      		} else {
-      			for (i = 0; i < this.selected_students.length; i++){
-					if (student.id === this.selected_students[i].id) {
-						return true;
-					}
-				}
-				return false;
-      		}
-      	},
-
-      	move_student_first(student) {
-      		console.log(student.profile.id);
-			fetch('/api/queues/' + this.queue.name + '/queuing/' + student.profile.id, {
-				method: 'PATCH',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ move_after: null })
-			}).then(res => {
-				console.log(res.status);
-				
-				if (res.status !== 200) {
-					res.json().then(j => {
-						console.log(j);
-					});
-				}
-			});
-      	},
-
-      	move_student_to_position(student) {
-
-      		var new_position = parseInt(document.getElementById("pos").value);
-      		console.log(student);
-
-      		if (new_position > this.queue.queuing.length || new_position < 1 || isNaN(new_position)) {
-      			alert("Positionen du valt är inte giltig");
-      		} else if (new_position === 1) {
-      			this.move_student_first(student);
-      		} else {
-      		// om man vill ställa sig på position x (1-idicerat) måste vi veta vem som står på positionen innan samt översätta till 0-indicerat
-	      		var student_before = this.queue.queuing[new_position-2];
-
-	      		fetch('/api/queues/'+ this.queue.name +'/students/' + student.profile.id, {
-					method: 'PATCH',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ move_after: student.student_before.profile.id })
-				}).then(res => {
-					console.log(res.status);
-		
-					if (res.status !== 200) {
-						res.json().then(j => {
-							console.log(j);
-						});
-					}
-				});
-			}
-      	},
-
 
 		enqueue(){
 				fetch('/api/queues/' + this.queue.name + '/queuing', {
@@ -165,9 +95,86 @@ Vue.component('route-queue', {
 			// TODO: blinka i kön
 		},
 
-		test (action) {
-			return "md-danger";
-		},
+		on_select (item) {
+			// håller koll på om en student är klickad på sen inte eller inte, och uppdaterar listan av "klickade" studenter
+			
+			if (this.student_clicked(item) === true) {
+				for (i = 0; i < this.selected_students.length; i++){
+					if (item.id === this.selected_students[i].id) {
+						this.selected_students.splice(i,1);
+					}
+				}
+			} else {
+        		this.selected_students.push(item);
+			}
+      	},
+
+      	student_clicked(student){
+      		if (this.selected_students === []) {
+      			return false;
+      		} else {
+      			for (i = 0; i < this.selected_students.length; i++){
+					if (student.id === this.selected_students[i].id) {
+						return true;
+					}
+				}
+				return false;
+      		}
+      	},
+
+      	move_student_first(student) {
+      		console.log(student.profile.id);
+			fetch('/api/queues/' + this.queue.name + '/queuing/' + student.profile.id, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ move_after: null })
+			}).then(res => {
+				console.log(res.status);
+				
+				if (res.status !== 200) {
+					res.json().then(j => {
+						console.log(j);
+					});
+				}
+			});
+      	},
+
+      	move_student_to_position(student) {
+
+      		var new_position = parseInt(document.getElementById("pos").value);
+      		console.log(student);
+
+      		if (new_position > this.queue.queuing.length || new_position < 1 || isNaN(new_position)) {
+      			alert("Positionen du valt är inte giltig");
+      		} else if (new_position === 1) {
+      			this.move_student_first(student);
+      		} else {
+      		// om man vill ställa sig på position x (1-idicerat) måste vi veta vem som står på positionen innan samt översätta till 0-indicerat
+	      		var student_before = this.queue.queuing[new_position-2];
+
+	      		fetch('/api/queues/'+ this.queue.name +'/students/' + student.profile.id, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ move_after: student.student_before.profile.id })
+				}).then(res => {
+					console.log(res.status);
+		
+					if (res.status !== 200) {
+						res.json().then(j => {
+							console.log(j);
+						});
+					}
+				});
+			}
+      	},
+
+      	notify(student) {
+      		console.log("hej student");
+      	},
+
+      	bad_location(student) {
+      		console.log("dålig plats");
+      	},
 
 		redirect (url) {
 			if (url === "edit"){
@@ -222,19 +229,25 @@ Vue.component('route-queue', {
 			}
 			
 			// TODO: använd någon snyggare popup, kanske från Material UI?
-			alert(data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>');
+			this.broadcast_active = true;
+			this.broadcast_message = data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>';
 		});
 
 		// tar emot ett broadcastmeddelande för en kö
 		this.$root.$data.socket.on('notify', data => {
 			if (data.queue !== this.queue.id) {
+				console.log("hejdå");
+
 				return;
 			}
-			
-			// TODO: använd någon snyggare popup, kanske från Material UI?
-			alert('personligt meddelande:\n' + data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>');
-		});
 
+			console.log("hej");
+			
+			this.notify_active = true;
+			this.notification_message = data;
+			// TODO: använd någon snyggare popup, kanske från Material UI?
+			//alert('personligt meddelande:\n' + data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>');
+		});
 	},
 
 	computed:{
@@ -303,20 +316,6 @@ Vue.component('route-queue', {
 			return false;
 		},
 
-		allowed_in_queue() {
-			// om listan av vitlistade studenter är tom får alla tillgång till kön
-			console.log("has_white_list = " + this.has_white_list);
-  			// assistenter i kön kan alltid se kön
-  			console.log("is_assistant_in_queue = " + this.is_assistant_in_queue);
-			// om det finns en vitlista och personen finns med i den får den tillgång till kön
-			console.log("profile_in_white_list = " + this.profile_in_white_list);
-
-  			allowed = (!this.has_white_list || this.is_assistant_in_queue || this.profile_in_white_list);
-
-  			this.active = !allowed;
-  			return allowed;
-      	},
-
       	has_white_list_and_profile_in_it() {
       		return (this.has_white_list && this.profile_in_white_list);
       	},
@@ -341,7 +340,7 @@ Vue.component('route-queue', {
     			this.$root.$data.socket.emit('notify', {
     				queue: this.queue.id,
     				message: 'meddelande',
-    				recipient: 'u1tm1nqn'
+    				recipient: "u1os21nb" // TODO: kan detta vara en lista?
     			});
     		}
     		else if (event === "broadcast"){
@@ -351,8 +350,6 @@ Vue.component('route-queue', {
     			});
     		}
     		else if(event === "purge"){
-    			console.log("töm")
-
     			fetch('/api/queues/' + this.queue.id + '/queuing',{
     				method: 'DELETE'
     			}).then(res => {
@@ -364,8 +361,6 @@ Vue.component('route-queue', {
     			});
     		}
     		else if(event === "lock"){
-    			console.log("lås")
-
     			fetch('/api/queues/' + this.queue.id, {
 					method: 'PATCH',
 					headers: { 'Content-Type': 'application/json' },
@@ -383,8 +378,6 @@ Vue.component('route-queue', {
 				});
     		}
     		else if(event === "unlock"){
-    			console.log("öppna")
-
     			fetch('/api/queues/' + this.queue.name, {
 					method: 'PATCH',
 					headers: { 'Content-Type': 'application/json' },
@@ -406,6 +399,18 @@ Vue.component('route-queue', {
 
 	template: `
 <div class="container" v-if="queue">
+	<md-dialog-alert style="white-space: pre-line;"
+		:md-active.sync="broadcast_active"
+		:md-content="broadcast_message"
+		md-confirm-text="OK!"
+		@md-closed="broadcast_active = false"/>
+
+	<md-dialog-alert style="white-space: pre-line;"
+		:md-active.sync="notify_active"
+		:md-content="notification_message"
+		md-confirm-text="OK!"
+		@md-closed="broadcast_active = false"/>
+
 	<div class="row">
 		<div class="col-md-4" :class="{ 'text-danger': queue.open === false }"> 
 			<h2> <span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>  {{ queue.name }} </h2> 
@@ -518,15 +523,8 @@ Vue.component('route-queue', {
 						<md-table-cell> <md-button class="md-icon-button" v-on:click="receiving_help(user)"><i class="material-icons">check_circle_outline</i></md-button> </md-table-cell>
 						<md-table-cell> <md-button class="md-icon-button" v-on:click="bad_location(user)"><i class="material-icons">location_off</i></md-button> </md-table-cell>
 						<md-table-cell> <md-button class="md-icon-button" v-on:click="move_student_first(user)"><i class="material-icons">forward</i></md-button> </md-table-cell>
-						<md-table-cell> <input type="text" name="pos" maxlength="4" size="4"> <md-button class="md-icon-button" v-on:click="prompt_move_student = true"><i class="material-icons">redo</i></md-button> </md-table-cell>
+						<md-table-cell> <input type="text" id="pos" name="pos" maxlength="4" size="4"> <md-button class="md-icon-button" v-on:click="move_student_to_position(user)"><i class="material-icons">redo</i></md-button> </md-table-cell>
 					</md-table-row>
-
-					<md-dialog-prompt :md-active.sync="prompt_move_student" v-model="new_position" md-title="What's your name?" md-input-placeholder="Type your name...">
-						<md-dialog-prompt-actions>
-        					<md-button class="md-primary" @click="showDialog = false">Close</md-button>
-        					<md-button class="md-primary" @click="showDialog = false">Save</md-button>
-      					</md-dialog-prompt-actions>
-      				</md-dialog-prompt>
 				</span>
 
 				
