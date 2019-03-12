@@ -2,12 +2,14 @@
 "use strict";
 
 const Sequelize = require('sequelize');
+const crypto = require('crypto');
 
 var Queue = null;
 var Room = null;
 var Computer = null;
 var Profile = null;
 var Action = null;
+var Token = null;
 
 var io = null;
 var connection = null;
@@ -79,6 +81,12 @@ exports.setConnection = (c) => {
 
 	// För att ange vilka actions en student kan välja på i kön
 	Action.belongsTo(Queue, { foreignKey: 'queue_id' });
+	
+	Token = connection.define('tokens', {
+		token: { type: Sequelize.STRING, primaryKey: true }
+	});
+	
+	Token.belongsTo(Profile, { foreignKey: 'profile_id' });
 
 	connection.sync().then(() => {
 		Queue.findAll().then(queues => {
@@ -89,7 +97,20 @@ exports.setConnection = (c) => {
 	});
 };
 
-exports.get_profile = (id) => Profile.findOne({ where: { id: id } });
+exports.validate_token = token => Token.findOne({
+	where: { token: token },
+	include: [{
+		model: Profile,
+		as: Profile.profiles
+	}]
+});
+
+exports.create_token = profile_id => Token.create({
+	token: crypto.randomBytes(32).toString('hex'),
+	profile_id: profile_id
+});
+
+exports.get_profile = id => Profile.findOne({ where: { id: id } });
 
 exports.get_profile_by_user_name = (user_name) => Profile.findOne({ where: { user_name: user_name } });
 

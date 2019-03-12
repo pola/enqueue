@@ -13,7 +13,6 @@ var cas = new CASAuthentication({
 router.get('/login', cas.bounce, function ( req, res ) {
 
 	model.get_or_create_profile(req.session.cas_user, req.session.cas_user, req.session.cas_user).then(profile => {
-		req.session.teacher = profile.teacher;
 		req.session.profile = profile;
 
 		res.redirect('/');

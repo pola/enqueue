@@ -6,7 +6,7 @@ const router = express.Router();
 router.get('/me', (req, res) => {
 	model.get_computer(req.connection.remoteAddress).then(location => {
 		if (req.session.hasOwnProperty('profile')) {
-			model.get_profile(req.session.cas_user).then(profile => {
+			model.get_profile(req.session.profile.id).then(profile => {
 				profile.getAssistantInQueues().then(queues => {
 					res.json({
 						profile: profile,
@@ -28,6 +28,39 @@ router.get('/me', (req, res) => {
 	});
 });
 
+// logga in en användare eller ge användaren en nyckel
+router.get('/authenticate', (req, res) => {
+	if (req.header('Token') !== undefined) {
+		model.validate_token(req.header('Token')).then(result => {
+			if (result === null) {
+				res.json({
+					authenticated: false,
+					token: null
+				});
+			} else {
+				req.session.profile = result.profile;
+				
+				res.json({
+					authenticated: true,
+					token: result.token
+				});
+			}
+		});
+	} else if (req.session.hasOwnProperty('profile')) {
+		model.create_token(req.session.profile.id).then(token => {
+			res.json({
+				authenticated: true,
+				token: token.token
+			});
+		})
+	} else {
+		res.json({
+			authenticated: false,
+			token: null
+		});
+	}
+});
+
 // hämta alla rum
 router.get('/rooms', (req, res) => {
 	model.get_rooms().then(rooms => {
@@ -42,7 +75,7 @@ router.get('/colors', (req, res) => {
 
 // hämta alla lärarprofiler
 router.get('/admin/teachers', (req, res) => {
-	if (!req.session.hasOwnProperty('teacher') || !req.session.teacher) {
+	if (!req.session.hasOwnProperty('profile') || !req.session.profile.teacher) {
 		res.status(401);
 		res.json([]);
 		return;
@@ -55,7 +88,7 @@ router.get('/admin/teachers', (req, res) => {
 
 // lägg till en profil som lärare
 router.post('/admin/teachers', (req, res) => {
-	if (!req.session.hasOwnProperty('teacher') || !req.session.teacher) {
+	if (!req.session.hasOwnProperty('profile') || !req.session.profile.teacher) {
 		res.status(401);
 		res.end();
 		return;
@@ -72,14 +105,14 @@ router.post('/admin/teachers', (req, res) => {
 
 // ta bort en profil som lärare
 router.delete('/admin/teachers/:id', (req, res) => {
-	if (!req.session.hasOwnProperty('teacher') || !req.session.teacher) {
+	if (!req.session.hasOwnProperty('profile') || !req.session.profile.teacher) {
 		res.status(401);
 		res.end();
 		return;
 	}
 
 	// man kan inte ta bort sig själv som lärare
-	if (req.params.id === req.session.cas_user) {
+	if (req.params.id === req.session.profile.id) {
 		res.status(401);
 		res.end();
 		return;
@@ -108,7 +141,7 @@ router.get('/queues', (req, res) => {
 
 // skapa en ny kö
 router.post('/queues', (req, res) => {
-	if (!req.session.hasOwnProperty('teacher') || !req.session.teacher) {
+	if (!req.session.hasOwnProperty('profile') || !req.session.profile.teacher) {
 		res.status(401);
 		res.end();
 		return;
