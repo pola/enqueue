@@ -292,6 +292,7 @@ exports.add_student = (queue, profile, comment, location, action) => {
 		comment: comment,
 		location: location,
 		action: action,
+		bad_location: false,
 		handlers: []
 	});
 
