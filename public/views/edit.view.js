@@ -409,15 +409,6 @@ Vue.component('route-edit', {
 		</md-card-actions>
 	</form>
 
-
-	<!-- TODO: sätt tid för att tömma kön automatiskt -->
-		<!-- https://puranjayjain.github.io/md-date-time-picker/ -->
-	
-	<!-- TODO: sätt tid för att öppna kön automatiskt -->
-		<!-- https://www.npmjs.com/package/vue-datetime - även upprepning, ska man bara välja veckodagar + tid och låta det hända varje vecka??-->
-	
-
-
 	<form novalidate @submit.prevent="change_description">
 		<md-field>
 	    	<label>Ändra beskrivning av kön</label>
@@ -431,7 +422,7 @@ Vue.component('route-edit', {
 	<form novalidate @submit.prevent="change_rooms">
 	    <label>Ändra tillåtna salar (om inga anges kan studenterna sitta var som helst)</label>
 	    <br>
-	    								<!-- TODO: fel - massa fel :D  -->
+
 	    <md-checkbox v-for="room in existing_rooms" v-model="clicked_rooms" v-on:change="change_room(room.id)" :key="room.id" :value="room.id">{{room.name}}</md-checkbox>
 
 	    <md-card-actions>

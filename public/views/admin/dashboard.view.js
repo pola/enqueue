@@ -3,7 +3,9 @@ Vue.component('route-admin-dashboard', {
 		return {
 			user_name: null,
 			queue_name: null,
-			teachers: []
+			room_name: null,
+			teachers: [],
+			rooms: []
 		}
 	},
 	methods: {
@@ -47,11 +49,23 @@ Vue.component('route-admin-dashboard', {
 					});
 				}
 			});
+		},
+
+		add_room() {
+
+		},
+
+		remove_room(room) {
+
 		}
 	},
 	created() {
 		fetch('/api/admin/teachers').then(res => res.json()).then(teachers => {
 			this.teachers = teachers;
+		});
+
+		fetch('/api/rooms').then(res => res.json()).then(rooms => {
+			this.rooms = rooms;
 		});
 
 		this.$root.$data.socket.on('teachers', teachers => {
@@ -105,6 +119,37 @@ Vue.component('route-admin-dashboard', {
 				<md-button type="submit" class="md-primary">Lägg till kö</md-button>
 			</md-card-actions>
 		</form>
+
+		<md-table md-card>
+	      <md-table-toolbar>
+	        <h1 class="md-title">Skolans datorsalar</h1>
+	      </md-table-toolbar>
+
+	      <md-table-row>
+	        <md-table-head>Namn</md-table-head>
+	        <md-table-head>Alternativ</md-table-head>
+	      </md-table-row>
+
+	      <md-table-row v-for="room in rooms" :key="room.id">
+	        <md-table-cell>{{ room.name }}</md-table-cell>
+	        <md-table-cell><md-button v-on:click="remove_room(room)" class="md-accent">Radera</md-button></md-table-cell>
+	      </md-table-row>
+   		</md-table>
+
+
+		<h1>Lägg till en ny sal</h1>
+
+		<form novalidate @submit.prevent="add_room">
+			<md-field>
+				<label for="room_name">Salens namn</label>
+				<md-input type="text" id="room_name" v-model="room_name" />
+			</md-field>
+
+			<md-card-actions>
+				<md-button type="submit" class="md-primary">Lägg till sal</md-button>
+			</md-card-actions>
+		</form>
+
 	</div>
 	`
 });

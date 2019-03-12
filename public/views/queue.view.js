@@ -92,7 +92,6 @@ Vue.component('route-queue', {
 					console.log("får hjälp");
 				}
 			});
-			// TODO: blinka i kön
 		},
 
 		on_select (item) {
@@ -169,7 +168,11 @@ Vue.component('route-queue', {
       	},
 
       	notify(student) {
-      		console.log("hej student");
+      		this.$root.$data.socket.emit('notify', {
+    			queue: this.queue.id,
+    			message: 'meddelande',
+    			recipient: student.profile.id
+    		});
       	},
 
       	bad_location(student) {
@@ -258,7 +261,6 @@ Vue.component('route-queue', {
 			if (data.queue !== this.queue.id) {
 				return;
 			}
-			
 			this.broadcast_active = true;
 			this.broadcast_message = data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>';
 		});
@@ -266,15 +268,10 @@ Vue.component('route-queue', {
 		// tar emot ett broadcastmeddelande för en kö
 		this.$root.$data.socket.on('notify', data => {
 			if (data.queue !== this.queue.id) {
-				console.log("hejdå");
-
 				return;
-			}
-
-			console.log("hej");
-			
+			}			
 			this.notify_active = true;
-			this.notification_message = 'personligt meddelande:\n' + data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>';
+			this.notification_message = 'Personligt meddelande:\n' + data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>';
 		});
 	},
 
@@ -365,10 +362,9 @@ Vue.component('route-queue', {
     	perform: function(event) {
     		if (event === "broadcast_faculty"){
     			console.log("meddelande till anställda");
-    			this.$root.$data.socket.emit('notify', {
+    			this.$root.$data.socket.emit('notify_faculty', {
     				queue: this.queue.id,
-    				message: 'meddelande',
-    				recipient: "u1os21nb" // TODO: kan detta vara en lista?
+    				message: 'meddelande'
     			});
     		}
     		else if (event === "broadcast"){
@@ -519,9 +515,9 @@ Vue.component('route-queue', {
 						<md-table-cell> {{ index+1 }} </md-table-cell>
 						<md-table-cell v-if="user.profile.name !== null"> {{ user.profile.name }}</md-table-cell>
 						<md-table-cell> <span v-if="typeof user.location === 'string'"> {{ user.location }} </span> <span v-else> {{ user.location.name }}  </span></md-table-cell>
-						<md-table-cell> <span v-if="user.action" style="color: red;" > {{ user.action.name }} </span>  </md-table-cell>
+						<md-table-cell> <span v-if="user.action" style="color: user.action.color;" > {{ user.action.name }} </span>  </md-table-cell>
 						<md-table-cell> <span v-if="user.comment"> {{ user.comment }} </span> </md-table-cell>
-						<md-table-cell>{{ user.entered_at }} </md-table-cell>
+						<md-table-cell>{{new Date(user.entered_at).toLocaleString()}} </md-table-cell>
 					</md-table-row>
 					
 					<md-table-row v-if="student_clicked(user)">
@@ -540,7 +536,7 @@ Vue.component('route-queue', {
 						<md-table-cell> {{ index+1 }} </md-table-cell>
 						<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
 						<md-table-cell> <span v-if="$root.$data.location === null"> {{ user.location }} </span> <span v-else> {{ $root.$data.location.name }}  </span></md-table-cell>
-						<md-table-cell> <span v-if="user.action" style="color: red;" > {{ user.action.name }} </span>  </md-table-cell>
+						<md-table-cell> <span v-if="user.action"> {{ user.action.name }} </span>  </md-table-cell>
 						<md-table-cell> <span v-if="user.comment"> {{ user.comment }} </span> </md-table-cell>
 						<md-table-cell>{{ user.entered_at }} </md-table-cell>
 					</md-table-row>
