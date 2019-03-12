@@ -119,12 +119,32 @@ exports.get_or_create_profile = (id, user_name, name) => new Promise((resolve, r
 		where: { id: id },
 		defaults: {
 			id: id,
-			user_name: user_name,
-			name: name,
+			user_name: user_name === null ? id : user_name,
+			name: name === null ? id : name,
 			teacher: false
 		}
 	}).spread((profile, created) => {
-		 resolve(profile);
+		var changed = false;
+		
+		if (!created) {
+			if (user_name !== null && profile.user_name !== user_name) {
+				profile.user_name = user_name;
+				changed = true;
+			}
+			
+			if (name !== null && profile.name !== name) {
+				profile.name = name;
+				changed = true;
+			}
+		}
+		
+		if (changed) {
+			profile.save().then(() => {
+				resolve(profile);
+			})
+		} else {
+			resolve(profile);
+		}
 	});
 });
 
