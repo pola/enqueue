@@ -403,6 +403,10 @@ class QueueScreen extends React.Component {
 				queue: queue
 			});
 		});
+		
+		socket.on('notify', data => {
+			alert(data.message + '\n\n-- ' + data.sender.name);
+		});
 	}
 	
 	render() {
