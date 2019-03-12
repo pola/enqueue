@@ -9,11 +9,7 @@ Vue.component('route-queue', {
 			disable_location: null,
 			active: null,
 			selected_students: [],
-			myStyle:{
-            	color:"#16a085" 
-            }
-
-		}
+			prompt_move_student: false		}
 	},
 	methods: {
 		login(){
@@ -65,8 +61,33 @@ Vue.component('route-queue', {
 			});
       	},
 
-      	place_student_after_after_other_student() {
+      	move_student_to_position(student) {
 
+      		var new_position = parseInt(document.getElementById("pos").value);
+      		console.log(student);
+
+      		if (new_position > this.queue.queuing.length || new_position < 1 || isNaN(new_position)) {
+      			alert("Positionen du valt är inte giltig");
+      		} else if (new_position === 1) {
+      			this.move_student_first(student);
+      		} else {
+      		// om man vill ställa sig på position x (1-idicerat) måste vi veta vem som står på positionen innan samt översätta till 0-indicerat
+	      		var student_before = this.queue.queuing[new_position-2];
+
+	      		fetch('/api/queues/'+ this.queue.name +'/students/' + student.profile.id, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ move_after: student.student_before.profile.id })
+				}).then(res => {
+					console.log(res.status);
+		
+					if (res.status !== 200) {
+						res.json().then(j => {
+							console.log(j);
+						});
+					}
+				});
+			}
       	},
 
 
@@ -447,7 +468,6 @@ Vue.component('route-queue', {
 				</md-field>
 			</div>
 		</div>
-											<!-- TODO: assistenter ska kunna ta bort, markera får hjälp, flytta studenter, markera fel plats -->
 		<section  class="col-md-8 col-md-offset-2">
 			<md-table md-card @md-selected="on_select">
 				<md-table-toolbar>
@@ -460,7 +480,6 @@ Vue.component('route-queue', {
 					  	<md-table-head>Tid</md-table-head>
 					</md-table-row>
 		      	</md-table-toolbar>
-		      							<!-- style="background-color: red; --> 
 
 		      	<span v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id">
 					<md-table-row md-selectable="single" v-on:click="on_select(user)" v-bind:style = "[user.handlers.length === 0 ? {backgroundColor: 'white'} : {backgroundColor: 'red'}]" >
@@ -478,7 +497,7 @@ Vue.component('route-queue', {
 						<md-table-cell> <md-button class="md-icon-button" v-on:click="receiving_help(user)"><i class="material-icons">check_circle_outline</i></md-button> </md-table-cell>
 						<md-table-cell> <md-button class="md-icon-button" v-on:click="bad_location(user)"><i class="material-icons">location_off</i></md-button> </md-table-cell>
 						<md-table-cell> <md-button class="md-icon-button" v-on:click="move_student_first(user)"><i class="material-icons">forward</i></md-button> </md-table-cell>
-						<md-table-cell> <md-button class="md-icon-button" v-on:click="move_after(user)"><i class="material-icons">redo</i></md-button> </md-table-cell>
+						<md-table-cell> <input type="text" id="pos" name="pos" maxlength="4" size="4"> <md-button class="md-icon-button" v-on:click="move_student_to_position(user)"><i class="material-icons">redo</i></md-button> </md-table-cell>
 					</md-table-row>
 
 				</span>
@@ -492,9 +511,24 @@ Vue.component('route-queue', {
 						<md-table-cell> <span v-if="user.comment"> {{ user.comment }} </span> </md-table-cell>
 						<md-table-cell>{{ user.entered_at }} </md-table-cell>
 					</md-table-row>
+
+					<md-table-row v-if="student_clicked(user)">
+						<md-table-cell> <md-button class="md-icon-button" v-on:click="dequeue(user)"><i class="material-icons">highlight_off</i></md-button> </md-table-cell>
+						<md-table-cell> <md-button class="md-icon-button" v-on:click="notify(user)"><i class="material-icons">drafts</i></md-button> </md-table-cell>
+						<md-table-cell> <md-button class="md-icon-button" v-on:click="receiving_help(user)"><i class="material-icons">check_circle_outline</i></md-button> </md-table-cell>
+						<md-table-cell> <md-button class="md-icon-button" v-on:click="bad_location(user)"><i class="material-icons">location_off</i></md-button> </md-table-cell>
+						<md-table-cell> <md-button class="md-icon-button" v-on:click="move_student_first(user)"><i class="material-icons">forward</i></md-button> </md-table-cell>
+						<md-table-cell> <input type="text" name="pos" maxlength="4" size="4"> <md-button class="md-icon-button" v-on:click="prompt_move_student = true"><i class="material-icons">redo</i></md-button> </md-table-cell>
+					</md-table-row>
+
+					<md-dialog-prompt :md-active.sync="prompt_move_student" v-model="new_position" md-title="What's your name?" md-input-placeholder="Type your name...">
+						<md-dialog-prompt-actions>
+        					<md-button class="md-primary" @click="showDialog = false">Close</md-button>
+        					<md-button class="md-primary" @click="showDialog = false">Save</md-button>
+      					</md-dialog-prompt-actions>
+      				</md-dialog-prompt>
 				</span>
 
-											<!-- ej testat! -->
 				
 			</md-table>
 		</section>
