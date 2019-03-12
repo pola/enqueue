@@ -1361,7 +1361,11 @@ const update_student = (queue, student, changes, req, res, keys) => {
 
 							changes.location = req.body.location;
 						}
-
+						
+						if (student.bad_location) {
+							changes.bad_location = false;
+						}
+						
 						update_student(queue, student, changes, req, res, keys);
 					});
 				});
@@ -1453,6 +1457,19 @@ const update_student = (queue, student, changes, req, res, keys) => {
 				}
 
 				changes.move_after = req.body.move_after;
+				update_student(queue, student, changes, req, res, keys);
+			});
+		} else if (key === 'bad_location' && typeof req.body.bad_location === 'boolean') {
+			keys.shift();
+
+			model.has_permission(queue, req.session.profile.id).then(has_permission => {
+				if (!has_permission) {
+					res.status(401);
+					res.end();
+					return;
+				}
+				
+				changes.bad_location = req.body.bad_location;
 				update_student(queue, student, changes, req, res, keys);
 			});
 		} else if (key === 'is_handling' && typeof req.body.is_handling === 'boolean') {

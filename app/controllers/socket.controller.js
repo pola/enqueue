@@ -36,7 +36,7 @@ module.exports = (socket, io) =>
 		
 		model.get_queue(data.queue).then(queue => {
 			if (queue === null) {
-				socket.emit('notify_status', {
+				socket.emit('broadcast_status', {
 					success: false,
 					queue: null,
 					error: 'UNKNOWN_QUEUE',
