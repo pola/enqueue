@@ -463,7 +463,7 @@ Vue.component('route-queue', {
 		      							<!-- style="background-color: red; --> 
 
 		      	<span v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id">
-					<md-table-row md-selectable="single" v-on:click="on_select(user)" v-bind:style = "[user.handlers === [] ? {backgroundColor: 'white'} : {backgroundColor: 'red'}]" >
+					<md-table-row md-selectable="single" v-on:click="on_select(user)" v-bind:style = "[user.handlers.length === 0 ? {backgroundColor: 'white'} : {backgroundColor: 'red'}]" >
 						<md-table-cell> {{ index+1 }} </md-table-cell>
 						<md-table-cell v-if="user.profile.name !== null"> {{ user.profile.name }}</md-table-cell>
 						<md-table-cell> <span v-if="typeof user.location === 'string'"> {{ user.location }} </span> <span v-else> {{ user.location.name }}  </span></md-table-cell>
@@ -484,7 +484,7 @@ Vue.component('route-queue', {
 				</span>
 
 				<span v-else-if="has_white_list_and_profile_in_it === true" v-for="(user, index) in profile_queuing" :key="user.profile.id">
-					<md-table-row  md-selectable="single" v-on:click="on_select(user)" v-bind:style = "[user.handlers === [] ? {backgroundColor: 'white'} : {backgroundColor: 'red'}]">
+					<md-table-row  md-selectable="single" v-on:click="on_select(user)" v-bind:style = "[user.handlers.length === 0 ? {backgroundColor: 'white'} : {backgroundColor: 'red'}]">
 						<md-table-cell> {{ index+1 }} </md-table-cell>
 						<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
 						<md-table-cell> <span v-if="$root.$data.location === null"> {{ user.location }} </span> <span v-else> {{ $root.$data.location.name }}  </span></md-table-cell>
