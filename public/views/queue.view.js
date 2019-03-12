@@ -204,6 +204,16 @@ Vue.component('route-queue', {
 			alert(data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>');
 		});
 
+		// tar emot ett broadcastmeddelande för en kö
+		this.$root.$data.socket.on('notify', data => {
+			if (data.queue !== this.queue.id) {
+				return;
+			}
+			
+			// TODO: använd någon snyggare popup, kanske från Material UI?
+			alert('personligt meddelande:\n' + data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>');
+		});
+
 	},
 
 	computed:{
@@ -307,6 +317,11 @@ Vue.component('route-queue', {
     	perform: function(event) {
     		if (event === "broadcast_faculty"){
     			console.log("meddelande till anställda");
+    			this.$root.$data.socket.emit('notify', {
+    				queue: this.queue.id,
+    				message: 'meddelande',
+    				recipient: 'u1tm1nqn'
+    			});
     		}
     		else if (event === "broadcast"){
     			this.$root.$data.socket.emit('broadcast', {
@@ -450,8 +465,8 @@ Vue.component('route-queue', {
 		      	<span v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id">
 					<md-table-row md-selectable="single" v-on:click="on_select(user)" v-bind:style = "[user.handlers === [] ? {backgroundColor: 'white'} : {backgroundColor: 'red'}]" >
 						<md-table-cell> {{ index+1 }} </md-table-cell>
-						<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
-						<md-table-cell> <span v-if="$root.$data.location === null"> {{ user.location }} </span> <span v-else> {{ $root.$data.location.name }}  </span></md-table-cell>
+						<md-table-cell v-if="user.profile.name !== null"> {{ user.profile.name }}</md-table-cell>
+						<md-table-cell> <span v-if="typeof user.location === 'string'"> {{ user.location }} </span> <span v-else> {{ user.location.name }}  </span></md-table-cell>
 						<md-table-cell> <span v-if="user.action" style="color: red;" > {{ user.action.name }} </span>  </md-table-cell>
 						<md-table-cell> <span v-if="user.comment"> {{ user.comment }} </span> </md-table-cell>
 						<md-table-cell>{{ user.entered_at }} </md-table-cell>

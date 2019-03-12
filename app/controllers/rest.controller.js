@@ -5,7 +5,7 @@ const router = express.Router();
 // hämta profilen för den inloggade användaren
 router.get('/me', (req, res) => {
 	model.get_computer(req.connection.remoteAddress).then(location => {
-		if ('cas_user' in req.session) {
+		if (req.session.hasOwnProperty('profile')) {
 			model.get_profile(req.session.cas_user).then(profile => {
 				profile.getAssistantInQueues().then(queues => {
 					res.json({
@@ -42,7 +42,7 @@ router.get('/colors', (req, res) => {
 
 // hämta alla lärarprofiler
 router.get('/admin/teachers', (req, res) => {
-	if (!('teacher' in req.session) || !req.session.teacher) {
+	if (!req.session.hasOwnProperty('teacher') || !req.session.teacher) {
 		res.status(401);
 		res.json([]);
 		return;
@@ -55,7 +55,7 @@ router.get('/admin/teachers', (req, res) => {
 
 // lägg till en profil som lärare
 router.post('/admin/teachers', (req, res) => {
-	if (!('teacher' in req.session) || !req.session.teacher) {
+	if (!req.session.hasOwnProperty('teacher') || !req.session.teacher) {
 		res.status(401);
 		res.end();
 		return;
@@ -72,7 +72,7 @@ router.post('/admin/teachers', (req, res) => {
 
 // ta bort en profil som lärare
 router.delete('/admin/teachers/:id', (req, res) => {
-	if (!('teacher' in req.session) || !req.session.teacher) {
+	if (!req.session.hasOwnProperty('teacher') || !req.session.teacher) {
 		res.status(401);
 		res.end();
 		return;
@@ -108,7 +108,7 @@ router.get('/queues', (req, res) => {
 
 // skapa en ny kö
 router.post('/queues', (req, res) => {
-	if (!('teacher' in req.session) || !req.session.teacher) {
+	if (!req.session.hasOwnProperty('teacher') || !req.session.teacher) {
 		res.status(401);
 		res.end();
 		return;
@@ -143,19 +143,37 @@ router.get('/queues/:name', (req, res) => {
 				queue.getStudents().then(students => {
 					queue.getStudents().then(students => {
 						queue.getAssistants().then(assistants => {
-							model.has_permission(queue, 'profile' in req.session ? req.session.profile.id : null).then(has_permission => {
+							model.has_permission(queue, req.session.hasOwnProperty('profile') ? req.session.profile.id : null).then(has_permission => {
 								const students_count = students.length;
 							
 								if (!has_permission) {
 									students = students.map(s => {
-										if ('profile' in req.session && req.session.profile.id === s.id) {
+										if (req.session.hasOwnProperty('profile') && req.session.profile.id === s.id) {
 											return s;
 										} else {
 											return null;
 										}
 									});
 								}
-						
+								
+								var queuing = model.get_queuing(queue);
+								
+								console.log(req.session);
+								
+								if (!req.session.hasOwnProperty('profile')) {
+									queuing = queuing.map(s => {
+										const s_copy = Object.assign({}, s);
+										
+										s_copy.profile = {
+											id: s.profile.id,
+											user_name: null,
+											name: null
+										};
+										
+										return s_copy;
+									});
+								} 
+								
 								res.json({
 									id: queue.id,
 									name: queue.name,
@@ -163,7 +181,7 @@ router.get('/queues/:name', (req, res) => {
 									open: queue.open,
 									force_comment: queue.force_comment,
 									force_action: queue.force_action,
-									queuing: model.get_queuing(queue),
+									queuing: queuing,
 									actions: actions.map(a => ({
 										id: a.id,
 										name: a.name,
@@ -195,7 +213,7 @@ router.get('/queues/:name', (req, res) => {
 
 // radera en kö
 router.delete('/queues/:name', (req, res) => {
-	if (!('cas_user' in req.session)) {
+	if (!req.session.hasOwnProperty('profile')) {
 		res.status(401);
 		res.end();
 		return;
@@ -223,7 +241,7 @@ router.delete('/queues/:name', (req, res) => {
 
 // ny student i kön
 router.post('/queues/:name/queuing', (req, res) => {
-	if (!('cas_user' in req.session)) {
+	if (!req.session.hasOwnProperty('profile')) {
 		res.status(401);
 		res.end();
 		return;
@@ -236,7 +254,7 @@ router.post('/queues/:name/queuing', (req, res) => {
 			return;
 		}
 
-		if (!('comment' in req.body) || !('action' in req.body) || !('location' in req.body)) {
+		if (!req.body.hasOwnProperty('comment') || !req.body.hasOwnProperty('action') || !req.body.hasOwnProperty('location')) {
 			res.status(400);
 			res.json({
 				error: 3,
@@ -366,7 +384,13 @@ router.post('/queues/:name/queuing', (req, res) => {
 						}
 					}
 					
-					model.add_student(queue, req.session.profile, req.body.comment, location, action);
+					const profile = {
+						id: req.session.profile.id,
+						user_name: req.session.profile.user_name,
+						name: req.session.profile.name
+					};
+					
+					model.add_student(queue, profile, req.body.comment, location, action);
 					
 					res.status(201);
 					res.end();
@@ -379,7 +403,7 @@ router.post('/queues/:name/queuing', (req, res) => {
 
 // töm kön som assistent
 router.delete('/queues/:name/queuing', (req, res) => {
-	if (!('cas_user' in req.session)) {
+	if (!req.session.hasOwnProperty('profile')) {
 		res.status(401);
 		res.end();
 		return;
@@ -411,7 +435,7 @@ router.delete('/queues/:name/queuing', (req, res) => {
 
 // lämna kön (om det är en själv) eller sparka ut någon (som assistent)
 router.delete('/queues/:name/queuing/:id', (req, res) => {
-	if (!('cas_user' in req.session)) {
+	if (!req.session.hasOwnProperty('profile')) {
 		res.status(401);
 		res.end();
 		return;
@@ -460,7 +484,7 @@ router.delete('/queues/:name/queuing/:id', (req, res) => {
 
 // ändra en kö
 router.patch('/queues/:name', (req, res) => {
-	if (!('cas_user' in req.session)) {
+	if (!req.session.hasOwnProperty('profile')) {
 		res.status(401);
 		res.end();
 		return;
@@ -635,7 +659,7 @@ const update_queue = (queue, changes, req, res, keys) => {
 
 // ändra en student i kön
 router.patch('/queues/:name/queuing/:id', (req, res) => {
-	if (!('cas_user' in req.session)) {
+	if (!req.session.hasOwnProperty('profile')) {
 		res.status(401);
 		res.end();
 		return;
@@ -689,13 +713,13 @@ router.get('/queues/:name/actions', (req, res) => {
 
 // lägg till en ny action
 router.post('/queues/:name/actions', (req, res) => {
-	if (!('cas_user' in req.session)) {
+	if (!req.session.hasOwnProperty('profile')) {
 		res.status(401);
 		res.end();
 		return;
 	}
 
-	if (!('name' in req.body) || typeof req.body.name !== 'string' || !('color' in req.body) || model.colors.indexOf(req.body.color) === -1) {
+	if (!req.body.hasOwnProperty('name') || typeof req.body.name !== 'string' || !req.body.hasOwnProperty('color') || model.colors.indexOf(req.body.color) === -1) {
 		res.status(400);
 		res.json({
 			error: 1,
@@ -748,7 +772,7 @@ router.post('/queues/:name/actions', (req, res) => {
 
 // ta bort en action
 router.delete('/queues/:name/actions/:id', (req, res) => {
-	if (!('cas_user' in req.session)) {
+	if (!req.session.hasOwnProperty('profile')) {
 		res.status(401);
 		res.end();
 		return;
@@ -796,7 +820,7 @@ router.get('/queues/:name/rooms', (req, res) => {
 
 // associera ett rum med en kö
 router.post('/queues/:name/rooms', (req, res) => {
-	if (!('cas_user' in req.session)) {
+	if (!req.session.hasOwnProperty('profile')) {
 		res.status(401);
 		res.end();
 		return;
@@ -809,7 +833,7 @@ router.post('/queues/:name/rooms', (req, res) => {
 			return;
 		}
 		
-		if (!('room_id' in req.body) || typeof req.body.room_id !== 'number') {
+		if (!req.body.hasOwnProperty('room_id') || typeof req.body.room_id !== 'number') {
 			res.status(400);
 			res.json({
 				error: 'INVALID_PARAMETER_ROOM_ID',
@@ -855,7 +879,7 @@ router.post('/queues/:name/rooms', (req, res) => {
 
 // ta bort en association mellan ett rum och en kö
 router.delete('/queues/:name/rooms/:room_id', (req, res) => {
-	if (!('cas_user' in req.session)) {
+	if (!req.session.hasOwnProperty('profile')) {
 		res.status(401);
 		res.end();
 		return;
@@ -909,10 +933,10 @@ router.get('/queues/:name/students', (req, res) => {
 		}
 		
 		queue.getStudents().then(students => {
-			model.has_permission(queue, 'profile' in req.session ? req.session.profile.id : null).then(has_permission => {
+			model.has_permission(queue, req.session.hasOwnProperty('profile') ? req.session.profile.id : null).then(has_permission => {
 				if (!has_permission) {
 					students = students.map(s => {
-						if ('profile' in req.session && req.session.profile.id === s.id) {
+						if (req.session.hasOwnProperty('profile') && req.session.profile.id === s.id) {
 							return s;
 						} else {
 							return null;
@@ -932,7 +956,7 @@ router.get('/queues/:name/students', (req, res) => {
 
 // vitlista en student
 router.post('/queues/:name/students', (req, res) => {
-	if (!('cas_user' in req.session)) {
+	if (!req.session.hasOwnProperty('profile')) {
 		res.status(401);
 		res.end();
 		return;
@@ -945,7 +969,7 @@ router.post('/queues/:name/students', (req, res) => {
 			return;
 		}
 		
-		if ('user_id' in req.body && 'user_name' in req.body) {
+		if (req.body.hasOwnProperty('user_id') && req.body.hasOwnProperty('user_name')) {
 			res.status(400);
 			res.json({
 				error: 'DUPLICATE_PARAMETERS',
@@ -956,7 +980,7 @@ router.post('/queues/:name/students', (req, res) => {
 		
 		var profile_promise = null;
 		
-		if ('user_id' in req.body) {
+		if (req.body.hasOwnProperty('user_id')) {
 			if (typeof req.body.user_id !== 'string') {
 				res.status(400);
 				res.json({
@@ -967,7 +991,7 @@ router.post('/queues/:name/students', (req, res) => {
 			}
 			
 			profile_promise = model.get_profile(req.body.user_id);
-		} else if ('user_name' in req.body) {
+		} else if (req.body.hasOwnProperty('user_name')) {
 			if (typeof req.body.user_name !== 'string') {
 				res.status(400);
 				res.json({
@@ -1024,7 +1048,7 @@ router.post('/queues/:name/students', (req, res) => {
 
 // ta bort en student från vitlistan i en kö
 router.delete('/queues/:name/students/:user_id', (req, res) => {
-	if (!('cas_user' in req.session)) {
+	if (!req.session.hasOwnProperty('profile')) {
 		res.status(401);
 		res.end();
 		return;
@@ -1089,7 +1113,7 @@ router.get('/queues/:name/assistants', (req, res) => {
 
 // lägg till en assistent
 router.post('/queues/:name/assistants', (req, res) => {
-	if (!('cas_user' in req.session)) {
+	if (!req.session.hasOwnProperty('profile')) {
 		res.status(401);
 		res.end();
 		return;
@@ -1102,7 +1126,7 @@ router.post('/queues/:name/assistants', (req, res) => {
 			return;
 		}
 		
-		if ('user_id' in req.body && 'user_name' in req.body) {
+		if (req.body.hasOwnProperty('user_id') && req.body.hasOwnProperty('user_name')) {
 			res.status(400);
 			res.json({
 				error: 'DUPLICATE_PARAMETERS',
@@ -1113,7 +1137,7 @@ router.post('/queues/:name/assistants', (req, res) => {
 		
 		var profile_promise = null;
 		
-		if ('user_id' in req.body) {
+		if (req.body.hasOwnProperty('user_id')) {
 			if (typeof req.body.user_id !== 'string') {
 				res.status(400);
 				res.json({
@@ -1124,7 +1148,7 @@ router.post('/queues/:name/assistants', (req, res) => {
 			}
 			
 			profile_promise = model.get_profile(req.body.user_id);
-		} else if ('user_name' in req.body) {
+		} else if (req.body.hasOwnProperty('user_name')) {
 			if (typeof req.body.user_name !== 'string') {
 				res.status(400);
 				res.json({
@@ -1181,7 +1205,7 @@ router.post('/queues/:name/assistants', (req, res) => {
 
 // ta bort en assistent från en kö
 router.delete('/queues/:name/assistants/:user_id', (req, res) => {
-	if (!('cas_user' in req.session)) {
+	if (!req.session.hasOwnProperty('profile')) {
 		res.status(401);
 		res.end();
 		return;
