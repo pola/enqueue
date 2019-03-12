@@ -173,7 +173,38 @@ Vue.component('route-queue', {
       	},
 
       	bad_location(student) {
-      		console.log("dålig plats");
+      		if (student.bad_location === true){
+      			fetch('/api/queues/'+ this.queue.name +'/queuing/' + student.profile.id, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ bad_location: false }) 
+				}).then(res => {
+					console.log(res.status);
+					
+					if (res.status !== 200) {
+						res.json().then(j => {
+							console.log(j);
+						});
+					}
+				});
+      		} else {
+      			console.log(student.profile.id);
+      			fetch('/api/queues/'+ this.queue.name +'/queuing/' + student.profile.id, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ bad_location: true }) 
+				}).then(res => {
+					console.log(res.status);
+					
+					if (res.status !== 200) {
+						res.json().then(j => {
+							console.log(j);
+						});
+					}
+				});
+      		}
+
+      		
       	},
 
 		redirect (url) {
@@ -228,7 +259,6 @@ Vue.component('route-queue', {
 				return;
 			}
 			
-			// TODO: använd någon snyggare popup, kanske från Material UI?
 			this.broadcast_active = true;
 			this.broadcast_message = data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>';
 		});
@@ -244,9 +274,7 @@ Vue.component('route-queue', {
 			console.log("hej");
 			
 			this.notify_active = true;
-			this.notification_message = data;
-			// TODO: använd någon snyggare popup, kanske från Material UI?
-			//alert('personligt meddelande:\n' + data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>');
+			this.notification_message = 'personligt meddelande:\n' + data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>';
 		});
 	},
 
@@ -487,7 +515,7 @@ Vue.component('route-queue', {
 		      	</md-table-toolbar>
 
 		      	<span v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id">
-					<md-table-row md-selectable="single" v-on:click="on_select(user)" v-bind:style = "[user.handlers.length === 0 ? {backgroundColor: 'white'} : {backgroundColor: 'red'}]" >
+					<md-table-row md-selectable="single" v-on:click="on_select(user)" v-bind:style = "[user.handlers.length === 0 ? {backgroundColor: 'white'} : {backgroundColor: 'blue'}], [user.bad_location === true ? {backgroundColor: 'red'} : {backgroundColor: 'white'}]" >
 						<md-table-cell> {{ index+1 }} </md-table-cell>
 						<md-table-cell v-if="user.profile.name !== null"> {{ user.profile.name }}</md-table-cell>
 						<md-table-cell> <span v-if="typeof user.location === 'string'"> {{ user.location }} </span> <span v-else> {{ user.location.name }}  </span></md-table-cell>
