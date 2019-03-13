@@ -21,6 +21,9 @@ io.on('connection', socket => {
 // Demo calls to model
 const model = require('./model.js');
 
+
+var moment = require('moment');
+
 model.setIo(io);
 model.setConnection(sequelize);
 

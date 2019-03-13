@@ -253,6 +253,28 @@ Vue.component('route-queue', {
       		
       	},
 
+      	unix_to_time_ago(unix){
+
+			// 	var moment = require('moment'); - detta ska stå någonstans för att det ska funka - var?
+      		
+      		//var a = new Date(unix * 1000).toLocaleString();
+      		d = new Date(unix);
+
+      		day = d.getDate();
+      		month = d.getMonth() + 1; // kanske borde vara 03
+      		year = d.getFullYear();
+
+      		hour = d.getHours();
+      		min = d.getMinutes();
+      		sec = d.getSeconds();
+
+  			time = year + month + day + ' ' + hour + min + sec;
+
+  			//moment(time, "YYYYMMDD HHMMSS").fromNow();
+
+  			return d.toLocaleString();
+      	},
+
 		redirect (url) {
 			if (url === "edit"){
 				this.$router.push('/queues/' + this.queue.name + '/edit');
@@ -555,7 +577,7 @@ Vue.component('route-queue', {
 						<md-table-cell> <span v-if="typeof user.location === 'string'"> {{ user.location }} </span> <span v-else> {{ user.location.name }}  </span></md-table-cell>
 						<md-table-cell> <span v-if="user.action" style="color: user.action.color;" > {{ user.action.name }} </span>  </md-table-cell>
 						<md-table-cell> <span v-if="user.comment"> {{ user.comment }} </span> </md-table-cell>
-						<md-table-cell>{{new Date(user.entered_at).toLocaleString()}} </md-table-cell>
+						<md-table-cell>{{unix_to_time_ago(user.entered_at)}} </md-table-cell>
 					</md-table-row>
 					
 					<md-table-row v-if="student_clicked(user)">
