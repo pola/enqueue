@@ -561,7 +561,11 @@ const update_queue = (queue, changes, req, res, keys) => {
 		queue.save().then(() => {
 			res.status(200);
 			res.end();
-
+			
+			if (changes_keys.includes('auto_open')) {
+				model.auto_open_update(queue);
+			}
+			
 			model.io_emit_update_queue(queue, changes);
 		});
 	} else {
@@ -638,15 +642,27 @@ const update_queue = (queue, changes, req, res, keys) => {
 			update_queue(queue, changes, req, res, keys);
 		} else if (key === 'auto_open') {
 			keys.shift();
-
-			// TODO hantera null eller en tidsstämpel i framtiden
-
-			update_queue(queue, changes, req, res, keys);
-		} else if (key === 'auto_purge') {
-			keys.shift();
-
-			// TODO: hantera null eller ett klockslag på HH:MM
-
+			
+			if (!(typeof req.body.auto_open === 'number')) {
+				res.status(400);
+				res.json({
+					error: 7,
+					message: 'The value for parameter auto_open must be a UNIX timestamp.'
+				});
+				return;
+			}
+			
+			if (Date.now() >= req.body.auto_open) {
+				res.status(400);
+				res.json({
+					error: 7,
+					message: 'The value for parameter auto_open is in the past.'
+				});
+				return;
+			}
+			
+			changes.auto_open = req.body.auto_open;
+			
 			update_queue(queue, changes, req, res, keys);
 		} else if (key === 'force_comment') {
 			keys.shift();

@@ -15,6 +15,7 @@ var io = null;
 var connection = null;
 var locked_time_slots = {};
 var queuing = {};
+var timeouts = {};
 
 exports.setIo = (i) => {
 	io = i;
@@ -30,8 +31,7 @@ exports.setConnection = (c) => {
 		name : Sequelize.STRING,
 		description: Sequelize.STRING,
 		open: Sequelize.BOOLEAN,
-		auto_open: Sequelize.DATE,
-		auto_purge: Sequelize.STRING,
+		auto_open: Sequelize.BIGINT,
 		force_comment: Sequelize.BOOLEAN,
 		force_action: Sequelize.BOOLEAN
 	});
@@ -95,6 +95,23 @@ exports.setConnection = (c) => {
 			}
 		});
 	});
+};
+
+exports.auto_open_update = queue => {
+	if (queue.id in timeouts) {
+		clearTimeout(timeouts[queue.id]);
+		delete timeouts[queue.id];
+	}
+	
+	if (queue.auto_open !== null) {
+		var duration = queue.auto_open - Date.now();
+		
+		if (duration <= 0) {
+			auto_open_timeout(queue.id);
+		} else {
+			timeouts[queue.id] = setTimeout(auto_open_timeout, duration, queue.id);
+		}
+	}
 };
 
 exports.validate_token = token => Token.findOne({
@@ -227,7 +244,6 @@ exports.get_or_create_queue = (name) => new Promise((resolve, reject) => {
 			description: null,
 			open: false,
 			auto_open: null,
-			auto_purge: null,
 			force_comment: true,
 			force_action: true
 		}
