@@ -92,7 +92,23 @@ exports.setConnection = (c) => {
 		Queue.findAll().then(queues => {
 			for (const queue of queues) {
 				queuing[queue.id] = [];
+				exports.auto_open_update(queue);
 			}
+		});
+	});
+};
+
+exports.auto_open_timeout = queue_id => {
+	delete timeouts[queue_id];
+	
+	Queue.findOne({ where: { id: queue_id } }).then(queue => {
+		queue.auto_open = null;
+		queue.open = true;
+		queue.save().then(() => {
+			exports.io_emit_update_queue(queue.id, {
+				auto_open: null,
+				open: true
+			});
 		});
 	});
 };
@@ -107,9 +123,9 @@ exports.auto_open_update = queue => {
 		var duration = queue.auto_open - Date.now();
 		
 		if (duration <= 0) {
-			auto_open_timeout(queue.id);
+			exports.auto_open_timeout(queue.id);
 		} else {
-			timeouts[queue.id] = setTimeout(auto_open_timeout, duration, queue.id);
+			timeouts[queue.id] = setTimeout(exports.auto_open_timeout, duration, queue.id);
 		}
 	}
 };

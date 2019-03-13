@@ -89,6 +89,15 @@ Vue.component('route-edit', {
 				}
 			}
 		},
+		
+		update_auto_open() {
+			if (this.queue.auto_open === null) {
+				this.selectedTime = null;
+			} else {
+				const dt = new Date(this.queue.auto_open);
+				this.selectedTime = dt.getFullYear() + '-' + (dt.getMonth() + 1).toString().padStart(2, '0') + '-' + dt.getDate().toString().padStart(2, '0') + ' ' + dt.getHours().toString().padStart(2, '0') + ':' + dt.getMinutes().toString().padStart(2, '0');
+			}
+		},
 
 		change_actions(){
 
@@ -259,7 +268,23 @@ Vue.component('route-edit', {
 		},
 
 		set_auto_open(){
-			console.log(this.selectedTime);
+			const dt = this.selectedTime.split(/[ \-:]/);
+			const ts = new Date(parseInt(dt[0]), parseInt(dt[1]) - 1, parseInt(dt[2]), parseInt(dt[3]), parseInt(dt[4])).getTime();
+			console.log(ts);
+			
+			fetch('/api/queues/' + this.queue.id, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ auto_open: ts })
+			}).then(res => {
+				console.log(res.status);
+				
+				if (res.status !== 200) {
+					res.json().then(j => {
+						console.log(j);
+					});
+				}
+			});
 		}	
 
 	},
@@ -296,6 +321,10 @@ Vue.component('route-edit', {
 			if (queue.rooms.length > 0){
 				this.update_clicked_rooms();
 			}
+			
+			if (queue.auto_open !== null) {
+				this.update_auto_open();
+			}
 		});
 
 		fetch('/api/colors').then(res => res.json()).then(colors => {
@@ -313,7 +342,9 @@ Vue.component('route-edit', {
    				
    				if (k === 'rooms') {
    					this.update_clicked_rooms();
-   				}
+   				} else if (k === 'auto_open') {
+					this.update_auto_open();
+				}
 			}
 		});
 	},

@@ -210,6 +210,7 @@ router.get('/queues/:name', (req, res) => {
 									name: queue.name,
 									description: queue.description,
 									open: queue.open,
+									auto_open: queue.auto_open,
 									force_comment: queue.force_comment,
 									force_action: queue.force_action,
 									queuing: queuing,
