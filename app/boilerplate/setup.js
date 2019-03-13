@@ -1,3 +1,5 @@
+'use strict';
+
 require('better-logging')(console);
 
 const path = require('path');

@@ -1,3 +1,5 @@
+'use strict';
+
 const setupBoilerplate = require('./boilerplate/setup');
 const config = require('./config');
 const fetch = require('node-fetch');
