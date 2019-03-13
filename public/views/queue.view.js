@@ -1,4 +1,14 @@
+
+
+
 Vue.component('route-queue', {
+
+	//import modal from './components/modal.vue';
+
+	/*components: {
+		modal,
+	},*/
+
 	data() {
 		return {
 			queue: null,
@@ -8,11 +18,16 @@ Vue.component('route-queue', {
 			perform: null,
 			disable_location: null,
 			selected_students: [],
-			prompt_move_student: false,
 			notify_active: false,
 			broadcast_active: false,
 			broadcast_message: null,
-			notification_message: null
+			notification_message: null,
+			active_broadcast: false,
+			prompt_broadcast: false,
+			prompt_notify: false,
+			promt_notify_faculty: false,
+			message: null
+			//modal_active: false
 		}
 	},
 	methods: {
@@ -97,6 +112,10 @@ Vue.component('route-queue', {
 		on_select (item) {
 			// håller koll på om en student är klickad på sen inte eller inte, och uppdaterar listan av "klickade" studenter
 			
+			if (!this.is_assistant_in_queue){
+				return;
+			}
+
 			if (this.student_clicked(item) === true) {
 				for (i = 0; i < this.selected_students.length; i++){
 					if (item.id === this.selected_students[i].id) {
@@ -170,10 +189,34 @@ Vue.component('route-queue', {
       	notify(student) {
       		this.$root.$data.socket.emit('notify', {
     			queue: this.queue.id,
-    			message: 'meddelande',
+    			message: this.message,
     			recipient: student.profile.id
     		});
+
+    		this.message = null;
       	},
+
+      	broadcast() {
+      		this.$root.$data.socket.emit('broadcast', {
+    			queue: this.queue.id,
+    			message: this.message
+    		});
+
+    		this.message = null;
+      	},
+
+      	broadcast_faculty() {
+      		this.$root.$data.socket.emit('notify_faculty', {
+    			queue: this.queue.id,
+    			message: this.message
+    		});
+
+    		this.message = null;
+      	},
+
+      	/*closeModal(){
+      		this.modal_active = false;
+      	}*/
 
       	bad_location(student) {
       		if (student.bad_location === true){
@@ -361,17 +404,10 @@ Vue.component('route-queue', {
 	watch: {
     	perform: function(event) {
     		if (event === "broadcast_faculty"){
-    			console.log("meddelande till anställda");
-    			this.$root.$data.socket.emit('notify_faculty', {
-    				queue: this.queue.id,
-    				message: 'meddelande'
-    			});
+    			this.promt_notify_faculty = true;
     		}
     		else if (event === "broadcast"){
-    			this.$root.$data.socket.emit('broadcast', {
-    				queue: this.queue.id,
-    				message: 'meddelande'
-    			});
+    			this.prompt_broadcast = true;
     		}
     		else if(event === "purge"){
     			fetch('/api/queues/' + this.queue.id + '/queuing',{
@@ -423,17 +459,19 @@ Vue.component('route-queue', {
 
 	template: `
 <div class="container" v-if="queue">
-	<md-dialog-alert style="white-space: pre-line;"
-		:md-active.sync="broadcast_active"
-		:md-content="broadcast_message"
-		md-confirm-text="OK!"
-		@md-closed="broadcast_active = false"/>
 
-	<md-dialog-alert style="white-space: pre-line;"
-		:md-active.sync="notify_active"
-		:md-content="notification_message"
-		md-confirm-text="OK!"
-		@md-closed="broadcast_active = false"/>
+
+	<md-dialog-alert md-title="Meddelande" style="white-space: pre-line;" :md-active.sync="broadcast_active" :md-content="broadcast_message"
+		md-confirm-text="OK!" @md-closed="broadcast_active = false"/>
+
+	<md-dialog-alert md-title="Meddelande" style="white-space: pre-line;" :md-active.sync="notify_active" :md-content="notification_message"
+		md-confirm-text="OK!" @md-closed="broadcast_active = false"/>
+
+	<md-dialog-prompt :md-active.sync="prompt_broadcast" v-model="message" md-title="Skicka ett meddelande till samtliga" md-input-placeholder="Skriv meddelande..."
+		md-confirm-text="Skicka" md-cancel-text="Avsluta" @md-confirm="broadcast" @md-cancel="prompt_broadcast = false"/>
+
+	<md-dialog-prompt :md-active.sync="promt_notify_faculty" v-model="message" md-title="Skicka ett meddelande till anställda" md-input-placeholder="Skriv meddelande..."
+		md-confirm-text="Skicka" md-cancel-text="Avsluta" @md-confirm="broadcast_faculty" @md-cancel="promt_notify_faculty = false"/>
 
 	<div class="row">
 		<div class="col-md-4" :class="{ 'text-danger': queue.open === false }"> 
@@ -522,12 +560,15 @@ Vue.component('route-queue', {
 					
 					<md-table-row v-if="student_clicked(user)">
 						<md-table-cell> <md-button class="md-icon-button" v-on:click="dequeue(user)"><i class="material-icons">highlight_off</i></md-button> </md-table-cell>
-						<md-table-cell> <md-button class="md-icon-button" v-on:click="notify(user)"><i class="material-icons">drafts</i></md-button> </md-table-cell>
+						<md-table-cell> <md-button class="md-icon-button" v-on:click="prompt_notify = true"><i class="material-icons">drafts</i></md-button> </md-table-cell>
 						<md-table-cell> <md-button class="md-icon-button" v-on:click="receiving_help(user)"><i class="material-icons">check_circle_outline</i></md-button> </md-table-cell>
 						<md-table-cell> <md-button class="md-icon-button" v-on:click="bad_location(user)"><i class="material-icons">location_off</i></md-button> </md-table-cell>
 						<md-table-cell> <md-button class="md-icon-button" v-on:click="move_student_first(user)"><i class="material-icons">forward</i></md-button> </md-table-cell>
 						<md-table-cell> <input type="text" id="pos" name="pos" maxlength="4" size="4"> <md-button class="md-icon-button" v-on:click="move_student_to_position(user)"><i class="material-icons">redo</i></md-button> </md-table-cell>
 					</md-table-row>
+
+					<md-dialog-prompt :md-active.sync="prompt_notify" v-model="message" md-title="Skicka ett personligt meddelande" md-input-placeholder="Skriv meddelande..."
+				      md-confirm-text="Skicka" md-cancel-text="Avsluta" @md-confirm="notify(user)" @md-cancel="prompt_notify = false"/>
 
 				</span>
 
@@ -549,6 +590,9 @@ Vue.component('route-queue', {
 						<md-table-cell> <md-button class="md-icon-button" v-on:click="move_student_first(user)"><i class="material-icons">forward</i></md-button> </md-table-cell>
 						<md-table-cell> <input type="text" id="pos" name="pos" maxlength="4" size="4"> <md-button class="md-icon-button" v-on:click="move_student_to_position(user)"><i class="material-icons">redo</i></md-button> </md-table-cell>
 					</md-table-row>
+
+					<md-dialog-prompt :md-active.sync="prompt_notify" v-model="message" md-title="Skicka ett personligt meddelande" md-input-placeholder="Skriv meddelande..."
+				      md-confirm-text="Skicka" md-cancel-text="Avsluta" @md-confirm="notify(user)" @md-cancel="prompt_notify = false"/>
 				</span>
 
 				
