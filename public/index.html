@@ -38,7 +38,7 @@
 		                </button>
 		                <div v-on:click="redirect('/')" class="navbar-brand navbar-brand-centered" style="line-height: 1em; cursor: pointer;">Köer</div>
 		                <div v-on:click="redirect('/admin')" class="navbar-brand navbar-brand-centered" style="line-height: 1em; cursor: pointer;" v-if="profile !== null && profile.teacher">Administration</div>
-		                <div v-on:click="set_location('/login')" class="navbar-brand navbar-brand-centered" style="line-height: 1em; cursor: pointer;" v-if="profile == null">Logga in</div>
+		                <div v-on:click="redirect_login()" class="navbar-brand navbar-brand-centered" style="line-height: 1em; cursor: pointer;" v-if="profile == null">Logga in</div>
 		                <div v-on:click="set_location('/logout')" class="navbar-brand navbar-brand-centered" style="line-height: 1em; cursor: pointer;" v-else>Logga ut</div>
 		            </div>
 		        </div><!-- /.container-fluid -->

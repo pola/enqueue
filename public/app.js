@@ -29,6 +29,9 @@ const app = new Vue({
 		},
 		set_location(location) {
 			window.location = location;
+		},
+		redirect_login() {
+			window.location = '/login?returnTo=' + window.location.pathname;
 		}
 	}
 }).$mount('#app');
