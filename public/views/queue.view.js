@@ -283,6 +283,22 @@ Vue.component('route-queue', {
 				this.$router.push('/queues/');
 			}
 			
+		},
+		
+		purge() {
+			fetch('/api/queues/' + this.queue.id + '/queuing', {
+				method: 'DELETE'
+			});
+		},
+		
+		set_open(open) {
+			fetch('/api/queues/' + this.queue.id, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					open: open,
+				})
+			});
 		}
 	},
 	created() {
@@ -419,70 +435,10 @@ Vue.component('route-queue', {
          		return u.id === this.$root.$data.profile.id;
      		})
      	}
-
-
-	}, 
-
-	watch: {
-    	perform: function(event) {
-    		if (event === "broadcast_faculty"){
-    			this.promt_notify_faculty = true;
-    		}
-    		else if (event === "broadcast"){
-    			this.prompt_broadcast = true;
-    		}
-    		else if(event === "purge"){
-    			fetch('/api/queues/' + this.queue.id + '/queuing',{
-    				method: 'DELETE'
-    			}).then(res => {
-    				if (res.status !== 200) {
-						res.json().then(j => {
-							console.log(j);
-						});
-					}
-    			});
-    		}
-    		else if(event === "lock"){
-    			fetch('/api/queues/' + this.queue.id, {
-					method: 'PATCH',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						open: false,
-					})
-				}).then(res => {
-					console.log(res.status);
-	
-					if (res.status !== 200) {
-						res.json().then(j => {
-							console.log(j);
-						});
-					}
-				});
-    		}
-    		else if(event === "unlock"){
-    			fetch('/api/queues/' + this.queue.name, {
-					method: 'PATCH',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						open: true,
-					})
-				}).then(res => {
-					console.log(res.status);
-	
-					if (res.status !== 200) {
-						res.json().then(j => {
-							console.log(j);
-						});
-					}
-				});
-    		}
-    	}
-  	},
+	},
 
 	template: `
 <div class="container" v-if="queue">
-
-
 	<md-dialog-alert md-title="Meddelande" style="white-space: pre-line;" :md-active.sync="broadcast_active" :md-content="broadcast_message"
 		md-confirm-text="OK!" @md-closed="broadcast_active = false"/>
 
@@ -494,18 +450,11 @@ Vue.component('route-queue', {
 
 	<md-dialog-prompt :md-active.sync="promt_notify_faculty" v-model="message" md-title="Skicka ett meddelande till anställda" md-input-placeholder="Skriv meddelande..."
 		md-confirm-text="Skicka" md-cancel-text="Avsluta" @md-confirm="broadcast_faculty" @md-cancel="promt_notify_faculty = false"/>
-
-	<div class="row">
-		<div class="col-md-4" :class="{ 'text-danger': queue.open === false }"> 
-			<h2> <span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>  {{ queue.name }} </h2> 
-
-			<md-button v-if="is_assistant_in_queue === true" v-on:click="redirect('edit')" type="submit" class="md-primary"> Redigera kön </md-button>
-
-		</div>
-		<p class="col-md-8" style="white-space: pre-line;">{{ queue.description }}</p>
-	</div>
-	<div class="row">
-		<div class="col-md-2">
+	
+	<div class="md-layout md-gutter md-alignment-top">
+		<div class="md-layout-item md-xlarge-size-30 md-large-size-30 md-medium-size-30 md-small-size-30 md-xsmall-size-100">
+			<h2>Gå med i kön</h2>
+			
 			<div v-if="! $root.$data.profile">
 				<h4> För att kunna ställa dig i kön måste du logga in </h4>
 				<form novalidate @submit.prevent="login">
@@ -514,9 +463,11 @@ Vue.component('route-queue', {
 					</md-card-actions>
 				</form>
 			</div>
+			
 			<div v-else-if="blocked_by_whitelist">
 				<h4>Den här kön kan du inte ställa dig i.</h4>
 			</div>
+			
 			<div v-else>
 				<form novalidate >
 					<md-field>
@@ -545,19 +496,59 @@ Vue.component('route-queue', {
 						<md-button v-if="in_queue === false" :disabled="!queue.open" v-on:click="enqueue" type="submit" class="md-primary">Gå med i kön</md-button>
 					</span>
 				</md-card-actions>
-
-				<md-field>
-					<md-select name="dropdown" id="dropdown" v-model="perform" v-if="is_assistant_in_queue === true" placeholder="Alternativ">
-						<md-option value="broadcast">Broadcast</md-option>
-						<md-option value="broadcast_faculty">Broadcast till anställda</md-option>
-						<md-option value="purge">Töm kön</md-option>
-						<md-option v-if="queue.open" value="lock">Lås kön</md-option>
-						<md-option v-if="!queue.open" value="unlock">Öppna kön</md-option>
-					</md-select>
-				</md-field>
+				
+				<div v-if="is_assistant_in_queue">
+					<h2>Inställningar</h2>
+					
+					<md-button v-on:click="prompt_broadcast = true" :disabled="queue.queuing.length === 0">
+						<md-icon>message</md-icon>
+						Meddela köande
+					</md-button>
+					
+					<br />
+					
+					<md-button v-on:click="promt_notify_faculty = true">
+						<md-icon>message</md-icon>
+						Meddela assistenter
+					</md-button>
+					
+					<br />
+					
+					<md-button v-on:click="purge()" :disabled="queue.queuing.length === 0">
+						<md-icon>delete_sweep</md-icon>
+						Rensa kön
+					</md-button>
+					
+					<br />
+					
+					<md-button v-on:click="set_open(false)" v-if="queue.open">
+						<md-icon>lock</md-icon>
+						Lås kön
+					</md-button>
+					
+					<md-button v-on:click="set_open(true)" v-if="!queue.open">
+						<md-icon>lock_open</md-icon>
+						Öppna kön
+					</md-button>
+					
+					<br />
+					
+					<md-button v-on:click="redirect('edit')">
+						<md-icon>settings</md-icon>
+						Fler inställningar
+					</md-button>
+				</div>
 			</div>
 		</div>
-		<section  class="col-md-8 col-md-offset-2">
+		
+		<div class="md-layout-item md-xlarge-size-70 md-large-size-70 md-medium-size-70 md-small-size-70 md-xsmall-size-100">
+			<h1>
+				<span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>
+				{{ queue.name }}
+			</h1>
+			
+			<p style="white-space: pre-line;">{{ queue.description }}</p>
+			
 			<md-table md-card @md-selected="on_select">
 				<md-table-toolbar>
 				  	<md-table-row>
@@ -616,10 +607,8 @@ Vue.component('route-queue', {
 					<md-dialog-prompt :md-active.sync="prompt_notify" v-model="message" md-title="Skicka ett personligt meddelande" md-input-placeholder="Skriv meddelande..."
 				      md-confirm-text="Skicka" md-cancel-text="Avsluta" @md-confirm="notify(user)" @md-cancel="prompt_notify = false"/>
 				</span>
-
-				
 			</md-table>
-		</section>
+		</div>
 	</div>
 </div>
 	`
