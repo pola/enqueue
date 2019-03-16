@@ -353,169 +353,182 @@ Vue.component('route-edit', {
 <div class="container" v-if="queue !== null && colors !== null && existing_rooms !== null && is_assistant_in_queue">
 	<div class="row">
 		<div class="col-md-4" :class="{ 'text-danger': queue.open === false }"> 
-			<h2> <span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>  {{ this.queue.name }} </h2> 
+			<h1><span v-if="!queue.open" class="glyphicon glyphicon-lock"></span> Inställningar för {{ this.queue.name }} </h1> 
 		</div>
 	</div>
 
-	<form novalidate @submit.prevent="change_name">
-		<md-field>
-	    	<label>Ändra köns namn</label>
-	    	<md-textarea id="new_name" name="new_name" v-model="queue.name"></md-textarea>
-	    </md-field>
-	    <md-card-actions>
-	   		<md-button type="submit" class="md-primary">Genomför ändring</md-button>
-	   	</md-card-actions>
-	</form>
+	<md-card>
+		<md-card-content>
+			<form novalidate @submit.prevent="change_description">
+				<md-field>
+					<label>Namn</label>
+					<md-input type="text" id="new_name" name="new_name" v-model="queue.name" />
+				</md-field>
+			
+				<md-field>
+					<label>Beskrivning</label>
+					<md-textarea id="new_description" name="new_description" v-model="queue.description"></md-textarea>
+				</md-field>
+			
+				<md-switch v-model="queue.force_action">Kräv action</md-switch>
+				<md-switch v-model="queue.force_comment">Kräv kommentar</md-switch>
+		
+				<md-field>
+					<md-input type="datetime-local" v-model="selectedTime" />
+				</md-field>
+			
+				<md-card-actions>
+			   		<md-button type="submit" class="md-primary">Spara ändringar</md-button>
+			   	</md-card-actions>
+			</form>
+		</md-card-content>
+	</md-card>
+	
+	<br />
 
+	<md-card>
+		<md-card-header>
+	        <h2 class="md-title">Tillåtna salar</h2>
+	    </md-card-header>
+	    
+	    <md-card-content>
+			<p>Om inga anges kan studenterna sitta var som helst.</p>
+			
+			<form novalidate @submit.prevent="change_rooms">
+				<md-checkbox v-for="room in existing_rooms" v-model="clicked_rooms" v-on:change="change_room(room.id)" :key="room.id" :value="room.id">{{room.name}}</md-checkbox>
+			</form>
+		</md-card-content>
+    </md-card>
+	
+	<br />
+	
 	<!-- vy endast för lärare - lägg till och ta bort assistenter -->
-	<div v-if="$root.$data.profile.teacher === true">
-		<md-table md-card>
-		    <md-table-toolbar>
-		        <h1 class="md-title">Befintliga assistenter</h1>
-		    </md-table-toolbar>
+	<md-card v-if="$root.$data.profile.teacher">
+		<md-card-header>
+	        <h2 class="md-title">Assistenter</h2>
+	    </md-card-header>
+		
+		<md-card-content>
+			<form novalidate @submit.prevent="add_assistant" style="display: inline-flex;">
+				<md-field>
+					<label for="user_name_assistant">KTH-användarnamn</label>
+					<md-input type="text" id="user_name_assistant" v-model="user_name_assistant" />
+				</md-field>
 
-		    <md-table-row>
-		        <md-table-head>Användarnamn</md-table-head>
-		        <md-table-head>Namn</md-table-head>
-		        <md-table-head>Alternativ</md-table-head>
-		    </md-table-row>
+				<md-card-actions>
+					<md-button type="submit" class="md-primary">Lägg till assistent</md-button>
+				</md-card-actions>
+			</form>
+		
+			<md-table v-if="queue.assistants.length > 0">
+				<md-table-row>
+					<md-table-head>Användarnamn</md-table-head>
+					<md-table-head>Namn</md-table-head>
+					<md-table-head>Alternativ</md-table-head>
+				</md-table-row>
 
-		    <md-table-row v-for="assistant in queue.assistants" :key="assistant.id">
-		        <md-table-cell>{{ assistant.user_name }}</md-table-cell>
-		        <md-table-cell>{{ assistant.name }}</md-table-cell>
-		        <md-table-cell><md-button v-on:click="remove_assistant(assistant)" class="md-accent">Radera</md-button></md-table-cell>
-		    </md-table-row>
-	   	</md-table>
+				<md-table-row v-for="assistant in queue.assistants" :key="assistant.id">
+					<md-table-cell>{{ assistant.user_name }}</md-table-cell>
+					<md-table-cell>{{ assistant.name }}</md-table-cell>
+					<md-table-cell><md-button v-on:click="remove_assistant(assistant)" class="md-accent">Radera</md-button></md-table-cell>
+				</md-table-row>
+		   	</md-table>
+		</md-card-content>
+	</md-card>
+	
+	<br />
+	
+	<md-card>
+		<md-card-header>
+		    <h2 class="md-title">Vitlista</h2>
+		</md-card-header>
+		
+		<md-card-content>
+			<form novalidate @submit.prevent="add_student" style="display: inline-flex;">
+				<md-field>
+					<label for="user_name_student">KTH-användarnamn</label>
+					<md-input type="text" id="user_name_student" v-model="user_name_student" />
+				</md-field>
 
-	   	<br>
+				<md-card-actions>
+					<md-button type="submit" class="md-primary">Lägg till student</md-button>
+				</md-card-actions>
+			</form>
+		
+			<md-table v-if="queue.students.length > 0">
+				<md-table-row>
+					<md-table-head>Användarnamn</md-table-head>
+					<md-table-head>Namn</md-table-head>
+					<md-table-head>Alternativ</md-table-head>
+				</md-table-row>
 
-	   	<h4>Lägg till en ny assistent</h4>
-
-		<form novalidate @submit.prevent="add_assistant">
-			<md-field>
-				<label for="user_name_assistant">KTH-användarnamn</label>
-				<md-input type="text" id="user_name_assistant" v-model="user_name_assistant" />
-			</md-field>
-
-			<md-card-actions>
-				<md-button type="submit" class="md-primary">Lägg till assistent</md-button>
-			</md-card-actions>
-		</form>
-	</div>
-
-	<br>
-
-	<md-table md-card>
-	    <md-table-toolbar>
-	        <h1 class="md-title">Studenter i vitlistan</h1>
-	        <h4 class="md-title">Om listan är tom får alla gå med i kön</h4>
-
-	    </md-table-toolbar>
-
-	    <md-table-row>
-	        <md-table-head>Användarnamn</md-table-head>
-	        <md-table-head>Namn</md-table-head>
-	        <md-table-head>Alternativ</md-table-head>
-	    </md-table-row>
-
-	    <md-table-row v-for="student in queue.students" :key="student.id">
-	        <md-table-cell>{{ student.user_name }}</md-table-cell>
-	        <md-table-cell>{{ student.name }}</md-table-cell>
-	        <md-table-cell><md-button v-on:click="remove_student(student)" class="md-accent">Radera</md-button></md-table-cell>
-	    </md-table-row>
-   	</md-table>
-
-   	<br>
-
-   	<h4>Lägg till en ny student i vitlistan</h4>
-
-	<form novalidate @submit.prevent="add_student">
-		<md-field>
-			<label for="user_name_student">KTH-användarnamn</label>
-			<md-input type="text" id="user_name_student" v-model="user_name_student" />
-		</md-field>
-
-		<md-card-actions>
-			<md-button type="submit" class="md-primary">Lägg till student</md-button>
-		</md-card-actions>
-	</form>
-
-	<form novalidate @submit.prevent="change_description">
-		<md-field>
-	    	<label>Ändra beskrivning av kön</label>
-	    	<md-textarea id="new_description" name="new_description" v-model="queue.description"></md-textarea>
-	    </md-field>
-	    <md-card-actions>
-	   		<md-button type="submit" class="md-primary">Genomför ändring</md-button>
-	   	</md-card-actions>
-	</form>
-
-	<form novalidate @submit.prevent="change_rooms">
-	    <label>Ändra tillåtna salar (om inga anges kan studenterna sitta var som helst)</label>
-	    <br>
-
-	    <md-checkbox v-for="room in existing_rooms" v-model="clicked_rooms" v-on:change="change_room(room.id)" :key="room.id" :value="room.id">{{room.name}}</md-checkbox>
-
-	    <md-card-actions>
-	    	<md-button type="submit" class="md-primary">Genomför ändring</md-button>
-	    </md-card-actions>
-    </form>
-
-    <md-table md-card>
-		    <md-table-toolbar>
-		        <h1 class="md-title">Möjliga actions</h1>
-		    </md-table-toolbar>
-
-		    <md-table-row>
-		        <md-table-head>Action</md-table-head>
-		        <md-table-head>Färg</md-table-head>
-		        <md-table-head>Alternativ</md-table-head>
-		    </md-table-row>
-		    <md-table-row v-for="action in queue.actions" :key="action.id">
-		        <md-table-cell>{{ action.name }}</md-table-cell>
-		        <md-table-cell>{{ action.color }}</md-table-cell>
-		        <md-table-cell><md-button v-on:click="remove_action(action)" class="md-accent">Radera</md-button></md-table-cell>
-		    </md-table-row>
-	</md-table>
-
-	   	<br>
-
-	   	<h4>Lägg till en ny action</h4>
-
-		<form novalidate @submit.prevent="add_action">
-			<md-field>
-				<label for="action_name">Namn på action</label>
-				<md-input type="text" id="action_name" v-model="action_name" />
-			</md-field>
-
-			<md-field>
-				<label for="action_color">Färg på action</label>
-			    <md-select v-model="action_color" name="Color" id="action_color">
-           			<md-option v-for="color in colors" :value="color" :key="color">{{ color }}</md-option>
-           		</md-select>
-			</md-field>
-
-			<md-card-actions>
-				<md-button type="submit" class="md-primary">Lägg till action</md-button>
-			</md-card-actions>
-		</form>
-
-    <md-switch v-model="queue.force_action">Kräv action</md-switch>
-    <md-switch v-model="queue.force_comment">Kräv kommentar</md-switch>
-
-    <md-card-actions>
-		<md-button v-on:click="change_requirements" type="submit" class="md-primary">Genomför ändringar</md-button>
-	</md-card-actions>
-
-	<h4>Välj en dag och tid då kön automatiskt ska öppnas</h4>
-	<input class="form-control" type="text" v-model="selectedTime" placeholder="YYYY-MM-DD HH:MM" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}" required autofocus>
-	<md-button v-on:click="set_auto_open">Välj tid</md-button>
-
-
-    <md-card-actions>
-	    	<md-button v-on:click="delete_queue" type="submit" class="md-danger">Ta bort kön</md-button>
-	</md-card-actions>
+				<md-table-row v-for="student in queue.students" :key="student.id">
+					<md-table-cell>{{ student.user_name }}</md-table-cell>
+					<md-table-cell>{{ student.name }}</md-table-cell>
+					<md-table-cell><md-button v-on:click="remove_student(student)" class="md-accent">Radera</md-button></md-table-cell>
+				</md-table-row>
+		   	</md-table>
+		   	
+		   	<p v-else>
+		   		Vitlistan är tom; alla studenter kan ställa sig i kön.
+		   	</p>
+		</md-card-content>
+	</md-card>
     
+    <br />
+
+	<md-card>
+		<md-card-header>
+	        <h2 class="md-title">Actions</h2>
+	    </md-card-header>
+	    
+	    <md-card-content>
+			<form novalidate @submit.prevent="add_action" style="display: inline-flex;">
+				<md-field>
+					<label for="action_name">Namn på action</label>
+					<md-input type="text" id="action_name" v-model="action_name" />
+				</md-field>
+
+				<md-field>
+					<label for="action_color">Färg på action</label>
+					<md-select v-model="action_color" name="Color" id="action_color">
+		       			<md-option v-for="color in colors" :value="color" :key="color">{{ color }}</md-option>
+		       		</md-select>
+				</md-field>
+
+				<md-card-actions>
+					<md-button type="submit" class="md-primary">Lägg till action</md-button>
+				</md-card-actions>
+			</form>
+			
+			<md-table v-if="queue.actions.length > 0">
+				<md-table-row>
+				    <md-table-head>Action</md-table-head>
+				    <md-table-head>Färg</md-table-head>
+				    <md-table-head>Alternativ</md-table-head>
+				</md-table-row>
+				<md-table-row v-for="action in queue.actions" :key="action.id">
+				    <md-table-cell>{{ action.name }}</md-table-cell>
+				    <md-table-cell>{{ action.color }}</md-table-cell>
+				    <md-table-cell><md-button v-on:click="remove_action(action)" class="md-accent">Radera</md-button></md-table-cell>
+				</md-table-row>
+			</md-table>
+		</md-card-content>
+	</md-card>
+    
+    <br />
+
+	<md-card>
+		<md-card-header>
+	        <h2 class="md-title">Ta bort kön</h2>
+	    </md-card-header>
+	    
+	    <md-card-content>
+	    	<p>Om du tar bort kön försvinner den och all associerad statistik permanent.</p>
+	    	
+	    	<md-button v-on:click="delete_queue()" class="md-raised md-accent">Ta bort kön</md-button>
+	    </md-card-content>
+	</md-card>
 </div>
 	`
 });

@@ -291,13 +291,11 @@ Vue.component('route-queue', {
 			});
 		},
 		
-		set_open(open) {
+		toggle_open() {
 			fetch('/api/queues/' + this.queue.id, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					open: open,
-				})
+				body: JSON.stringify({ open: !this.queue.open })
 			});
 		}
 	},
@@ -500,43 +498,34 @@ Vue.component('route-queue', {
 				<div v-if="is_assistant_in_queue">
 					<h2>Inställningar</h2>
 					
-					<md-button v-on:click="prompt_broadcast = true" :disabled="queue.queuing.length === 0">
-						<md-icon>message</md-icon>
-						Meddela köande
-					</md-button>
-					
-					<br />
-					
-					<md-button v-on:click="promt_notify_faculty = true">
-						<md-icon>message</md-icon>
-						Meddela assistenter
-					</md-button>
-					
-					<br />
-					
-					<md-button v-on:click="purge()" :disabled="queue.queuing.length === 0">
-						<md-icon>delete_sweep</md-icon>
-						Rensa kön
-					</md-button>
-					
-					<br />
-					
-					<md-button v-on:click="set_open(false)" v-if="queue.open">
-						<md-icon>lock</md-icon>
-						Lås kön
-					</md-button>
-					
-					<md-button v-on:click="set_open(true)" v-if="!queue.open">
-						<md-icon>lock_open</md-icon>
-						Öppna kön
-					</md-button>
-					
-					<br />
-					
-					<md-button v-on:click="redirect('edit')">
-						<md-icon>settings</md-icon>
-						Fler inställningar
-					</md-button>
+					<md-list>
+						<md-list-item v-on:click="prompt_broadcast = true" :disabled="queue.queuing.length === 0">
+							<md-icon>message</md-icon>
+        					<span class="md-list-item-text">Meddela köande</span>
+						</md-list-item>
+						
+						<md-list-item v-on:click="promt_notify_faculty = true">
+							<md-icon>message</md-icon>
+        					<span class="md-list-item-text">Meddela assistenter</span>
+						</md-list-item>
+						
+						<md-list-item v-on:click="promt_notify_faculty = true" :disabled="queue.queuing.length === 0">
+							<md-icon>delete_sweep</md-icon>
+        					<span class="md-list-item-text">Rensa kön</span>
+						</md-list-item>
+						
+						<md-list-item v-on:click="toggle_open()">
+							<md-icon v-if="queue.open">lock</md-icon>
+        					<md-icon v-else>lock_open</md-icon>
+        					<span class="md-list-item-text" v-if="queue.open">Lås kön</span>
+        					<span class="md-list-item-text" v-else>Öppna kön</span>
+						</md-list-item>
+						
+						<md-list-item v-on:click="redirect('edit')">
+							<md-icon>settings</md-icon>
+        					<span class="md-list-item-text">Fler inställningar
+						</md-list-item>
+					</md-list>
 				</div>
 			</div>
 		</div>
