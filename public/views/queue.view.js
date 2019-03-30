@@ -31,11 +31,6 @@ Vue.component('route-queue', {
 		}
 	},
 	methods: {
-		login(){
-			window.location = '/login';
-			// TODO: skicka tillbaka till kön!
-		},
-
 		enqueue(){
 				fetch('/api/queues/' + this.queue.name + '/queuing', {
         			method: "POST",
@@ -271,8 +266,9 @@ Vue.component('route-queue', {
   			time = year + month + day + ' ' + hour + min + sec;
 
   			//moment(time, "YYYYMMDD HHMMSS").fromNow();
-
-  			return d.toLocaleString();
+			
+			return hour + ':' + min;
+  			//return d.toLocaleString();
       	},
 
 		redirect (url) {
@@ -451,152 +447,134 @@ Vue.component('route-queue', {
 	
 	<div class="md-layout md-gutter md-alignment-top">
 		<div class="md-layout-item md-xlarge-size-30 md-large-size-30 md-medium-size-30 md-small-size-30 md-xsmall-size-100">
-			<h2>Gå med i kön</h2>
-			
-			<div v-if="! $root.$data.profile">
-				<h4> För att kunna ställa dig i kön måste du logga in </h4>
-				<form novalidate @submit.prevent="login">
-					<md-card-actions>
-						<md-button type="submit" class="md-primary">Logga in</md-button>
-					</md-card-actions>
-				</form>
-			</div>
-			
-			<div v-else-if="blocked_by_whitelist">
-				<h4>Den här kön kan du inte ställa dig i.</h4>
-			</div>
-			
-			<div v-else>
-				<form novalidate >
-					<md-field>
-						<label for="location">Plats</label>
-						<md-input :disabled="$root.$data.location !== null" type="text" id="location" name="location" v-model="location" />
-					</md-field>
-
-					<md-field>
-						<label for="comment">Kommentar</label>
-						<md-input :required="queue.force_comment" type="text" id="comment" name="comment" v-model="comment" />
-					</md-field>
-
-					<div v-for="p_action in queue.actions">
-					<!--class="md-get-palette-color(green, A200)" -->
-						<md-radio v-model="action" :value="p_action.id" :class="'md-' + p_action.color"> {{ p_action.name }} </md-radio>
-					</div>
-				</form>
-
-				<md-card-actions>
-					<span v-if="in_queue === true">
-						<md-button v-on:click="receiving_help($root.$data
-						)" type="submit" class="md-primary">Får hjälp</md-button>
-						<md-button v-on:click="dequeue(($root.$data))" type="submit" class="md-primary">Lämna kön</md-button>
-					</span>
-					<span v-else>
-						<md-button v-if="in_queue === false" :disabled="!queue.open" v-on:click="enqueue" type="submit" class="md-primary">Gå med i kön</md-button>
-					</span>
-				</md-card-actions>
+			<md-card>
+				<md-card-header>
+					<h2 class="md-title">Gå med i kön</h2>
+				</md-card-header>
 				
-				<div v-if="is_assistant_in_queue">
-					<h2>Inställningar</h2>
+				<md-card-content>
+					<div v-if="!queue.open && !in_queue">
+						<div v-if="$root.$data.profile === null">
+							<p>Kön är stängd och du är inte inloggad.</p>
+							<md-button class="md-primary md-raised" v-on:click="$root.redirect_login()">Logga in</md-button>
+						</div>
+						
+						<p v-else>Kön är stängd.</p>
+					</div>
 					
+					<div v-else-if="$root.$data.profile === null">
+						<p>För att kunna ställa dig i kön måste du logga in.</p>
+						<md-button class="md-primary md-raised" v-on:click="$root.redirect_login()">Logga in</md-button>
+					</div>
+					
+					<div v-else-if="blocked_by_whitelist">
+						<p>Den här kön kan du inte ställa dig i.</p>
+					</div>
+					
+					<div v-else>
+						<form novalidate>
+							<md-field>
+								<label for="location">Plats</label>
+								<md-input :disabled="$root.$data.location !== null" type="text" id="location" name="location" v-model="location" />
+							</md-field>
+
+							<md-field>
+								<label for="comment">Kommentar</label>
+								<md-input :required="queue.force_comment" type="text" id="comment" name="comment" v-model="comment" />
+							</md-field>
+
+							<div v-for="p_action in queue.actions">
+								<!--class="md-get-palette-color(green, A200)" -->
+								<md-radio v-model="action" :value="p_action.id" :class="'md-' + p_action.color"> {{ p_action.name }} </md-radio>
+							</div>
+						</form>
+
+						<md-card-actions>
+							<span v-if="in_queue === true">
+								<md-button v-on:click="receiving_help($root.$data)" type="submit" class="md-primary">Får hjälp</md-button>
+								<md-button v-on:click="dequeue(($root.$data))" type="submit" class="md-accent">Lämna kön</md-button>
+							</span>
+							<span v-else>
+								<md-button v-if="in_queue === false" :disabled="!queue.open" v-on:click="enqueue" type="submit" class="md-primary">Gå med i kön</md-button>
+							</span>
+						</md-card-actions>
+					</div>
+				</md-card-content>
+			</md-card>
+			
+			<br />
+			
+			<md-card v-if="is_assistant_in_queue">
+				<md-card-header>
+					<h2 class="md-title">Inställningar</h2>
+				</md-card-header>
+				
+				<md-card-content>
 					<md-list>
 						<md-list-item v-on:click="prompt_broadcast = true" :disabled="queue.queuing.length === 0">
 							<md-icon>message</md-icon>
-        					<span class="md-list-item-text">Meddela köande</span>
+							<span class="md-list-item-text">Meddela köande</span>
 						</md-list-item>
 						
 						<md-list-item v-on:click="promt_notify_faculty = true">
 							<md-icon>message</md-icon>
-        					<span class="md-list-item-text">Meddela assistenter</span>
+							<span class="md-list-item-text">Meddela assistenter</span>
 						</md-list-item>
 						
 						<md-list-item v-on:click="promt_notify_faculty = true" :disabled="queue.queuing.length === 0">
 							<md-icon>delete_sweep</md-icon>
-        					<span class="md-list-item-text">Rensa kön</span>
+							<span class="md-list-item-text">Rensa kön</span>
 						</md-list-item>
 						
 						<md-list-item v-on:click="toggle_open()">
 							<md-icon v-if="queue.open">lock</md-icon>
-        					<md-icon v-else>lock_open</md-icon>
-        					<span class="md-list-item-text" v-if="queue.open">Lås kön</span>
-        					<span class="md-list-item-text" v-else>Öppna kön</span>
+							<md-icon v-else>lock_open</md-icon>
+							<span class="md-list-item-text" v-if="queue.open">Stäng kön</span>
+							<span class="md-list-item-text" v-else>Öppna kön</span>
 						</md-list-item>
 						
 						<md-list-item v-on:click="redirect('edit')">
 							<md-icon>settings</md-icon>
-        					<span class="md-list-item-text">Fler inställningar
+							<span class="md-list-item-text">Fler inställningar</span>
 						</md-list-item>
 					</md-list>
-				</div>
-			</div>
+				</md-card-content>
+			</md-card>
 		</div>
 		
 		<div class="md-layout-item md-xlarge-size-70 md-large-size-70 md-medium-size-70 md-small-size-70 md-xsmall-size-100">
 			<h1>
-				<span v-if="!queue.open" class="glyphicon glyphicon-lock"></span>
+				<md-icon v-if="!queue.open" class="md-accent">lock</md-icon>
 				{{ queue.name }}
 			</h1>
 			
 			<p style="white-space: pre-line;">{{ queue.description }}</p>
 			
-			<md-table md-card @md-selected="on_select">
-				<md-table-toolbar>
-				  	<md-table-row>
-					  	<md-table-head>#</md-table-head>
-					  	<md-table-head v-if="$root.$data.profile">Användarnamn</md-table-head>
-					  	<md-table-head>Plats</md-table-head>
-					  	<md-table-head>Action</md-table-head>
-					  	<md-table-head>Kommentar</md-table-head>
-					  	<md-table-head>Tid</md-table-head>
-					</md-table-row>
-		      	</md-table-toolbar>
-
-		      	<span v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id">
-					<md-table-row md-selectable="single" v-on:click="on_select(user)" v-bind:style = "[user.handlers.length === 0 ? {backgroundColor: 'white'} : {backgroundColor: 'blue'}], [user.bad_location === true ? {backgroundColor: 'red'} : {backgroundColor: 'white'}]" >
-						<md-table-cell> {{ index+1 }} </md-table-cell>
-						<md-table-cell v-if="user.profile.name !== null"> {{ user.profile.name }}</md-table-cell>
-						<md-table-cell> <span v-if="typeof user.location === 'string'"> {{ user.location }} </span> <span v-else> {{ user.location.name }}  </span></md-table-cell>
-						<md-table-cell> <span v-if="user.action" style="color: user.action.color;" > {{ user.action.name }} </span>  </md-table-cell>
-						<md-table-cell> <span v-if="user.comment"> {{ user.comment }} </span> </md-table-cell>
-						<md-table-cell>{{unix_to_time_ago(user.entered_at)}} </md-table-cell>
-					</md-table-row>
-					
-					<md-table-row v-if="student_clicked(user)">
-						<md-table-cell> <md-button class="md-icon-button" v-on:click="dequeue(user)"><i class="material-icons">highlight_off</i></md-button> </md-table-cell>
-						<md-table-cell> <md-button class="md-icon-button" v-on:click="prompt_notify = true"><i class="material-icons">drafts</i></md-button> </md-table-cell>
-						<md-table-cell> <md-button class="md-icon-button" v-on:click="receiving_help(user)"><i class="material-icons">check_circle_outline</i></md-button> </md-table-cell>
-						<md-table-cell> <md-button class="md-icon-button" v-on:click="bad_location(user)"><i class="material-icons">location_off</i></md-button> </md-table-cell>
-						<md-table-cell> <md-button class="md-icon-button" v-on:click="move_student_first(user)"><i class="material-icons">forward</i></md-button> </md-table-cell>
-						<md-table-cell> <input type="text" id="pos" name="pos" maxlength="4" size="4"> <md-button class="md-icon-button" v-on:click="move_student_to_position(user)"><i class="material-icons">redo</i></md-button> </md-table-cell>
-					</md-table-row>
-
-					<md-dialog-prompt :md-active.sync="prompt_notify" v-model="message" md-title="Skicka ett personligt meddelande" md-input-placeholder="Skriv meddelande..."
-				      md-confirm-text="Skicka" md-cancel-text="Avsluta" @md-confirm="notify(user)" @md-cancel="prompt_notify = false"/>
-
-				</span>
-
-				<span v-else-if="has_white_list_and_profile_in_it === true" v-for="(user, index) in profile_queuing" :key="user.profile.id">
-					<md-table-row  md-selectable="single" v-on:click="on_select(user)" v-bind:style = "[user.handlers.length === 0 ? {backgroundColor: 'white'} : {backgroundColor: 'red'}]">
-						<md-table-cell> {{ index+1 }} </md-table-cell>
-						<md-table-cell v-if="$root.$data.profile"> {{ user.profile.name }}</md-table-cell>
-						<md-table-cell> <span v-if="$root.$data.location === null"> {{ user.location }} </span> <span v-else> {{ $root.$data.location.name }}  </span></md-table-cell>
-						<md-table-cell> <span v-if="user.action"> {{ user.action.name }} </span>  </md-table-cell>
-						<md-table-cell> <span v-if="user.comment"> {{ user.comment }} </span> </md-table-cell>
-						<md-table-cell>{{ user.entered_at }} </md-table-cell>
-					</md-table-row>
-
-					<md-table-row v-if="student_clicked(user)">
-						<md-table-cell> <md-button class="md-icon-button" v-on:click="dequeue(user)"><i class="material-icons">highlight_off</i></md-button> </md-table-cell>
-						<md-table-cell> <md-button class="md-icon-button" v-on:click="notify(user)"><i class="material-icons">drafts</i></md-button> </md-table-cell>
-						<md-table-cell> <md-button class="md-icon-button" v-on:click="receiving_help(user)"><i class="material-icons">check_circle_outline</i></md-button> </md-table-cell>
-						<md-table-cell> <md-button class="md-icon-button" v-on:click="bad_location(user)"><i class="material-icons">location_off</i></md-button> </md-table-cell>
-						<md-table-cell> <md-button class="md-icon-button" v-on:click="move_student_first(user)"><i class="material-icons">forward</i></md-button> </md-table-cell>
-						<md-table-cell> <input type="text" id="pos" name="pos" maxlength="4" size="4"> <md-button class="md-icon-button" v-on:click="move_student_to_position(user)"><i class="material-icons">redo</i></md-button> </md-table-cell>
-					</md-table-row>
-
-					<md-dialog-prompt :md-active.sync="prompt_notify" v-model="message" md-title="Skicka ett personligt meddelande" md-input-placeholder="Skriv meddelande..."
-				      md-confirm-text="Skicka" md-cancel-text="Avsluta" @md-confirm="notify(user)" @md-cancel="prompt_notify = false"/>
-				</span>
-			</md-table>
+			<md-empty-state v-if="queue.queuing.length === 0" md-rounded md-icon="access_time" md-label="Den här kön är tom."></md-empty-state>
+			
+			<md-card v-else>
+				<md-card-content>
+					<md-table @md-selected="on_select">
+						<md-table-row>
+							<md-table-head md-numeric></md-table-head>
+							<md-table-head style="width: 30%;">Namn</md-table-head>
+							<md-table-head style="width: 30%;">Tid</md-table-head>
+							<md-table-head style="width: 40%;">Kommentar</md-table-head>
+						</md-table-row>
+						
+						<md-table-row v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id" md-selectable="single" v-on:click="on_select(user)" v-bind:style="[user.handlers.length === 0 ? {backgroundColor: 'white'} : {backgroundColor: 'blue'}], [user.bad_location === true ? {backgroundColor: 'red'} : {backgroundColor: 'white'}]">
+							<md-table-cell md-numeric>{{ index+1 }}</md-table-cell>
+							<md-table-cell>
+								<md-badge v-if="user.action !== null" class="md-primary md-square" :md-content="user.action.name" />
+								<div v-if="user.profile.name !== null">{{ user.profile.name }}</div>
+								<span v-if="typeof user.location === 'string'"> {{ user.location }} </span> <span v-else> {{ user.location.name }} </span>
+							</md-table-cell>
+							<md-table-cell>{{unix_to_time_ago(user.entered_at)}} </md-table-cell>
+							<md-table-cell><span v-if="user.comment !== null"> {{ user.comment }} </span></md-table-cell>
+						</md-table-row>
+					</md-table>
+				</md-card-content>
+			</md-card>
 		</div>
 	</div>
 </div>
