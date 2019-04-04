@@ -184,7 +184,7 @@ exports.get_room = id => Room.findOne({ where: { id: id } });
 
 // ger alla tillgängliga rum och deras tillhörande datorer
 exports.get_rooms = () => new Promise((resolve, reject) => {
-	Room.findAll().then(rooms => {
+	Room.findAll({ order: [ ['name', 'ASC'] ] }).then(rooms => {
 		Computer.findAll().then(computers => {
 			const result = [];
 			
@@ -302,7 +302,7 @@ exports.get_computer = ip => Computer.findOne({
 });
 
 exports.get_actions = (queue) => new Promise((resolve, reject) => {
-	Action.findAll({ where: { queue_id: queue.id } }).then(actions => {
+	Action.findAll({ where: { queue_id: queue.id }, order: [ ['name', 'ASC'] ] }).then(actions => {
 		resolve(actions);
 	});
 });
