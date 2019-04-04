@@ -28,7 +28,7 @@ exports.setConnection = (c) => {
 	Queue = connection.define('queue', {
 		id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
 		name : Sequelize.STRING,
-		description: Sequelize.STRING,
+		description: Sequelize.TEXT,
 		open: Sequelize.BOOLEAN,
 		auto_open: Sequelize.BIGINT,
 		force_comment: Sequelize.BOOLEAN,
