@@ -462,6 +462,14 @@ Vue.component('route-queue', {
 						<p v-else>Kön är stängd.</p>
 					</div>
 					
+					<div v-else-if="queue.rooms.length > 0 && ($root.$data.location === null || !queue.rooms.map(x => x.id).includes($root.$data.location.room_id))">
+						<p>För att kunna ställa dig i kön måste du vara inloggad på en dator i någon av följande rum.</p>
+						
+						<ul>
+							<li v-for="room in queue.rooms">{{ room.name }}</li>
+						</ul>
+					</div>
+					
 					<div v-else-if="$root.$data.profile === null">
 						<p>För att kunna ställa dig i kön måste du logga in.</p>
 						<md-button class="md-primary md-raised" v-on:click="$root.redirect_login()">Logga in</md-button>
