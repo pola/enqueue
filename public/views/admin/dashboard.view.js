@@ -74,82 +74,92 @@ Vue.component('route-admin-dashboard', {
 	},
 	template: `
 	<div class="text-box col-md-4 col-md-offset-4">
-		<md-table md-card>
-	      <md-table-toolbar>
-	        <h1 class="md-title">Befintliga lärare</h1>
-	      </md-table-toolbar>
+		<md-card>
+			<md-card-header>
+			    <h2 class="md-title">Lärare</h2>
+			</md-card-header>
+			
+			<md-card-content>
+				<form novalidate @submit.prevent="add_teacher" style="display: inline-flex;">
+					<md-field>
+						<label for="user_name">KTH-användarnamn</label>
+						<md-input type="text" id="user_name" v-model="user_name" />
+					</md-field>
 
-	      <md-table-row>
-	        <md-table-head>Användarnamn</md-table-head>
-	        <md-table-head>Namn</md-table-head>
-	        <md-table-head>Alternativ</md-table-head>
-	      </md-table-row>
+					<md-card-actions>
+						<md-button type="submit" class="md-primary">Lägg till lärare</md-button>
+					</md-card-actions>
+				</form>
+				
+				<md-table>
+				  <md-table-row>
+					<md-table-head>Användarnamn</md-table-head>
+					<md-table-head>Namn</md-table-head>
+					<md-table-head>Alternativ</md-table-head>
+				  </md-table-row>
 
-	      <md-table-row v-for="teacher in teachers" :key="teacher.id">
-	        <md-table-cell>{{ teacher.user_name }}</md-table-cell>
-	        <md-table-cell>{{ teacher.name }}</md-table-cell>
-	        <md-table-cell><md-button v-if="teacher.id !== $root.$data.profile.id" v-on:click="remove_teacher(teacher)" class="md-accent">Radera</md-button></md-table-cell>
-	      </md-table-row>
-   		</md-table>
+				  <md-table-row v-for="teacher in teachers" :key="teacher.id">
+					<md-table-cell>{{ teacher.user_name }}</md-table-cell>
+					<md-table-cell>{{ teacher.name }}</md-table-cell>
+					<md-table-cell><md-button v-if="teacher.id !== $root.$data.profile.id" v-on:click="remove_teacher(teacher)" class="md-accent">Radera</md-button></md-table-cell>
+				  </md-table-row>
+		   		</md-table>
+		   	</md-card-content>
+		</md-card>
+		
+		<br />
 
+		<md-card>
+			<md-card-header>
+				<h2 class="md-title">Skapa ny kö</h2>
+			</md-card-header>
+			
+			<md-card-content>
+				<form novalidate @submit.prevent="add_queue" style="display: inline-flex;">
+					<md-field>
+						<label for="queue_name">Namn</label>
+						<md-input type="text" id="queue_name" name="queue_name" v-model="queue_name" />
+					</md-field>
 
-		<h1>Lägg till en ny lärare</h1>
+					<md-card-actions>
+						<md-button type="submit" class="md-primary">Lägg till kö</md-button>
+					</md-card-actions>
+				</form>
+			</md-card-content>
+		</md-card>
+		
+		<br />
 
-		<form novalidate @submit.prevent="add_teacher">
-			<md-field>
-				<label for="user_name">KTH-användarnamn</label>
-				<md-input type="text" id="user_name" v-model="user_name" />
-			</md-field>
+		<md-card>
+			<md-card-header>
+			    <h2 class="md-title">Terminalsalar</h2>
+			</md-card-header>
+		
+			<md-card-content>
+				<form novalidate @submit.prevent="add_room" style="display: inline-flex;">
+					<md-field>
+						<label for="room_name">Namn</label>
+						<md-input type="text" id="room_name" v-model="room_name" />
+					</md-field>
 
-			<md-card-actions>
-				<md-button type="submit" class="md-primary">Lägg till lärare</md-button>
-			</md-card-actions>
-		</form>
+					<md-card-actions>
+						<md-button type="submit" class="md-primary">Lägg till sal</md-button>
+					</md-card-actions>
+				</form>
+				
+				<md-table>
+				  <md-table-row>
+					<md-table-head>Namn</md-table-head>
+					<md-table-head>Alternativ</md-table-head>
+				  </md-table-row>
 
-
-		<h1>Lägg till en ny kö</h1>
-
-		<form novalidate @submit.prevent="add_queue">
-			<md-field>
-				<label for="queue_name">Namn</label>
-				<md-input type="text" id="queue_name" name="queue_name" v-model="queue_name" />
-			</md-field>
-
-			<md-card-actions>
-				<md-button type="submit" class="md-primary">Lägg till kö</md-button>
-			</md-card-actions>
-		</form>
-
-		<md-table md-card>
-	      <md-table-toolbar>
-	        <h1 class="md-title">Skolans datorsalar</h1>
-	      </md-table-toolbar>
-
-	      <md-table-row>
-	        <md-table-head>Namn</md-table-head>
-	        <md-table-head>Alternativ</md-table-head>
-	      </md-table-row>
-
-	      <md-table-row v-for="room in rooms" :key="room.id">
-	        <md-table-cell>{{ room.name }}</md-table-cell>
-	        <md-table-cell><md-button v-on:click="remove_room(room)" class="md-accent">Radera</md-button></md-table-cell>
-	      </md-table-row>
-   		</md-table>
-
-
-		<h1>Lägg till en ny sal</h1>
-
-		<form novalidate @submit.prevent="add_room">
-			<md-field>
-				<label for="room_name">Salens namn</label>
-				<md-input type="text" id="room_name" v-model="room_name" />
-			</md-field>
-
-			<md-card-actions>
-				<md-button type="submit" class="md-primary">Lägg till sal</md-button>
-			</md-card-actions>
-		</form>
-
+				  <md-table-row v-for="room in rooms" :key="room.id">
+					<md-table-cell>{{ room.name }}</md-table-cell>
+					<md-table-cell><md-button v-on:click="remove_room(room)" class="md-accent">Radera</md-button></md-table-cell>
+				  </md-table-row>
+		   		</md-table>
+		   	</md-card-content>
+		</md-card>
 	</div>
 	`
 });

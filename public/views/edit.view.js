@@ -24,19 +24,35 @@ Vue.component('route-edit', {
 			// TODO: skicka tillbaka till kön!
 		},
 
-		change_description(){
+		update_settings() {
 			fetch('/api/queues/' + this.queue.id, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
+					name: this.queue.name,
 					description: this.queue.description
 				})
 			}).then(res => {
-				console.log(res.status);
-				
 				if (res.status !== 200) {
 					res.json().then(j => {
-						console.log(j);
+						alert(j);
+					});
+				}
+			});
+		},
+
+		update_force() {
+			fetch('/api/queues/' + this.queue.id, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					force_action: this.queue.force_action,
+					force_comment: this.queue.force_comment
+				})
+			}).then(res => {
+				if (res.status !== 200) {
+					res.json().then(j => {
+						alert(j);
 					});
 				}
 			});
@@ -248,25 +264,6 @@ Vue.component('route-edit', {
 			});
 		},
 
-		change_requirements(){
-			fetch('/api/queues/' + this.queue.id, {
-				method: 'PATCH',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					force_comment: this.queue.force_comment,
-					force_action: this.queue.force_action
-				})
-			}).then(res => {
-				console.log(res.status);
-				
-				if (res.status !== 200) {
-					res.json().then(j => {
-						console.log(j);
-					});
-				}
-			});
-		},
-
 		set_auto_open(){
 			const dt = this.selectedTime.split(/[ \-:]/);
 			const ts = new Date(parseInt(dt[0]), parseInt(dt[1]) - 1, parseInt(dt[2]), parseInt(dt[3]), parseInt(dt[4])).getTime();
@@ -359,7 +356,7 @@ Vue.component('route-edit', {
 
 	<md-card>
 		<md-card-content>
-			<form novalidate @submit.prevent="change_description">
+			<form novalidate @submit.prevent="update_settings">
 				<md-field>
 					<label>Namn</label>
 					<md-input type="text" id="new_name" name="new_name" v-model="queue.name" />
@@ -369,11 +366,9 @@ Vue.component('route-edit', {
 					<label>Beskrivning</label>
 					<md-textarea id="new_description" name="new_description" v-model="queue.description"></md-textarea>
 				</md-field>
-			
-				<md-switch v-model="queue.force_action">Kräv action</md-switch>
-				<md-switch v-model="queue.force_comment">Kräv kommentar</md-switch>
 		
 				<md-field>
+					<label>Datum och tid för automatisk upplåsning</label>
 					<md-input type="datetime-local" v-model="selectedTime" />
 				</md-field>
 			
@@ -381,6 +376,15 @@ Vue.component('route-edit', {
 			   		<md-button type="submit" class="md-primary">Spara ändringar</md-button>
 			   	</md-card-actions>
 			</form>
+		</md-card-content>
+	</md-card>
+	
+	<br />
+	
+	<md-card>
+		<md-card-content>
+			<md-switch v-model="queue.force_action" @change="update_force();">Kräv action</md-switch>
+			<md-switch v-model="queue.force_comment" @change="update_force();">Kräv kommentar</md-switch>
 		</md-card-content>
 	</md-card>
 	
@@ -416,7 +420,7 @@ Vue.component('route-edit', {
 				</md-field>
 
 				<md-card-actions>
-					<md-button type="submit" class="md-primary">Lägg till assistent</md-button>
+					<md-button type="submit" class="md-primary" :disabled="user_name_assistant === null || user_name_assistant.length === 0">Lägg till assistent</md-button>
 				</md-card-actions>
 			</form>
 		
@@ -451,7 +455,7 @@ Vue.component('route-edit', {
 				</md-field>
 
 				<md-card-actions>
-					<md-button type="submit" class="md-primary">Lägg till student</md-button>
+					<md-button type="submit" class="md-primary" :disabled="user_name_student === null || user_name_student.length === 0">Lägg till student</md-button>
 				</md-card-actions>
 			</form>
 		
@@ -486,18 +490,18 @@ Vue.component('route-edit', {
 			<form novalidate @submit.prevent="add_action" style="display: inline-flex;">
 				<md-field>
 					<label for="action_name">Namn på action</label>
-					<md-input type="text" id="action_name" v-model="action_name" />
+					<md-input type="text" id="action_name" v-model="action_name" required />
 				</md-field>
 
 				<md-field>
 					<label for="action_color">Färg på action</label>
-					<md-select v-model="action_color" name="Color" id="action_color">
+					<md-select v-model="action_color" name="Color" id="action_color" required>
 		       			<md-option v-for="color in colors" :value="color" :key="color">{{ color }}</md-option>
 		       		</md-select>
 				</md-field>
 
 				<md-card-actions>
-					<md-button type="submit" class="md-primary">Lägg till action</md-button>
+					<md-button type="submit" class="md-primary" :disabled="action_name === null || action_name.length === 0 || action_color === null">Lägg till action</md-button>
 				</md-card-actions>
 			</form>
 			

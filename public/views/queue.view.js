@@ -475,12 +475,13 @@ Vue.component('route-queue', {
 						<form novalidate>
 							<md-field>
 								<label for="location">Plats</label>
-								<md-input :disabled="$root.$data.location !== null" type="text" id="location" name="location" v-model="location" />
+								<md-input v-if="$root.$data.location === null" id="location" type="text" v-model="location" required />
+								<md-input v-else type="text" :placeholder="$root.$data.location.name" disabled style="background: #eeeeee;" />
 							</md-field>
 
 							<md-field>
 								<label for="comment">Kommentar</label>
-								<md-input :required="queue.force_comment" type="text" id="comment" name="comment" v-model="comment" />
+								<md-input :required="queue.force_comment" type="text" id="comment" v-model="comment" />
 							</md-field>
 
 							<div v-for="p_action in queue.actions">
@@ -495,7 +496,7 @@ Vue.component('route-queue', {
 								<md-button v-on:click="dequeue(($root.$data))" type="submit" class="md-accent">Lämna kön</md-button>
 							</span>
 							<span v-else>
-								<md-button v-if="in_queue === false" :disabled="!queue.open" v-on:click="enqueue" type="submit" class="md-primary">Gå med i kön</md-button>
+								<md-button v-if="in_queue === false" :disabled="!queue.open || (queue.force_comment && (comment === null || comment.length === 0)) || (queue.force_action && action === null)" v-on:click="enqueue" type="submit" class="md-primary">Gå med i kön</md-button>
 							</span>
 						</md-card-actions>
 					</div>
@@ -550,9 +551,7 @@ Vue.component('route-queue', {
 			
 			<p style="white-space: pre-line;">{{ queue.description }}</p>
 			
-			<md-empty-state v-if="queue.queuing.length === 0" md-rounded md-icon="access_time" md-label="Den här kön är tom."></md-empty-state>
-			
-			<md-card v-else>
+			<md-card v-if="queue.queuing.length > 0">
 				<md-card-content>
 					<md-table @md-selected="on_select">
 						<md-table-row>
