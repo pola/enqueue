@@ -218,9 +218,13 @@ Vue.component('route-edit', {
 			fetch('/api/queues/'+ this.queue.id +'/actions', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ name: this.action_name, color: this.action_color })
+				body: JSON.stringify({
+					name: this.action_name,
+					color: this.action_color
+				})
 			}).then(res => {
-				console.log(res.status);
+				this.action_name = null;
+				this.action_color = null;
 				
 				if (res.status !== 201) {
 					res.json().then(j => {
@@ -246,28 +250,9 @@ Vue.component('route-edit', {
 			});
 		},
 
-		change_name(){
-			fetch('/api/queues/' + this.queue.id, {
-				method: 'PATCH',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					name: this.queue.name
-				})
-			}).then(res => {
-				console.log(res.status);
-				
-				if (res.status !== 200) {
-					res.json().then(j => {
-						console.log(j);
-					});
-				} 
-			});
-		},
-
 		set_auto_open(){
 			const dt = this.selectedTime.split(/[ \-:]/);
 			const ts = new Date(parseInt(dt[0]), parseInt(dt[1]) - 1, parseInt(dt[2]), parseInt(dt[3]), parseInt(dt[4])).getTime();
-			console.log(ts);
 			
 			fetch('/api/queues/' + this.queue.id, {
 				method: 'PATCH',
