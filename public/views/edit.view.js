@@ -63,8 +63,6 @@ Vue.component('route-edit', {
 				fetch('/api/queues/'+ this.queue.name +'/rooms/' + room_id, {
 					method: 'DELETE'
 				}).then(res => {
-					console.log(res.status);
-					
 					if (res.status !== 200) {
 						res.json().then(j => {
 							console.log(j);
@@ -79,8 +77,6 @@ Vue.component('route-edit', {
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ room_id: room_id })
 				}).then(res => {
-					console.log(res.status);
-					
 					if (res.status !== 201) {
 						res.json().then(j => {
 							console.log(j);
@@ -122,8 +118,6 @@ Vue.component('route-edit', {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ name: this.action_name, color: this.action_color })
 			}).then(res => {
-				console.log(res.status);
-	
 				if (res.status !== 201) {
 					res.json().then(j => {
 						console.log(j);
@@ -137,7 +131,6 @@ Vue.component('route-edit', {
 		},
 
 		delete_queue(){
-			console.log("delete");
 			fetch('/api/queues/' + this.queue.id, {
 				method: 'DELETE'
 			}).then(res => {
@@ -146,15 +139,11 @@ Vue.component('route-edit', {
 		},
 
 		add_assistant(){
-			console.log("add assistant");
-
 			fetch('/api/queues/'+ this.queue.id +'/assistants', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ user_name: this.user_name_assistant }) // mpola, jark etc.
 			}).then(res => {
-				console.log(res.status);
-				
 				if (res.status !== 201) {
 					res.json().then(j => {
 						console.log(j);
@@ -169,8 +158,6 @@ Vue.component('route-edit', {
 			fetch('/api/queues/' + this.queue.id + '/assistants/' + assistant.id, {
 				method: 'DELETE'
 			}).then(res => {
-				console.log(res.status);
-				
 				if (res.status !== 200) {
 					res.json().then(j => {
 						console.log(j);
@@ -185,8 +172,6 @@ Vue.component('route-edit', {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ user_name: this.user_name_student }) // mpola, jark etc.
 			}).then(res => {
-				console.log(res.status);
-				
 				if (res.status !== 201) {
 					res.json().then(j => {
 						console.log(j);
@@ -202,8 +187,6 @@ Vue.component('route-edit', {
 			fetch('/api/queues/' + this.queue.id + '/students/' + student.id, {
 				method: 'DELETE'
 			}).then(res => {
-				console.log(res.status);
-				
 				if (res.status !== 200) {
 					res.json().then(j => {
 						console.log(j);
@@ -213,8 +196,6 @@ Vue.component('route-edit', {
 		},
 
 		add_action (){
-			console.log("add action");
-
 			fetch('/api/queues/'+ this.queue.id +'/actions', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -234,14 +215,10 @@ Vue.component('route-edit', {
 			});
 		},
 
-		remove_action(action){
-			console.log("remove action");
-
+		remove_action(action) {
 			fetch('/api/queues/'+ this.queue.id +'/actions/' + action.id, {
 				method: 'DELETE'
 			}).then(res => {
-				console.log(res.status);
-				
 				if (res.status !== 200) {
 					res.json().then(j => {
 						console.log(j);

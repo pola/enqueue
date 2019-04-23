@@ -49,7 +49,6 @@ Vue.component('route-queue', {
 		},
 
 		dequeue(student){
-			console.log(student);
 			fetch('/api/queues/' + this.queue.name + '/queuing/' + student.profile.id, {
         		method: "DELETE"
     		}).then(res => {
@@ -63,8 +62,8 @@ Vue.component('route-queue', {
 
 		receiving_help(student){
 
-		const profile = this.queue.queuing.find(profile => profile.id === student.id);
-		console.log(profile.handlers);
+			const profile = this.queue.queuing.find(profile => profile.id === student.id);
+		
 			for (i = 0; i < profile.handlers.length; i ++){
 				const handler = profile.handlers[i];
 				if (handler.id === this.$root.$data.profile.id){
@@ -73,14 +72,10 @@ Vue.component('route-queue', {
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ is_handling: false }) // använd false för att markera att man inte längre hjälper till
 					}).then(res => {
-						console.log(res.status);
-			
 						if (res.status !== 200) {
 							res.json().then(j => {
 								console.log(j);
 							});
-						} else {
-							console.log("får inte hjälp");
 						}
 					});
 					return;
@@ -92,14 +87,10 @@ Vue.component('route-queue', {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ is_handling: true }) // använd false för att markera att man inte längre hjälper till
 			}).then(res => {
-				console.log(res.status);
-	
 				if (res.status !== 200) {
 					res.json().then(j => {
 						console.log(j);
 					});
-				} else {
-					console.log("får hjälp");
 				}
 			});
 		},
@@ -136,14 +127,11 @@ Vue.component('route-queue', {
       	},
 
       	move_student_first(student) {
-      		console.log(student.profile.id);
 			fetch('/api/queues/' + this.queue.name + '/queuing/' + student.profile.id, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ move_after: null })
 			}).then(res => {
-				console.log(res.status);
-				
 				if (res.status !== 200) {
 					res.json().then(j => {
 						console.log(j);
@@ -155,7 +143,6 @@ Vue.component('route-queue', {
       	move_student_to_position(student) {
 
       		var new_position = parseInt(document.getElementById("pos").value);
-      		console.log(student);
 
       		if (new_position > this.queue.queuing.length || new_position < 1 || isNaN(new_position)) {
       			alert("Positionen du valt är inte giltig");
@@ -170,8 +157,6 @@ Vue.component('route-queue', {
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ move_after: student.student_before.profile.id })
 				}).then(res => {
-					console.log(res.status);
-		
 					if (res.status !== 200) {
 						res.json().then(j => {
 							console.log(j);
@@ -220,8 +205,6 @@ Vue.component('route-queue', {
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ bad_location: false }) 
 				}).then(res => {
-					console.log(res.status);
-					
 					if (res.status !== 200) {
 						res.json().then(j => {
 							console.log(j);
@@ -229,14 +212,11 @@ Vue.component('route-queue', {
 					}
 				});
       		} else {
-      			console.log(student.profile.id);
       			fetch('/api/queues/'+ this.queue.name +'/queuing/' + student.profile.id, {
 					method: 'PATCH',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ bad_location: true }) 
 				}).then(res => {
-					console.log(res.status);
-					
 					if (res.status !== 200) {
 						res.json().then(j => {
 							console.log(j);
