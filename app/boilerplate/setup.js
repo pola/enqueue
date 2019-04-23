@@ -24,7 +24,11 @@ const config = require('../config');
 module.exports = () => {
 	const app = express(); // Creates express app
 	const httpServer = http.Server(app); // Express usually does this for us, but socket.io needs the httpServer directly
-	const io = require('socket.io').listen(httpServer); // Creates socket.io app
+	const io = require('socket.io')(httpServer, {
+		timeout: 5000,
+		pingInterval: 5000,
+		pingTimeout: 3000
+	});
 
 	// ORM (Sequelize)
 	const sequelize = new Sequelize(config.mysql.database, config.mysql.username, config.mysql.password, {
