@@ -259,16 +259,60 @@ Vue.component('route-edit', {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ auto_open: ts })
 			}).then(res => {
-				console.log(res.status);
-				
 				if (res.status !== 200) {
 					res.json().then(j => {
 						console.log(j);
 					});
 				}
 			});
-		}	
+		},
+		
+		fetch_queue() {
+			fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
+				this.queue = queue;
+			
+				if (queue.rooms.length > 0){
+					this.update_clicked_rooms();
+				}
+			
+				if (queue.auto_open !== null) {
+					this.update_auto_open();
+				}
+			});
+		},
+		
+		socket_handle_update_queue(data) {
+			for (var k of Object.keys(data.changes)) {
+   				this.queue[k] = data.changes[k];
+   				
+   				if (k === 'rooms') {
+   					this.update_clicked_rooms();
+   				} else if (k === 'auto_open') {
+					this.update_auto_open();
+				}
+			}
+		}
+	},
+	
+	beforeDestroy() {
+		this.$root.$data.socket.removeListener('connect', this.fetch_queue);
+		this.$root.$data.socket.removeListener('update_queue', this.socket_handle_update_queue);
+	},
 
+	created() {
+		this.$root.$data.socket.on('connect', this.fetch_queue);
+		this.$root.$data.socket.on('update_queue', this.socket_handle_update_queue);
+		
+		this.fetch_queue();
+		
+		fetch('/api/colors').then(res => res.json()).then(colors => {
+			this.colors = colors;
+		});
+
+		fetch('/api/rooms').then(res => res.json()).then(rooms => {
+			this.existing_rooms = rooms;
+			this.update_clicked_rooms();
+		});
 	},
 
 	computed: {
@@ -294,41 +338,6 @@ Vue.component('route-edit', {
 			}
 			return false;
 		}
-	}, 
-
-	created() {
-		fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
-			this.queue = queue;
-			
-			if (queue.rooms.length > 0){
-				this.update_clicked_rooms();
-			}
-			
-			if (queue.auto_open !== null) {
-				this.update_auto_open();
-			}
-		});
-
-		fetch('/api/colors').then(res => res.json()).then(colors => {
-			this.colors = colors;
-		});
-
-		fetch('/api/rooms').then(res => res.json()).then(rooms => {
-			this.existing_rooms = rooms;
-			this.update_clicked_rooms();
-		});
-
-		this.$root.$data.socket.on('update_queue', data => {
-			for (var k of Object.keys(data.changes)) {
-   				this.queue[k] = data.changes[k];
-   				
-   				if (k === 'rooms') {
-   					this.update_clicked_rooms();
-   				} else if (k === 'auto_open') {
-					this.update_auto_open();
-				}
-			}
-		});
 	},
 
 	template: `

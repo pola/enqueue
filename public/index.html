@@ -39,6 +39,10 @@
 				<li v-on:click="redirect_login()" class="navbar-brand navbar-brand-centered" style="line-height: 1em; cursor: pointer;" v-if="profile == null">Logga in</li>
 				<li v-on:click="set_location('/logout')" class="navbar-brand navbar-brand-centered" style="line-height: 1em; cursor: pointer;" v-else>Logga ut</li>
 			</ul>
+			
+			<md-snackbar md-position="center" :md-active="!socket_connected" md-persistent>
+				<span>Enqueue är inte ansluten till nätverket. Försöker återansluta...</span>
+			</md-snackbar>
 		</div>
 		
 		<script src="/socket.io/socket.io.js"></script>

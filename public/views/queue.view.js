@@ -293,18 +293,19 @@ Vue.component('route-queue', {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ open: !this.queue.open })
 			});
-		}
-	},
-	created() {
-		fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
-			this.queue = queue;
-			if (this.$root.$data.location !== null){
-				this.location = this.$root.$data.location.name;
-			}
-		});
-
+		},
+		
+		fetch_queue() {
+			fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
+				this.queue = queue;
+				if (this.$root.$data.location !== null){
+					this.location = this.$root.$data.location.name;
+				}
+			});
+		},
+		
 		// ändrar data om en kö (inklusive t.ex. queuing-listan)
-		this.$root.$data.socket.on('update_queue', data => {
+		socket_handle_update_queue(data) {
 			if (data.queue !== this.queue.id) {
 				return;
 			}
@@ -312,10 +313,10 @@ Vue.component('route-queue', {
 			for (var k of Object.keys(data.changes)) {
    				this.queue[k] = data.changes[k];
 			}
-		});
-
+		},
+		
 		// ändrar data om en specifik köande student inuti queuing-listan
-		this.$root.$data.socket.on('update_queue_queuing_student', data => {
+		socket_handle_update_queue_queuing_student(data) {
 			if (data.queue !== this.queue.id) {
 				return;
 			}
@@ -329,25 +330,43 @@ Vue.component('route-queue', {
    					break;
    				}
 			}
-		});
-
+		},
+		
 		// tar emot ett broadcastmeddelande för en kö
-		this.$root.$data.socket.on('broadcast', data => {
+		socket_handle_broadcast(data) {
 			if (data.queue !== this.queue.id) {
 				return;
 			}
 			this.broadcast_active = true;
 			this.broadcast_message = data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>';
-		});
-
+		},
+		
 		// tar emot ett broadcastmeddelande för en kö
-		this.$root.$data.socket.on('notify', data => {
+		socket_handle_notify(data) {
 			if (data.queue !== this.queue.id) {
 				return;
 			}			
 			this.notify_active = true;
 			this.notification_message = 'Personligt meddelande:\n' + data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>';
-		});
+		}
+	},
+	
+	beforeDestroy() {
+		this.$root.$data.socket.removeListener('connect', this.fetch_queue);
+		this.$root.$data.socket.removeListener('update_queue', this.socket_handle_update_queue);
+		this.$root.$data.socket.removeListener('update_queue_queuing_student', this.socket_handle_update_queue_queuing_student);
+		this.$root.$data.socket.removeListener('broadcast', this.socket_handle_broadcast);
+		this.$root.$data.socket.removeListener('notify', this.socket_handle_notify);
+	},
+	
+	created() {
+		this.$root.$data.socket.on('connect', this.fetch_queue);
+		this.$root.$data.socket.on('update_queue', this.socket_handle_update_queue);
+		this.$root.$data.socket.on('update_queue_queuing_student', this.socket_handle_update_queue_queuing_student);
+		this.$root.$data.socket.on('broadcast', this.socket_handle_broadcast);		
+		this.$root.$data.socket.on('notify', this.socket_handle_notify);
+		
+		this.fetch_queue();
 	},
 
 	computed:{

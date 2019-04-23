@@ -22,7 +22,8 @@ const app = new Vue({
 		profile: null,
 		location: null,
 		assisting_in: null,
-		socket: io().connect()
+		socket: io().connect(),
+		socket_connected: false
 	},
 	methods: {
 		redirect(target) {
@@ -34,12 +35,22 @@ const app = new Vue({
 		},
 		redirect_login() {
 			window.location = '/login?returnTo=' + window.location.pathname;
+		},
+		fetch_me() {
+			fetch('/api/me').then(res => res.json()).then(me => {
+				app.$data.profile = me.profile;
+				app.$data.location = me.location;
+				app.$data.assisting_in = me.assisting_in;
+			});
 		}
 	}
 }).$mount('#app');
 
-fetch('/api/me').then(res => res.json()).then(me => {
-	app.$data.profile = me.profile;
-	app.$data.location = me.location;
-	app.$data.assisting_in = me.assisting_in;
-})
+app.$data.socket.on('connect', () => {
+	app.$data.socket_connected = true;
+	app.fetch_me();
+});
+
+app.$data.socket.on('disconnect', () => {
+	app.$data.socket_connected = false;
+});
