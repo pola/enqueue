@@ -564,15 +564,15 @@ Vue.component('route-queue', {
 						<md-table-row>
 							<md-table-head md-numeric></md-table-head>
 							<md-table-head style="width: 30%;">Namn</md-table-head>
-							<md-table-head style="width: 30%;">Tid</md-table-head>
-							<md-table-head style="width: 40%;">Kommentar</md-table-head>
+							<md-table-head style="width: 20%;">Tid</md-table-head>
+							<md-table-head style="width: 50%;">Kommentar</md-table-head>
 						</md-table-row>
 						
 						<md-table-row v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id" md-selectable="single" v-on:click="on_select(user)" v-bind:style="[user.handlers.length === 0 ? {backgroundColor: 'white'} : {backgroundColor: 'blue'}], [user.bad_location === true ? {backgroundColor: 'red'} : {backgroundColor: 'white'}]">
-							<md-table-cell md-numeric>{{ index+1 }}</md-table-cell>
+							<md-table-cell md-numeric> {{ index + 1 }} </md-table-cell>
 							<md-table-cell>
 								<md-badge v-if="user.action !== null" class="md-primary md-square" :md-content="user.action.name" />
-								<div v-if="user.profile.name !== null">{{ user.profile.name }}</div>
+								<div v-if="user.profile.name !== null" style="white-space: nowrap;">{{ user.profile.name }}</div>
 								<span v-if="typeof user.location === 'string'"> {{ user.location }} </span> <span v-else> {{ user.location.name }} </span>
 							</md-table-cell>
 							<md-table-cell>{{unix_to_time_ago(user.entered_at)}} </md-table-cell>
