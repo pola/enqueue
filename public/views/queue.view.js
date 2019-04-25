@@ -26,7 +26,8 @@ Vue.component('route-queue', {
 			prompt_broadcast: false,
 			prompt_notify: false,
 			promt_notify_faculty: false,
-			message: null
+			message: null,
+			open_menu: null
 			//modal_active: false
 		}
 	},
@@ -95,36 +96,19 @@ Vue.component('route-queue', {
 			});
 		},
 
-		on_select (item) {
+		toggle_menu(item) {
 			// håller koll på om en student är klickad på sen inte eller inte, och uppdaterar listan av "klickade" studenter
-			
+		
 			if (!this.is_assistant_in_queue){
 				return;
 			}
-
-			if (this.student_clicked(item) === true) {
-				for (i = 0; i < this.selected_students.length; i++){
-					if (item.id === this.selected_students[i].id) {
-						this.selected_students.splice(i,1);
-					}
-				}
-			} else {
-        		this.selected_students.push(item);
-			}
-      	},
-
-      	student_clicked(student){
-      		if (this.selected_students === []) {
-      			return false;
-      		} else {
-      			for (i = 0; i < this.selected_students.length; i++){
-					if (student.id === this.selected_students[i].id) {
-						return true;
-					}
-				}
-				return false;
-      		}
-      	},
+			
+			setTimeout(() => {
+				this.open_menu = item.profile.id === this.open_menu ? null : item.profile.id;
+			}, 50);
+			
+			//this.open_menu = item.profile.id === this.open_menu ? null : item.profile.id;
+		},
 
       	move_student_first(student) {
 			fetch('/api/queues/' + this.queue.name + '/queuing/' + student.profile.id, {
@@ -558,9 +542,11 @@ Vue.component('route-queue', {
 			
 			<p style="white-space: pre-line;">{{ queue.description }}</p>
 			
+			{{ open_menu }}
+			
 			<md-card v-if="queue.queuing.length > 0">
 				<md-card-content>
-					<md-table @md-selected="on_select">
+					<md-table @md-selected="on_select(user)">
 						<md-table-row>
 							<md-table-head md-numeric></md-table-head>
 							<md-table-head style="width: 30%;">Namn</md-table-head>
@@ -568,8 +554,18 @@ Vue.component('route-queue', {
 							<md-table-head style="width: 50%;">Kommentar</md-table-head>
 						</md-table-row>
 						
-						<md-table-row v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id" md-selectable="single" v-on:click="on_select(user)" v-bind:style="[user.handlers.length === 0 ? {backgroundColor: 'white'} : {backgroundColor: 'blue'}], [user.bad_location === true ? {backgroundColor: 'red'} : {backgroundColor: 'white'}]">
-							<md-table-cell md-numeric> {{ index + 1 }} </md-table-cell>
+						<md-table-row v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id" md-selectable="single" v-on:click="toggle_menu(user)" v-bind:style="[user.handlers.length === 0 ? {backgroundColor: 'white'} : {backgroundColor: 'blue'}], [user.bad_location === true ? {backgroundColor: 'red'} : {backgroundColor: 'white'}]">
+							<md-table-cell md-numeric>
+								{{ index + 1 }}
+								
+								<md-menu md-size="big" md-direction="top-start" md-close-on-select="false" md-close-on-click="false" :md-active="open_menu === user.profile.id">
+									<md-menu-content>
+										<md-menu-item>My Item 1</md-menu-item>
+										<md-menu-item>My Item 2</md-menu-item>
+										<md-menu-item>My Item 3</md-menu-item>
+									</md-menu-content>
+								</md-menu>
+							</md-table-cell>
 							<md-table-cell>
 								<md-badge v-if="user.action !== null" class="md-primary md-square" :md-content="user.action.name" />
 								<div v-if="user.profile.name !== null" style="white-space: nowrap;">{{ user.profile.name }}</div>
