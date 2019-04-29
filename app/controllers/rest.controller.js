@@ -612,7 +612,7 @@ const update_queue = (queue, changes, req, res, keys) => {
 		} else if (key === 'description') {
 			keys.shift();
 
-			if (typeof req.body.description !== 'string') {
+			if (req.body.description !== null && typeof req.body.description !== 'string') {
 				res.status(400);
 				res.json({
 					error: 6,
@@ -623,8 +623,8 @@ const update_queue = (queue, changes, req, res, keys) => {
 
 			changes.description = req.body.description;
 
-			if (changes.description.length === 0) {
-				changes.description = 0;
+			if (changes.description !== null && changes.description.length === 0) {
+				changes.description = null;
 			}
 
 			update_queue(queue, changes, req, res, keys);

@@ -2,6 +2,7 @@ Vue.component('route-edit', {
 	data() {
 		return {
 			queue: null,
+			name_new: null,
 			
 			colors: null,
 
@@ -29,7 +30,7 @@ Vue.component('route-edit', {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					name: this.queue.name,
+					name: this.name_new,
 					description: this.queue.description
 				})
 			}).then(res => {
@@ -255,6 +256,10 @@ Vue.component('route-edit', {
 				if (queue.auto_open !== null) {
 					this.update_auto_open();
 				}
+				
+				if (this.name_new === null) {
+					this.name_new = queue.name;
+				}
 			});
 		},
 		
@@ -330,7 +335,7 @@ Vue.component('route-edit', {
 			<form novalidate @submit.prevent="update_settings">
 				<md-field>
 					<label>Namn</label>
-					<md-input type="text" id="new_name" name="new_name" v-model="queue.name" />
+					<md-input type="text" id="name_new" name="name_new" v-model="name_new" />
 				</md-field>
 			
 				<md-field>
