@@ -430,6 +430,45 @@ Vue.component('route-queue', {
 	
 	<div class="md-layout md-gutter md-alignment-top">
 		<div class="md-layout-item md-xlarge-size-30 md-large-size-30 md-medium-size-30 md-small-size-30 md-xsmall-size-100">
+			<md-card v-if="is_assistant_in_queue">
+				<md-card-header>
+					<h2 class="md-title">Alternativ</h2>
+				</md-card-header>
+				
+				<md-card-content>
+					<md-list>
+						<md-list-item v-on:click="prompt_broadcast = true">
+							<md-icon>chat_bubble_outline</md-icon>
+							<span class="md-list-item-text">Meddela samtliga</span>
+						</md-list-item>
+						
+						<md-list-item v-on:click="promt_notify_faculty = true">
+							<md-icon>chat_bubble</md-icon>
+							<span class="md-list-item-text">Meddela assistenter</span>
+						</md-list-item>
+						
+						<md-list-item v-on:click="queue.queuing.length !== 0 && purge()" :disabled="queue.queuing.length === 0">
+							<md-icon>clear_all</md-icon>
+							<span class="md-list-item-text">Rensa kön</span>
+						</md-list-item>
+						
+						<md-list-item v-on:click="toggle_open()">
+							<md-icon v-if="queue.open">lock</md-icon>
+							<md-icon v-else>lock_open</md-icon>
+							<span class="md-list-item-text" v-if="queue.open">Stäng kön</span>
+							<span class="md-list-item-text" v-else>Öppna kön</span>
+						</md-list-item>
+						
+						<md-list-item v-on:click="redirect('edit')">
+							<md-icon>settings</md-icon>
+							<span class="md-list-item-text">Inställningar</span>
+						</md-list-item>
+					</md-list>
+				</md-card-content>
+			</md-card>
+			
+			<br />
+			
 			<md-card>
 				<md-card-header>
 					<h2 class="md-title">Gå med i kön</h2>
@@ -487,56 +526,18 @@ Vue.component('route-queue', {
 								<md-button v-on:click="dequeue(($root.$data))" type="submit" class="md-accent">Lämna kön</md-button>
 							</span>
 							<span v-else>
-								<md-button v-if="in_queue === false" :disabled="!queue.open || (queue.force_comment && (comment === null || comment.length === 0)) || (queue.force_action && action === null)" v-on:click="enqueue" type="submit" class="md-primary">Gå med i kön</md-button>
+								<md-button v-if="in_queue === false" :disabled="!queue.open || (queue.force_comment && (comment === null || comment.length === 0)) || (queue.force_action && action === null)" v-on:click="enqueue" type="submit" class="md-primary"><md-icon>person_add</md-icon> Gå med i kön</md-button>
 							</span>
 						</md-card-actions>
 					</div>
-				</md-card-content>
-			</md-card>
-			
-			<br />
-			
-			<md-card v-if="is_assistant_in_queue">
-				<md-card-header>
-					<h2 class="md-title">Inställningar</h2>
-				</md-card-header>
-				
-				<md-card-content>
-					<md-list>
-						<md-list-item v-on:click="prompt_broadcast = true">
-							<md-icon>chat_bubble_outline</md-icon>
-							<span class="md-list-item-text">Meddela samtliga</span>
-						</md-list-item>
-						
-						<md-list-item v-on:click="promt_notify_faculty = true">
-							<md-icon>chat_bubble</md-icon>
-							<span class="md-list-item-text">Meddela assistenter</span>
-						</md-list-item>
-						
-						<md-list-item v-on:click="queue.queuing.length !== 0 && purge()" :disabled="queue.queuing.length === 0">
-							<md-icon>clear_all</md-icon>
-							<span class="md-list-item-text">Rensa kön</span>
-						</md-list-item>
-						
-						<md-list-item v-on:click="toggle_open()">
-							<md-icon v-if="queue.open">lock</md-icon>
-							<md-icon v-else>lock_open</md-icon>
-							<span class="md-list-item-text" v-if="queue.open">Stäng kön</span>
-							<span class="md-list-item-text" v-else>Öppna kön</span>
-						</md-list-item>
-						
-						<md-list-item v-on:click="redirect('edit')">
-							<md-icon>settings</md-icon>
-							<span class="md-list-item-text">Fler inställningar</span>
-						</md-list-item>
-					</md-list>
 				</md-card-content>
 			</md-card>
 		</div>
 		
 		<div class="md-layout-item md-xlarge-size-70 md-large-size-70 md-medium-size-70 md-small-size-70 md-xsmall-size-100">
 			<h1>
-				<md-icon v-if="!queue.open" class="md-accent">lock</md-icon>
+				<md-icon v-if="!queue.open" class="md-size-2x md-accent">lock</md-icon>
+				<md-icon v-if="queue.open" class="md-size-2x">people</md-icon>
 				{{ queue.name }}
 			</h1>
 			
