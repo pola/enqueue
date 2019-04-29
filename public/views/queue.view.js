@@ -415,7 +415,7 @@ Vue.component('route-queue', {
 	},
 
 	template: `
-<div class="container" v-if="queue">
+<div v-if="queue">
 	<md-dialog-alert md-title="Meddelande" style="white-space: pre-line;" :md-active.sync="broadcast_active" :md-content="broadcast_message"
 		md-confirm-text="OK!" @md-closed="broadcast_active = false"/>
 
