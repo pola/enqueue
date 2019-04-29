@@ -503,7 +503,7 @@ Vue.component('route-queue', {
 				
 				<md-card-content>
 					<md-list>
-						<md-list-item v-on:click="queue.queuing.length !== 0 && (prompt_broadcast = true)" :disabled="queue.queuing.length === 0">
+						<md-list-item v-on:click="prompt_broadcast = true">
 							<md-icon>chat_bubble_outline</md-icon>
 							<span class="md-list-item-text">Meddela samtliga</span>
 						</md-list-item>
