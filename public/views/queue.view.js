@@ -428,7 +428,7 @@ Vue.component('route-queue', {
 	<md-dialog-prompt :md-active.sync="promt_notify_faculty" v-model="message" md-title="Meddela assistenter" md-input-placeholder="Skriv meddelande..."
 		md-confirm-text="Skicka" md-cancel-text="Avsluta" @md-confirm="broadcast_faculty" @md-cancel="promt_notify_faculty = false"/>
 
-	<md-dialog-confirm :md-active.sync="promt_clear_queue" md-title="Vill du rensa kön?"
+	<md-dialog-confirm :md-active.sync="promt_clear_queue && queue.queuing.length !== 0" md-title="Vill du rensa kön?"
 		md-confirm-text="Ja, rensa kön" md-cancel-text="Nej, återgå" @md-confirm="purge()" @md-cancel="promt_clear_queue = false"/>
 	
 	<div class="md-layout md-gutter md-alignment-top">
