@@ -422,10 +422,10 @@ Vue.component('route-queue', {
 	<md-dialog-alert md-title="Meddelande" style="white-space: pre-line;" :md-active.sync="notify_active" :md-content="notification_message"
 		md-confirm-text="OK!" @md-closed="broadcast_active = false"/>
 
-	<md-dialog-prompt :md-active.sync="prompt_broadcast" v-model="message" md-title="Skicka ett meddelande till samtliga" md-input-placeholder="Skriv meddelande..."
+	<md-dialog-prompt :md-active.sync="prompt_broadcast" v-model="message" md-title="Meddela samtliga" md-input-placeholder="Skriv meddelande..."
 		md-confirm-text="Skicka" md-cancel-text="Avsluta" @md-confirm="broadcast" @md-cancel="prompt_broadcast = false"/>
 
-	<md-dialog-prompt :md-active.sync="promt_notify_faculty" v-model="message" md-title="Skicka ett meddelande till anställda" md-input-placeholder="Skriv meddelande..."
+	<md-dialog-prompt :md-active.sync="promt_notify_faculty" v-model="message" md-title="Meddela assistenter" md-input-placeholder="Skriv meddelande..."
 		md-confirm-text="Skicka" md-cancel-text="Avsluta" @md-confirm="broadcast_faculty" @md-cancel="promt_notify_faculty = false"/>
 	
 	<div class="md-layout md-gutter md-alignment-top">
@@ -503,18 +503,18 @@ Vue.component('route-queue', {
 				
 				<md-card-content>
 					<md-list>
-						<md-list-item v-on:click="prompt_broadcast = true" :disabled="queue.queuing.length === 0">
-							<md-icon>message</md-icon>
-							<span class="md-list-item-text">Meddela köande</span>
+						<md-list-item v-on:click="queue.queuing.length !== 0 && (prompt_broadcast = true)" :disabled="queue.queuing.length === 0">
+							<md-icon>chat_bubble_outline</md-icon>
+							<span class="md-list-item-text">Meddela samtliga</span>
 						</md-list-item>
 						
 						<md-list-item v-on:click="promt_notify_faculty = true">
-							<md-icon>message</md-icon>
+							<md-icon>chat_bubble</md-icon>
 							<span class="md-list-item-text">Meddela assistenter</span>
 						</md-list-item>
 						
-						<md-list-item v-on:click="promt_notify_faculty = true" :disabled="queue.queuing.length === 0">
-							<md-icon>delete_sweep</md-icon>
+						<md-list-item v-on:click="queue.queuing.length !== 0 && purge()" :disabled="queue.queuing.length === 0">
+							<md-icon>clear_all</md-icon>
 							<span class="md-list-item-text">Rensa kön</span>
 						</md-list-item>
 						
