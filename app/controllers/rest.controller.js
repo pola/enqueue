@@ -297,7 +297,7 @@ router.post('/queues/:name/queuing', (req, res) => {
 			return;
 		}
 
-		if ((req.body.comment !== null && typeof(req.body.comment) !== 'string') || (req.body.action !== null && typeof(req.body.action) !== 'number') || (req.body.location !== null && typeof(req.body.comment) !== 'string')) {
+		if ((req.body.comment !== null && typeof(req.body.comment) !== 'string') || (req.body.action !== null && typeof(req.body.action) !== 'number') || (req.body.location !== null && typeof(req.body.location) !== 'string')) {
 			res.status(400);
 			res.json({
 				error: 4,
