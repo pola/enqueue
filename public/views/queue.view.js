@@ -26,9 +26,9 @@ Vue.component('route-queue', {
 			prompt_broadcast: false,
 			prompt_notify: false,
 			promt_notify_faculty: false,
+			promt_clear_queue: false,
 			message: null,
 			open_menu: null
-			//modal_active: false
 		}
 	},
 	methods: {
@@ -427,6 +427,9 @@ Vue.component('route-queue', {
 
 	<md-dialog-prompt :md-active.sync="promt_notify_faculty" v-model="message" md-title="Meddela assistenter" md-input-placeholder="Skriv meddelande..."
 		md-confirm-text="Skicka" md-cancel-text="Avsluta" @md-confirm="broadcast_faculty" @md-cancel="promt_notify_faculty = false"/>
+
+	<md-dialog-confirm :md-active.sync="promt_clear_queue" md-title="Vill du rensa kön?"
+		md-confirm-text="Ja, rensa kön" md-cancel-text="Nej, återgå" @md-confirm="purge()" @md-cancel="promt_clear_queue = false"/>
 	
 	<div class="md-layout md-gutter md-alignment-top">
 		<div class="md-layout-item md-xlarge-size-30 md-large-size-30 md-medium-size-30 md-small-size-30 md-xsmall-size-100">
@@ -447,7 +450,7 @@ Vue.component('route-queue', {
 							<span class="md-list-item-text">Meddela assistenter</span>
 						</md-list-item>
 						
-						<md-list-item v-on:click="queue.queuing.length !== 0 && purge()" :disabled="queue.queuing.length === 0">
+						<md-list-item v-on:click="queue.queuing.length !== 0 && (promt_clear_queue = true)" :disabled="queue.queuing.length === 0">
 							<md-icon>clear_all</md-icon>
 							<span class="md-list-item-text">Rensa kön</span>
 						</md-list-item>
