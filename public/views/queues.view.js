@@ -28,19 +28,27 @@ Vue.component('route-queues', {
 	},
 
 	template: `
-<md-card>
-	<md-card-header>
-		<h1 class="md-title">Enqueue</h1>
-	</md-card-header>
-	
-	<md-card-content>
-		<md-table>
-			<md-table-row @click.native="open_queue(queue)" v-for="queue in queues" :key="queue.id" :class="{ 'text-danger': queue.open === false }">
-				<md-table-cell><span v-if="! queue.open"  class="glyphicon glyphicon-lock"></span> {{ queue.name }}</md-table-cell>
-				<md-table-cell class="text-right"> <span class="glyphicon glyphicon-user"></span> {{ queue.queuing_count }}</md-table-cell>
-			</md-table-row>
-		</md-table>
-	</md-card-content>
-</md-card>
+<div>
+	<md-card>
+		<md-card-header>
+			<h2 class="md-title">Alla köer</h2>
+		</md-card-header>
+		
+		<md-card-content>
+			<md-table>
+				<md-table-row @click.native="open_queue(queue)" v-for="queue in queues" :key="queue.id">
+					<md-table-cell>
+						<md-icon v-if="!queue.open" class="md-accent">lock</md-icon>
+						<md-icon v-else>people</md-icon>
+						{{ queue.name }}
+					</md-table-cell>
+					<md-table-cell class="text-right">
+						{{ queue.queuing_count }}
+					</md-table-cell>
+				</md-table-row>
+			</md-table>
+		</md-card-content>
+	</md-card>
+</div>
 	`
 });

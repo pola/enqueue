@@ -15,11 +15,9 @@
 		<link rel="stylesheet" href="https://unpkg.com/vue-material/dist/theme/default.css" />
 		<title>Enqueue</title>
 		<style type="text/css">
-			#app > .md-layout {
-				align-items: center;
-				justify-content: center;
+			#app .md-app-scroller > .md-content > div {
 				margin: 0 auto;
-				padding: 30px 0;
+				padding: 15px 0;
 				max-width: 1200px;
 			}
 		</style>
@@ -47,12 +45,12 @@
 				<span>Enqueue är inte ansluten till nätverket. Försöker återansluta...</span>
 			</md-snackbar>
 		</div>
-		
-		<script src="/socket.io/socket.io.js"></script>
-		<script src="/views/queues.view.js"></script>
-		<script src="/views/queue.view.js"></script>   
-		<script src="/views/edit.view.js"></script>
-		<script src="/views/admin/dashboard.view.js"></script>
-		<script src="/app.js"></script>
 	</body>
+	
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="/views/queues.view.js"></script>
+	<script src="/views/queue.view.js"></script>   
+	<script src="/views/edit.view.js"></script>
+	<script src="/views/admin/dashboard.view.js"></script>
+	<script src="/app.js"></script>
 </html>

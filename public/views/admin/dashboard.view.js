@@ -73,7 +73,9 @@ Vue.component('route-admin-dashboard', {
     	});
 	},
 	template: `
-	<div class="text-box col-md-4 col-md-offset-4">
+	<div>
+		<h1>Administration</h1>
+		
 		<md-card>
 			<md-card-header>
 			    <h2 class="md-title">Lärare</h2>

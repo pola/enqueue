@@ -323,13 +323,9 @@ Vue.component('route-edit', {
 	},
 
 	template: `
-<div class="container" v-if="queue !== null && colors !== null && existing_rooms !== null && is_assistant_in_queue">
-	<div class="row">
-		<div class="col-md-4" :class="{ 'text-danger': queue.open === false }"> 
-			<h1><span v-if="!queue.open" class="glyphicon glyphicon-lock"></span> Inställningar för {{ this.queue.name }} </h1> 
-		</div>
-	</div>
-
+<div v-if="queue !== null && colors !== null && existing_rooms !== null && is_assistant_in_queue">
+	<h1>Inställningar för {{ this.queue.name }}</h1>
+	
 	<md-card>
 		<md-card-content>
 			<form novalidate @submit.prevent="update_settings">
