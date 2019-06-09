@@ -2,13 +2,6 @@
 
 
 Vue.component('route-queue', {
-
-	//import modal from './components/modal.vue';
-
-	/*components: {
-		modal,
-	},*/
-
 	data() {
 		return {
 			queue: null,
@@ -32,27 +25,27 @@ Vue.component('route-queue', {
 		}
 	},
 	methods: {
-		enqueue(){
-				fetch('/api/queues/' + this.queue.name + '/queuing', {
-        			method: "POST",
-        			headers: { "Content-Type": "application/json" },
-        			body: JSON.stringify({ 	
-        				"location": this.location,
-						"action": this.action,
-						"comment": this.comment})})
-				.then(res => {
-					if (res.status !== 201) {
-						res.json().then (data => {
-							alert(data.message);
-						});
-					}
-				});
+		enqueue() {
+			fetch('/api/queues/' + this.queue.name + '/queuing', {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ 	
+					"location": this.location,
+				"action": this.action,
+					"comment": this.comment})})
+			.then(res => {
+				if (res.status !== 201) {
+					res.json().then (data => {
+						alert(data.message);
+					});
+				}
+			});
 		},
-
-		dequeue(student){
+		
+		dequeue(student) {
 			fetch('/api/queues/' + this.queue.name + '/queuing/' + student.profile.id, {
-        		method: "DELETE"
-    		}).then(res => {
+				method: "DELETE"
+			}).then(res => {
 				if (res.status !== 200) {
 					res.json().then (data => {
 						alert(data.message);
@@ -60,11 +53,10 @@ Vue.component('route-queue', {
 				}
 			});
 		},
-
-		receiving_help(student){
-
-			const profile = this.queue.queuing.find(profile => profile.id === student.id);
 		
+		receiving_help(student) {
+			const profile = this.queue.queuing.find(profile => profile.id === student.id);
+			
 			for (i = 0; i < profile.handlers.length; i ++){
 				const handler = profile.handlers[i];
 				if (handler.id === this.$root.$data.profile.id){
@@ -82,7 +74,7 @@ Vue.component('route-queue', {
 					return;
 				}
 			}
-
+			
 			fetch('/api/queues/tilpro/queuing/' + student.profile.id, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
@@ -95,10 +87,9 @@ Vue.component('route-queue', {
 				}
 			});
 		},
-
+		
 		toggle_menu(item) {
 			// håller koll på om en student är klickad på sen inte eller inte, och uppdaterar listan av "klickade" studenter
-		
 			if (!this.is_assistant_in_queue){
 				return;
 			}
@@ -109,8 +100,8 @@ Vue.component('route-queue', {
 			
 			//this.open_menu = item.profile.id === this.open_menu ? null : item.profile.id;
 		},
-
-      	move_student_first(student) {
+		
+		move_student_first(student) {
 			fetch('/api/queues/' + this.queue.name + '/queuing/' + student.profile.id, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
@@ -122,21 +113,20 @@ Vue.component('route-queue', {
 					});
 				}
 			});
-      	},
-
-      	move_student_to_position(student) {
-
-      		var new_position = parseInt(document.getElementById("pos").value);
-
-      		if (new_position > this.queue.queuing.length || new_position < 1 || isNaN(new_position)) {
-      			alert("Positionen du valt är inte giltig");
-      		} else if (new_position === 1) {
-      			this.move_student_first(student);
-      		} else {
-      		// om man vill ställa sig på position x (1-idicerat) måste vi veta vem som står på positionen innan samt översätta till 0-indicerat
-	      		var student_before = this.queue.queuing[new_position-2];
-
-	      		fetch('/api/queues/'+ this.queue.name +'/students/' + student.profile.id, {
+		},
+		
+		move_student_to_position(student) {
+			var new_position = parseInt(document.getElementById("pos").value);
+			
+			if (new_position > this.queue.queuing.length || new_position < 1 || isNaN(new_position)) {
+				alert("Positionen du valt är inte giltig");
+			} else if (new_position === 1) {
+				this.move_student_first(student);
+			} else {
+				// om man vill ställa sig på position x (1-idicerat) måste vi veta vem som står på positionen innan samt översätta till 0-indicerat
+				var student_before = this.queue.queuing[new_position-2];
+				
+				fetch('/api/queues/'+ this.queue.name +'/students/' + student.profile.id, {
 					method: 'PATCH',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ move_after: student.student_before.profile.id })
@@ -148,46 +138,42 @@ Vue.component('route-queue', {
 					}
 				});
 			}
-      	},
-
-      	notify(student) {
-      		this.$root.$data.socket.emit('notify', {
-    			queue: this.queue.id,
-    			message: this.message,
-    			recipient: student.profile.id
-    		});
-
-    		this.message = null;
-      	},
-
-      	broadcast() {
-      		this.$root.$data.socket.emit('broadcast', {
-    			queue: this.queue.id,
-    			message: this.message
-    		});
-
-    		this.message = null;
-      	},
-
-      	broadcast_faculty() {
-      		this.$root.$data.socket.emit('notify_faculty', {
-    			queue: this.queue.id,
-    			message: this.message
-    		});
-
-    		this.message = null;
-      	},
-
-      	/*closeModal(){
-      		this.modal_active = false;
-      	}*/
-
-      	bad_location(student) {
-      		if (student.bad_location === true){
-      			fetch('/api/queues/'+ this.queue.name +'/queuing/' + student.profile.id, {
+		},
+		
+		notify(student) {
+			this.$root.$data.socket.emit('notify', {
+				queue: this.queue.id,
+				message: this.message,
+				recipient: student.profile.id
+			});
+			
+			this.message = null;
+		},
+		
+		broadcast() {
+			this.$root.$data.socket.emit('broadcast', {
+				queue: this.queue.id,
+				message: this.message
+			});
+			
+			this.message = null;
+		},
+		
+		broadcast_faculty() {
+			this.$root.$data.socket.emit('notify_faculty', {
+				queue: this.queue.id,
+				message: this.message
+			});
+			
+			this.message = null;
+		},
+		
+		bad_location(student) {
+			if (student.bad_location === true){
+				fetch('/api/queues/'+ this.queue.name +'/queuing/' + student.profile.id, {
 					method: 'PATCH',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ bad_location: false }) 
+				body: JSON.stringify({ bad_location: false }) 
 				}).then(res => {
 					if (res.status !== 200) {
 						res.json().then(j => {
@@ -207,34 +193,31 @@ Vue.component('route-queue', {
 						});
 					}
 				});
-      		}
-
-      		
-      	},
-
-      	unix_to_time_ago(unix){
-
+			}
+		},
+		
+      	unix_to_time_ago(unix) {
 			// 	var moment = require('moment'); - detta ska stå någonstans för att det ska funka - var?
-      		
-      		//var a = new Date(unix * 1000).toLocaleString();
-      		d = new Date(unix);
-
-      		day = d.getDate();
-      		month = d.getMonth() + 1; // kanske borde vara 03
-      		year = d.getFullYear();
-
-      		hour = d.getHours();
-      		min = d.getMinutes();
-      		sec = d.getSeconds();
-
-  			time = year + month + day + ' ' + hour + min + sec;
-
-  			//moment(time, "YYYYMMDD HHMMSS").fromNow();
+			
+			//var a = new Date(unix * 1000).toLocaleString();
+			d = new Date(unix);
+			
+			day = d.getDate();
+			month = d.getMonth() + 1; // kanske borde vara 03
+			year = d.getFullYear();
+			
+			hour = d.getHours();
+			min = d.getMinutes();
+			sec = d.getSeconds();
+			
+			time = year + month + day + ' ' + hour + min + sec;
+			
+			//moment(time, "YYYYMMDD HHMMSS").fromNow();
 			
 			return hour + ':' + min;
-  			//return d.toLocaleString();
-      	},
-
+		//return d.toLocaleString();
+		},
+		
 		redirect (url) {
 			if (url === "edit"){
 				this.$router.push('/queues/' + this.queue.name + '/edit');
@@ -275,7 +258,7 @@ Vue.component('route-queue', {
 			}
 			
 			for (var k of Object.keys(data.changes)) {
-   				this.queue[k] = data.changes[k];
+				this.queue[k] = data.changes[k];
 			}
 		},
 		
@@ -291,8 +274,8 @@ Vue.component('route-queue', {
 						queuing_student[k] = data.student[k];
 					}
 					
-   					break;
-   				}
+					break;
+				}
 			}
 		},
 		
@@ -301,6 +284,7 @@ Vue.component('route-queue', {
 			if (data.queue !== this.queue.id) {
 				return;
 			}
+			
 			this.broadcast_active = true;
 			this.broadcast_message = data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>';
 		},
@@ -309,7 +293,8 @@ Vue.component('route-queue', {
 		socket_handle_notify(data) {
 			if (data.queue !== this.queue.id) {
 				return;
-			}			
+			}
+			
 			this.notify_active = true;
 			this.notification_message = 'Personligt meddelande:\n' + data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>';
 		}
@@ -332,7 +317,7 @@ Vue.component('route-queue', {
 		
 		this.fetch_queue();
 	},
-
+	
 	computed:{
 		in_queue() {
 			// testar om den inloggade profilen står i kön
@@ -347,35 +332,36 @@ Vue.component('route-queue', {
 			}
 			return false;
 		},
-
-		is_assistant_in_queue(){
+		
+		is_assistant_in_queue() {
 			// för att få tillgång till admin måste personen vara  antingen vara en lärare
 			if (this.$root.$data.profile === null){
 				return false;
 			}
+			
 			else if (this.$root.$data.profile.teacher === true){
 				return true;
 			}
-
+			
 			// eller en assistent i den givla kön
 			profile_assistant_in = this.$root.$data.assisting_in;
-
+			
 			if (profile_assistant_in != []){
 				for (const queue of profile_assistant_in) {
 					if (this.queue === queue){
 						return true;
 					}
 				}
-
 			}
+			
 			return false;
 		},
-
+		
 		blocked_by_whitelist() {
 			if (this.queue.students.length === 0) {
 				return false;
 			}
-
+			
 			if (this.is_assistant_in_queue === true) {
 				return false;
 			}
@@ -388,7 +374,7 @@ Vue.component('route-queue', {
 			
 			return true;
 		},
-
+		
 		profile_in_white_list() {
 			for (const student of this.queue.students) {
 				if (student !== null && this.$root.$data.profile.id === student.id){
@@ -398,22 +384,22 @@ Vue.component('route-queue', {
 			
 			return false;
 		},
-
-      	has_white_list_and_profile_in_it() {
-      		return (this.has_white_list && this.profile_in_white_list);
-      	},
-
-      	view_entire_queue(){
-      		return (!this.has_white_list || this.is_assistant_in_queue);
-      	},
-
-      	profile_queuing: function() {
-       		return this.queue.queuing.filter(function(u) {
-         		return u.id === this.$root.$data.profile.id;
-     		})
-     	}
+		
+		has_white_list_and_profile_in_it() {
+			return (this.has_white_list && this.profile_in_white_list);
+		},
+		
+		view_entire_queue() {
+			return (!this.has_white_list || this.is_assistant_in_queue);
+		},
+		
+		profile_queuing: function() {
+			return this.queue.queuing.filter(function(u) {
+				return u.id === this.$root.$data.profile.id;
+			})
+		}
 	},
-
+	
 	template: `
 <div v-if="queue">
 	<md-dialog-alert md-title="Meddelande" style="white-space: pre-line;" :md-active.sync="broadcast_active" :md-content="broadcast_message"
