@@ -39,7 +39,7 @@ Vue.component('route-queues', {
 				<md-table-row @click.native="open_queue(queue)" v-for="queue in queues" :key="queue.id">
 					<md-table-cell>
 						<md-icon v-if="!queue.open" class="md-accent">lock</md-icon>
-						<md-icon v-else>people</md-icon>
+						<md-icon v-else>lock_open</md-icon>
 						{{ queue.name }}
 					</md-table-cell>
 					<md-table-cell class="text-right">
