@@ -54,31 +54,14 @@ Vue.component('route-queue', {
 			});
 		},
 		
-		receiving_help(student) {
-			const profile = this.queue.queuing.find(profile => profile.id === student.id);
+		receiving_help(profile) {
+			const qs = this.queue.queuing.find(x => x.profile.id === profile.id);
+			const is_handling = qs.handlers.find(x => x.id === this.$root.$data.profile.id) === undefined;
 			
-			for (i = 0; i < profile.handlers.length; i ++){
-				const handler = profile.handlers[i];
-				if (handler.id === this.$root.$data.profile.id){
-					fetch('/api/queues/tilpro/queuing/' + student.profile.id, {
-						method: 'PATCH',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ is_handling: false }) // använd false för att markera att man inte längre hjälper till
-					}).then(res => {
-						if (res.status !== 200) {
-							res.json().then(j => {
-								console.log(j);
-							});
-						}
-					});
-					return;
-				}
-			}
-			
-			fetch('/api/queues/tilpro/queuing/' + student.profile.id, {
+			fetch('/api/queues/' + this.queue.name + '/queuing/' + qs.profile.id, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ is_handling: true }) // använd false för att markera att man inte längre hjälper till
+				body: JSON.stringify({ is_handling: is_handling })
 			}).then(res => {
 				if (res.status !== 200) {
 					res.json().then(j => {
@@ -86,19 +69,6 @@ Vue.component('route-queue', {
 					});
 				}
 			});
-		},
-		
-		toggle_menu(item) {
-			// håller koll på om en student är klickad på sen inte eller inte, och uppdaterar listan av "klickade" studenter
-			if (!this.is_assistant_in_queue){
-				return;
-			}
-			
-			setTimeout(() => {
-				this.open_menu = item.profile.id === this.open_menu ? null : item.profile.id;
-			}, 50);
-			
-			//this.open_menu = item.profile.id === this.open_menu ? null : item.profile.id;
 		},
 		
 		move_student_first(student) {
@@ -197,25 +167,20 @@ Vue.component('route-queue', {
 		},
 		
       	unix_to_time_ago(unix) {
-			// 	var moment = require('moment'); - detta ska stå någonstans för att det ska funka - var?
-			
-			//var a = new Date(unix * 1000).toLocaleString();
+			// TODO: övergå till något bibliotek, till exempel Moment
 			d = new Date(unix);
 			
-			day = d.getDate();
-			month = d.getMonth() + 1; // kanske borde vara 03
+			day = '0' + d.getDate();
+			month = '0' + (d.getMonth() + 1);
 			year = d.getFullYear();
 			
-			hour = d.getHours();
-			min = d.getMinutes();
-			sec = d.getSeconds();
+			hour = '0' + d.getHours();
+			min = '0' + d.getMinutes();
+			sec = '0' + d.getSeconds();
 			
 			time = year + month + day + ' ' + hour + min + sec;
 			
-			//moment(time, "YYYYMMDD HHMMSS").fromNow();
-			
-			return hour + ':' + min;
-		//return d.toLocaleString();
+			return hour.slice(-2) + ':' + min.slice(-2);
 		},
 		
 		redirect (url) {
@@ -259,6 +224,10 @@ Vue.component('route-queue', {
 			
 			for (var k of Object.keys(data.changes)) {
 				this.queue[k] = data.changes[k];
+			}
+			
+			if (this.open_menu !== null && this.queue.queuing.findIndex(x => x === this.open_menu) === -1) {
+				this.open_menu = null;
 			}
 		},
 		
@@ -417,6 +386,33 @@ Vue.component('route-queue', {
 	<md-dialog-confirm :md-active.sync="promt_clear_queue && queue.queuing.length !== 0" md-title="Vill du rensa kön?"
 		md-confirm-text="Ja, rensa kön" md-cancel-text="Nej, återgå" @md-confirm="purge()" @md-cancel="promt_clear_queue = false"/>
 	
+	<md-dialog v-if="open_menu !== null && is_assistant_in_queue" :md-active="true">
+		<md-dialog-content>
+			<h2>
+				{{ queue.queuing.findIndex(x => x === open_menu ) + 1 }}.
+				{{ open_menu.profile.name }} ({{ open_menu.profile.user_name }})
+			</h2>
+			<strong>Gick in i kön:</strong> {{ unix_to_time_ago(open_menu.entered_at) }}<br />
+			<strong>Plats:</strong> <span :style="open_menu.bad_location ? { color: 'red' } : ''">{{ typeof(open_menu.location) === 'string' ? open_menu.location : open_menu.location.name }}</span><br />
+			<strong>Kommentar:</strong> {{ open_menu.comment }}
+			
+			<div v-if="open_menu.handlers.length > 0">
+				<strong>Får hjälp av:</strong> {{ open_menu.handlers.map(x => x.id === open_menu.profile.id ? '(egenmarkerat)' : (x.name + ' (' + x.user_name + ')')).join(', ') }}
+			</div>
+		</md-dialog-content>
+		
+		<md-dialog-actions>
+			<md-button class="md-accent" @click="dequeue(open_menu)">Ta bort</md-button>
+			<md-button class="md-accent" v-if="!open_menu.bad_location" @click="bad_location(open_menu)">Felaktig placering</md-button>
+			<md-button v-else @click="bad_location(open_menu)">Korrekt placering</md-button>
+			
+			<md-button class="md-primary" @click="receiving_help(open_menu.profile)" v-if="open_menu.handlers.find(x => x.id === $root.$data.profile.id) === undefined">Ge hjälp</md-button>
+			<md-button @click="receiving_help(open_menu.profile)" v-else>Sluta ge hjälp</md-button>
+			
+			<md-button class="md-primary" @click="open_menu = null">Stäng</md-button>
+		</md-dialog-actions>
+	</md-dialog>
+	
 	<div class="md-layout md-gutter md-alignment-top">
 		<div class="md-layout-item md-xlarge-size-30 md-large-size-30 md-medium-size-30 md-small-size-30 md-xsmall-size-100">
 			<md-card v-if="is_assistant_in_queue">
@@ -511,8 +507,8 @@ Vue.component('route-queue', {
 
 						<md-card-actions>
 							<span v-if="in_queue === true">
-								<md-button v-on:click="receiving_help($root.$data)" type="submit" class="md-primary">Får hjälp</md-button>
-								<md-button v-on:click="dequeue(($root.$data))" type="submit" class="md-accent">Lämna kön</md-button>
+								<md-button v-on:click="receiving_help($root.$data.profile)" type="submit" class="md-primary">Får hjälp</md-button>
+								<md-button v-on:click="dequeue($root.$data)" type="submit" class="md-accent">Lämna kön</md-button>
 							</span>
 							<span v-else>
 								<md-button v-if="in_queue === false" :disabled="!queue.open || (queue.force_comment && (comment === null || comment.length === 0)) || (queue.force_action && action === null)" v-on:click="enqueue" type="submit" class="md-primary"><md-icon>person_add</md-icon> Gå med i kön</md-button>
@@ -532,8 +528,6 @@ Vue.component('route-queue', {
 			
 			<p style="white-space: pre-line;">{{ queue.description }}</p>
 			
-			{{ open_menu }}
-			
 			<md-card v-if="queue.queuing.length > 0">
 				<md-card-content>
 					<md-table @md-selected="on_select(user)">
@@ -544,17 +538,9 @@ Vue.component('route-queue', {
 							<md-table-head style="width: 50%;">Kommentar</md-table-head>
 						</md-table-row>
 						
-						<md-table-row v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id" md-selectable="single" v-on:click="toggle_menu(user)" v-bind:style="[user.handlers.length === 0 ? {backgroundColor: 'white'} : {backgroundColor: 'blue'}], [user.bad_location === true ? {backgroundColor: 'red'} : {backgroundColor: 'white'}]">
+						<md-table-row v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id" md-selectable="single" v-on:click="open_menu = user" v-bind:style="[user.handlers.length === 0 ? { backgroundColor: 'white' } : { backgroundColor: 'blue'}], [is_assistant_in_queue ? {cursor: 'pointer'} : {cursor: 'default'}]">
 							<md-table-cell md-numeric>
 								{{ index + 1 }}
-								
-								<md-menu md-size="big" md-direction="top-start" md-close-on-select="false" md-close-on-click="false" :md-active="open_menu === user.profile.id">
-									<md-menu-content>
-										<md-menu-item>My Item 1</md-menu-item>
-										<md-menu-item>My Item 2</md-menu-item>
-										<md-menu-item>My Item 3</md-menu-item>
-									</md-menu-content>
-								</md-menu>
 							</md-table-cell>
 							<md-table-cell>
 								<md-badge v-if="user.action !== null" class="md-primary md-square" :md-content="user.action.name" />
