@@ -403,11 +403,11 @@ Vue.component('route-queue', {
 		
 		<md-dialog-actions>
 			<md-button class="md-accent" @click="dequeue(open_menu)">Ta bort</md-button>
-			<md-button class="md-accent" v-if="!open_menu.bad_location" @click="bad_location(open_menu)">Felaktig placering</md-button>
-			<md-button v-else @click="bad_location(open_menu)">Korrekt placering</md-button>
+			<md-button class="md-accent" v-if="!open_menu.bad_location" @click="bad_location(open_menu)">Placering</md-button>
+			<md-button v-else @click="bad_location(open_menu)">Placering</md-button>
 			
 			<md-button class="md-primary" @click="receiving_help(open_menu.profile)" v-if="open_menu.handlers.find(x => x.id === $root.$data.profile.id) === undefined">Ge hjälp</md-button>
-			<md-button @click="receiving_help(open_menu.profile)" v-else>Sluta ge hjälp</md-button>
+			<md-button @click="receiving_help(open_menu.profile)" v-else>Ge hjälp</md-button>
 			
 			<md-button class="md-primary" @click="open_menu = null">Stäng</md-button>
 		</md-dialog-actions>
