@@ -9,7 +9,7 @@ const router = express.Router();
 
 const cas = new CASAuthentication({
 	cas_url: 'https://login.kth.se',
-	service_url: 'http://' + config.hostname + ':' + config.port,
+	service_url: config.hostname,
 	destroy_session: true,
 	renew: true
 });
