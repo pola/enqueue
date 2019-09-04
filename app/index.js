@@ -57,6 +57,6 @@ var moment = require('moment');
 model.setIo(io);
 model.setConnection(sequelize);
 
-listen(config.port, config.listen.ip, () => {
+listen(config.listen.port, config.listen.ip, () => {
 	console.log("server listening on port", config.listen.port);
 });
