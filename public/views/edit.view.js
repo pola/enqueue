@@ -333,17 +333,17 @@ Vue.component('route-edit', {
 					<label>Namn</label>
 					<md-input type="text" id="name_new" name="name_new" v-model="name_new" />
 				</md-field>
-			
+				
 				<md-field>
 					<label>Beskrivning</label>
 					<md-textarea id="new_description" name="new_description" v-model="queue.description"></md-textarea>
 				</md-field>
-		
+				
 				<md-field>
 					<label>Datum och tid för automatisk upplåsning</label>
 					<md-input type="datetime-local" v-model="selectedTime" />
 				</md-field>
-			
+				
 				<md-card-actions>
 			   		<md-button type="submit" class="md-primary">Spara ändringar</md-button>
 			   	</md-card-actions>
@@ -361,7 +361,7 @@ Vue.component('route-edit', {
 	</md-card>
 	
 	<br />
-
+	
 	<md-card>
 		<md-card-header>
 	        <h2 class="md-title">Tillåtna salar</h2>

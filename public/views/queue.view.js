@@ -535,9 +535,7 @@ Vue.component('route-queue', {
 			
 			<p style="white-space: pre-line;">{{ queue.description }}</p>
 			
-			<md-card v-if="queue.queuing.length > 0">
-				<md-card-content>
-					<md-table @md-selected="on_select(user)">
+					<md-table v-if="queue.queuing.length > 0">
 						<md-table-row>
 							<md-table-head style="width: 30%;">Namn</md-table-head>
 							<md-table-head style="width: 20%;">Tid</md-table-head>
@@ -562,8 +560,6 @@ Vue.component('route-queue', {
 							</md-table-cell>
 						</md-table-row>
 					</md-table>
-				</md-card-content>
-			</md-card>
 		</div>
 	</div>
 </div>
