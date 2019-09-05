@@ -7,6 +7,8 @@ const expressSession = require('express-session');
 const sharedSession = require('express-socket.io-session');
 const express = require('express');
 const http = require('http');
+const https = require('https');
+const fs = require('fs');
 const history = require('connect-history-api-fallback');
 const Sequelize = require('sequelize');
 
@@ -23,7 +25,18 @@ const config = require('../config');
 */
 module.exports = () => {
 	const app = express(); // Creates express app
-	const httpServer = http.Server(app); // Express usually does this for us, but socket.io needs the httpServer directly
+	
+	var httpServer;
+	
+	if (config.ssl.key !== null && config.ssl.cert !== null) {
+		httpServer = https.createServer({
+			key: fs.readFileSync(config.ssl.key),
+			cert: fs.readFileSync(config.ssl.cert)
+		}, app);
+	} else {
+		httpServer = http.Server(app);
+	}
+	
 	const io = require('socket.io')(httpServer, {
 		timeout: 5000,
 		pingInterval: 5000,

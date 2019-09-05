@@ -9,5 +9,9 @@ module.exports = {
 		username: '',
 		password: '',
 		database: ''
+	},
+	ssl: {
+		key: null,
+		cert: null
 	}
 }
