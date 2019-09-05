@@ -460,7 +460,10 @@ Vue.component('route-queue', {
 			
 			<md-card>
 				<md-card-header>
-					<h2 class="md-title">Gå med i kön</h2>
+					<h2 class="md-title">
+						<span v-if="in_queue">Hantera min köplats</span>
+						<span v-else>Gå med i kön</span>
+					</h2>
 				</md-card-header>
 				
 				<md-card-content>
@@ -510,12 +513,12 @@ Vue.component('route-queue', {
 						</form>
 
 						<md-card-actions>
-							<span v-if="in_queue === true">
+							<span v-if="in_queue">
 								<md-button v-on:click="receiving_help($root.$data.profile)" type="submit" class="md-primary">Får hjälp</md-button>
 								<md-button v-on:click="dequeue($root.$data)" type="submit" class="md-accent">Lämna kön</md-button>
 							</span>
 							<span v-else>
-								<md-button v-if="in_queue === false" :disabled="!queue.open || (queue.force_comment && (comment === null || comment.length === 0)) || (queue.force_action && action === null)" v-on:click="enqueue" type="submit" class="md-primary"><md-icon>person_add</md-icon> Gå med i kön</md-button>
+								<md-button v-if="!in_queue" :disabled="!queue.open || (queue.force_comment && (comment === null || comment.length === 0)) || (queue.force_action && action === null)" v-on:click="enqueue" type="submit" class="md-primary"><md-icon>person_add</md-icon> Gå med i kön</md-button>
 							</span>
 						</md-card-actions>
 					</div>
