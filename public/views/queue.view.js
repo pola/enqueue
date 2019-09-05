@@ -183,6 +183,10 @@ Vue.component('route-queue', {
 			return hour.slice(-2) + ':' + min.slice(-2);
 		},
 		
+		nice_location(location) {
+			return typeof(location) === 'string' ? location : location.name;
+		},
+		
 		redirect (url) {
 			if (url === "edit"){
 				this.$router.push('/queues/' + this.queue.name + '/edit');
@@ -393,7 +397,7 @@ Vue.component('route-queue', {
 				{{ open_menu.profile.name }} ({{ open_menu.profile.user_name }})
 			</h2>
 			<strong>Gick in i kön:</strong> {{ unix_to_time_ago(open_menu.entered_at) }}<br />
-			<strong>Plats:</strong> <span :style="open_menu.bad_location ? { color: 'red' } : ''">{{ typeof(open_menu.location) === 'string' ? open_menu.location : open_menu.location.name }}</span><br />
+			<strong>Plats:</strong> <span :class="[{ badLocation: open_menu.bad_location }]"">{{ nice_location(open_menu.location) }}</span><br />
 			<strong>Kommentar:</strong> {{ open_menu.comment }}
 			
 			<div v-if="open_menu.handlers.length > 0">
@@ -407,7 +411,7 @@ Vue.component('route-queue', {
 			<md-button v-else @click="bad_location(open_menu)">Placering</md-button>
 			
 			<md-button class="md-primary" @click="receiving_help(open_menu.profile)" v-if="open_menu.handlers.find(x => x.id === $root.$data.profile.id) === undefined">Ge hjälp</md-button>
-			<md-button @click="receiving_help(open_menu.profile)" v-else>Ge hjälp</md-button>
+			<md-button @click="receiving_help(open_menu.profile)" v-else>Sluta ge hjälp</md-button>
 			
 			<md-button class="md-primary" @click="open_menu = null">Stäng</md-button>
 		</md-dialog-actions>
@@ -532,23 +536,27 @@ Vue.component('route-queue', {
 				<md-card-content>
 					<md-table @md-selected="on_select(user)">
 						<md-table-row>
-							<md-table-head md-numeric></md-table-head>
 							<md-table-head style="width: 30%;">Namn</md-table-head>
 							<md-table-head style="width: 20%;">Tid</md-table-head>
 							<md-table-head style="width: 50%;">Kommentar</md-table-head>
 						</md-table-row>
 						
-						<md-table-row v-if="view_entire_queue === true" v-for="(user, index) in queue.queuing" :key="user.profile.id" md-selectable="single" v-on:click="open_menu = user" v-bind:style="[user.handlers.length === 0 ? { backgroundColor: 'white' } : { backgroundColor: 'blue'}], [is_assistant_in_queue ? {cursor: 'pointer'} : {cursor: 'default'}]">
-							<md-table-cell md-numeric>
-								{{ index + 1 }}
-							</md-table-cell>
+						<md-table-row
+							v-if="view_entire_queue === true"
+							v-for="(user, index) in queue.queuing"
+							:key="user.profile.id"
+							v-on:click="open_menu = user"
+							:style="[{ cursor: is_assistant_in_queue ? 'pointer' : 'default' }]"
+							:class="[{ studentIsHandled: user.handlers.length > 0 }]">
 							<md-table-cell>
 								<md-badge v-if="user.action !== null" class="md-primary md-square" :md-content="user.action.name" />
 								<div v-if="user.profile.name !== null" style="white-space: nowrap;">{{ user.profile.name }}</div>
-								<span v-if="typeof user.location === 'string'"> {{ user.location }} </span> <span v-else> {{ user.location.name }} </span>
+								<span :class="[{ badLocation: user.bad_location }]">{{ nice_location(user.location) }} </span>
 							</md-table-cell>
-							<md-table-cell>{{unix_to_time_ago(user.entered_at)}} </md-table-cell>
-							<md-table-cell><span v-if="user.comment !== null"> {{ user.comment }} </span></md-table-cell>
+							<md-table-cell>{{ unix_to_time_ago(user.entered_at )}} </md-table-cell>
+							<md-table-cell>
+								<span v-if="user.comment !== null">{{ user.comment }}</span>
+							</md-table-cell>
 						</md-table-row>
 					</md-table>
 				</md-card-content>
