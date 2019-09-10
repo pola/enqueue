@@ -489,10 +489,9 @@ Vue.component('route-queue', {
 					
 					<div v-else>
 						<form novalidate>
-							<md-field>
+							<md-field v-if="$root.$data.location === null">
 								<label for="location">Plats</label>
-								<md-input v-if="$root.$data.location === null" id="location" type="text" v-model="location" required />
-								<md-input v-else type="text" :placeholder="$root.$data.location.name" disabled style="background: #eeeeee;" />
+								<md-input id="location" type="text" v-model="location" required />
 							</md-field>
 
 							<md-field>
