@@ -230,8 +230,11 @@ Vue.component('route-queue', {
 				this.queue[k] = data.changes[k];
 			}
 			
-			if (this.open_menu !== null && this.queue.queuing.findIndex(x => x === this.open_menu) === -1) {
-				this.open_menu = null;
+			// om en assistent har öppnat rutan med inställningar för en köande student, justera den
+			if (this.open_menu !== null) {
+				const qsi = this.queue.queuing.findIndex(x => x.profile.id === this.open_menu.profile.id);
+
+				this.open_menu = qsi === -1 ? null : this.queue.queuing[qsi];
 			}
 		},
 		
@@ -393,7 +396,7 @@ Vue.component('route-queue', {
 	<md-dialog v-if="open_menu !== null && is_assistant_in_queue" :md-active="true">
 		<md-dialog-content>
 			<h2>
-				{{ queue.queuing.findIndex(x => x === open_menu ) + 1 }}.
+				{{ queue.queuing.findIndex(x => x.profile.id === open_menu.profile.id ) + 1 }}.
 				{{ open_menu.profile.name }} ({{ open_menu.profile.user_name }})
 			</h2>
 			<strong>Gick in i kön:</strong> {{ unix_to_time_ago(open_menu.entered_at) }}<br />
