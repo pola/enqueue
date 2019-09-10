@@ -310,27 +310,18 @@ Vue.component('route-queue', {
 		},
 		
 		is_assistant_in_queue() {
-			// för att få tillgång till admin måste personen vara  antingen vara en lärare
-			if (this.$root.$data.profile === null){
+			// för att få tillgång till admin måste personen vara inloggad
+			if (this.$root.$data.profile === null) {
 				return false;
 			}
 			
-			else if (this.$root.$data.profile.teacher === true){
+			// är man lärare är man alltid assistent
+			if (this.$root.$data.profile.teacher === true){
 				return true;
 			}
-			
-			// eller en assistent i den givla kön
-			profile_assistant_in = this.$root.$data.assisting_in;
-			
-			if (profile_assistant_in != []){
-				for (const queue of profile_assistant_in) {
-					if (this.queue === queue){
-						return true;
-					}
-				}
-			}
-			
-			return false;
+
+			// man kan annars vara assistent i den aktuella kön
+			return this.queue.assistants.findIndex(x => x.id === this.$root.$data.profile.id) !== -1;
 		},
 		
 		blocked_by_whitelist() {
