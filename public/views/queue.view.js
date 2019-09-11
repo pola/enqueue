@@ -508,8 +508,8 @@ Vue.component('route-queue', {
 						<md-card-actions>
 							<span v-if="in_queue">
 								<md-button v-on:click="receiving_help($root.$data.profile)" type="submit" class="md-primary">
-									<span v-if="queue.queuing.find(x => x.profile.id === $root.$data.profile.id).handlers.length === 0">Får hjälp</span>
-									<span v-else>Får inte hjälp</span>
+									<span v-if="queue.queuing.find(x => x.profile.id === $root.$data.profile.id).handlers.length === 0">Får assistans</span>
+									<span v-else>Får inte assistans</span>
 								</md-button>
 								<md-button v-on:click="dequeue($root.$data)" type="submit" class="md-accent">Lämna kön</md-button>
 							</span>
