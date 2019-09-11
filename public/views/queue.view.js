@@ -395,7 +395,7 @@ Vue.component('route-queue', {
 			<strong>Kommentar:</strong> {{ open_menu.comment }}
 			
 			<div v-if="open_menu.handlers.length > 0">
-				<strong>Får hjälp av:</strong> {{ open_menu.handlers.map(x => x.id === open_menu.profile.id ? '(egenmarkerat)' : (x.name + ' (' + x.user_name + ')')).join(', ') }}
+				<strong>Assisteras av:</strong> {{ open_menu.handlers.map(x => x.id === open_menu.profile.id ? '(egenmarkerat)' : (x.name + ' (' + x.user_name + ')')).join(', ') }}
 			</div>
 		</md-dialog-content>
 		
@@ -404,8 +404,8 @@ Vue.component('route-queue', {
 			<md-button class="md-accent" v-if="!open_menu.bad_location" @click="bad_location(open_menu)">Placering</md-button>
 			<md-button v-else @click="bad_location(open_menu)">Placering</md-button>
 			
-			<md-button class="md-primary" @click="receiving_help(open_menu.profile)" v-if="open_menu.handlers.find(x => x.id === $root.$data.profile.id) === undefined">Ge hjälp</md-button>
-			<md-button @click="receiving_help(open_menu.profile)" v-else>Sluta ge hjälp</md-button>
+			<md-button class="md-primary" @click="receiving_help(open_menu.profile)" v-if="open_menu.handlers.find(x => x.id === $root.$data.profile.id) === undefined">Assistera</md-button>
+			<md-button @click="receiving_help(open_menu.profile)" v-else>Sluta assistera</md-button>
 			
 			<md-button class="md-primary" @click="open_menu = null">Stäng</md-button>
 		</md-dialog-actions>
@@ -507,7 +507,10 @@ Vue.component('route-queue', {
 
 						<md-card-actions>
 							<span v-if="in_queue">
-								<md-button v-on:click="receiving_help($root.$data.profile)" type="submit" class="md-primary">Får hjälp</md-button>
+								<md-button v-on:click="receiving_help($root.$data.profile)" type="submit" class="md-primary">
+									<span v-if="queue.queuing.find(x => x.profile.id === $root.$data.profile.id).handlers.length === 0">Får hjälp</span>
+									<span v-else>Får inte hjälp</span>
+								</md-button>
 								<md-button v-on:click="dequeue($root.$data)" type="submit" class="md-accent">Lämna kön</md-button>
 							</span>
 							<span v-else>
