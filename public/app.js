@@ -34,7 +34,7 @@ const app = new Vue({
 			window.location = location;
 		},
 		redirect_login() {
-			window.location = '/login?returnTo=' + window.location.pathname;
+			window.location = '/login?returnTo=' + encodeURIComponent(window.location.pathname);
 		},
 		fetch_me() {
 			fetch('/api/me').then(res => res.json()).then(me => {
