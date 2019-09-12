@@ -8,9 +8,6 @@ Vue.component('route-queue', {
 			location: null,
 			comment: null,
 			action: null,
-			perform: null,
-			disable_location: null,
-			selected_students: [],
 			notify_active: false,
 			broadcast_active: false,
 			broadcast_message: null,
@@ -27,12 +24,12 @@ Vue.component('route-queue', {
 	methods: {
 		enqueue() {
 			fetch('/api/queues/' + this.queue.name + '/queuing', {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ 	
-					"location": this.location,
-				"action": this.action,
-					"comment": this.comment})})
+					'location': this.location,
+				'action': this.action,
+					'comment': this.comment})})
 			.then(res => {
 				if (res.status !== 201) {
 					res.json().then (data => {
@@ -44,7 +41,7 @@ Vue.component('route-queue', {
 		
 		dequeue(student) {
 			fetch('/api/queues/' + this.queue.name + '/queuing/' + student.profile.id, {
-				method: "DELETE"
+				method: 'DELETE'
 			}).then(res => {
 				if (res.status !== 200) {
 					res.json().then (data => {
@@ -86,10 +83,10 @@ Vue.component('route-queue', {
 		},
 		
 		move_student_to_position(student) {
-			var new_position = parseInt(document.getElementById("pos").value);
+			var new_position = parseInt(document.getElementById('pos').value);
 			
 			if (new_position > this.queue.queuing.length || new_position < 1 || isNaN(new_position)) {
-				alert("Positionen du valt är inte giltig");
+				alert('Positionen du valt är inte giltig.');
 			} else if (new_position === 1) {
 				this.move_student_first(student);
 			} else {
@@ -188,13 +185,12 @@ Vue.component('route-queue', {
 		},
 		
 		redirect (url) {
-			if (url === "edit"){
+			if (url === 'edit'){
 				this.$router.push('/queues/' + this.queue.name + '/edit');
 			}
-			else if (url === "queues"){
-				this.$router.push('/queues/');
-			}
-			
+			else if (url === 'queues'){
+				this.$router.push('/queues');
+			}	
 		},
 		
 		purge() {

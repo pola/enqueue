@@ -3,19 +3,14 @@ Vue.component('route-edit', {
 		return {
 			queue: null,
 			name_new: null,
-			
+		
 			colors: null,
-
 			user_name_assistant: null,
-
 			user_name_student: null,
-
 			action_name: null,
 			action_color: null,
-
 			clicked_rooms: [],
 			existing_rooms: null,
-
 			selectedTime: null,
 			promt_delete_queue: false
 		}
