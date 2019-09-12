@@ -380,11 +380,11 @@ Vue.component('route-queue', {
 	<md-dialog-confirm :md-active.sync="promt_clear_queue && queue.queuing.length !== 0" md-title="Vill du rensa kön?"
 		md-confirm-text="Ja, rensa kön" md-cancel-text="Nej, återgå" @md-confirm="purge()" @md-cancel="promt_clear_queue = false"/>
 	
-	<md-dialog v-if="open_menu !== null && is_assistant_in_queue" :md-active="true">
+	<md-dialog v-if="open_menu !== null" :md-active="true">
 		<md-dialog-content>
 			<h2>
 				{{ queue.queuing.findIndex(x => x.profile.id === open_menu.profile.id ) + 1 }}.
-				{{ open_menu.profile.name }} ({{ open_menu.profile.user_name }})
+				<span v-if="open_menu.profile.user_name !== null">{{ open_menu.profile.name }} ({{ open_menu.profile.user_name }})</span>
 			</h2>
 			<strong>Gick in i kön:</strong> {{ unix_to_time_ago(open_menu.entered_at) }}<br />
 			<strong>Plats:</strong> <span :class="[{ badLocation: open_menu.bad_location }]"">{{ nice_location(open_menu.location) }}</span><br />
@@ -396,13 +396,15 @@ Vue.component('route-queue', {
 		</md-dialog-content>
 		
 		<md-dialog-actions>
-			<md-button class="md-accent" @click="dequeue(open_menu)">Ta bort</md-button>
-			<md-button class="md-accent" v-if="!open_menu.bad_location" @click="bad_location(open_menu)">Placering</md-button>
-			<md-button v-else @click="bad_location(open_menu)">Placering</md-button>
-			
-			<md-button class="md-primary" @click="receiving_help(open_menu.profile)" v-if="open_menu.handlers.find(x => x.id === $root.$data.profile.id) === undefined">Assistera</md-button>
-			<md-button @click="receiving_help(open_menu.profile)" v-else>Sluta assistera</md-button>
-			
+			<span v-if="assistant_in_queue">
+				<md-button class="md-accent" @click="dequeue(open_menu)">Ta bort</md-button>
+				<md-button class="md-accent" v-if="!open_menu.bad_location" @click="bad_location(open_menu)">Placering</md-button>
+				<md-button v-else @click="bad_location(open_menu)">Placering</md-button>
+				
+				<md-button class="md-primary" @click="receiving_help(open_menu.profile)" v-if="open_menu.handlers.find(x => x.id === $root.$data.profile.id) === undefined">Assistera</md-button>
+				<md-button @click="receiving_help(open_menu.profile)" v-else>Sluta assistera</md-button>
+			</span>
+
 			<md-button class="md-primary" @click="open_menu = null">Stäng</md-button>
 		</md-dialog-actions>
 	</md-dialog>
@@ -429,7 +431,7 @@ Vue.component('route-queue', {
 					v-for="(user, index) in queue.queuing"
 					:key="user.profile.id"
 					v-on:click="open_menu = user"
-					:style="[{ cursor: is_assistant_in_queue ? 'pointer' : 'default' }]"
+					style="cursor: pointer;"
 					:class="[{ studentIsHandled: user.handlers.length > 0 }, { myQueueRow: $root.$data.profile !== null && user.profile.id === $root.$data.profile.id }]">
 					<md-table-cell>
 						<md-badge v-if="user.action !== null" class="md-primary md-square" :md-content="user.action.name" />
