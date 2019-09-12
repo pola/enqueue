@@ -396,7 +396,7 @@ Vue.component('route-queue', {
 		</md-dialog-content>
 		
 		<md-dialog-actions>
-			<span v-if="assistant_in_queue">
+			<span v-if="is_assistant_in_queue">
 				<md-button class="md-accent" @click="dequeue(open_menu)">Ta bort</md-button>
 				<md-button class="md-accent" v-if="!open_menu.bad_location" @click="bad_location(open_menu)">Placering</md-button>
 				<md-button v-else @click="bad_location(open_menu)">Placering</md-button>
