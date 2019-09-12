@@ -1526,7 +1526,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 			keys.shift();
 
 			model.has_permission(queue, req.session.profile.id).then(has_permission => {
-				if (!has_permission && student.profile.id !== req.session.profile.id) {
+				if (!has_permission) {
 					res.status(401);
 					res.end();
 					return;
