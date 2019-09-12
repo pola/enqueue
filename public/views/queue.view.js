@@ -434,10 +434,10 @@ Vue.component('route-queue', {
 					:key="user.profile.id"
 					v-on:click="open_menu = user"
 					:style="[{ cursor: is_assistant_in_queue ? 'pointer' : 'default' }]"
-					:class="[{ studentIsHandled: user.handlers.length > 0 }]">
+					:class="[{ studentIsHandled: user.handlers.length > 0 }, { myQueueRow: $root.$data.profile !== null && user.profile.id === $root.$data.profile.id }]">
 					<md-table-cell>
 						<md-badge v-if="user.action !== null" class="md-primary md-square" :md-content="user.action.name" />
-						<div v-if="user.profile.name !== null" style="white-space: nowrap;">{{ user.profile.name }}</div>
+						<div v-if="user.profile.name !== null" style="white-space: nowrap;">{{ index + 1 }}. {{ user.profile.name }}</div>
 						<span :class="[{ badLocation: user.bad_location }]">{{ nice_location(user.location) }} </span>
 					</md-table-cell>
 					<md-table-cell>{{ unix_to_time_ago(user.entered_at )}} </md-table-cell>
