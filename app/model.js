@@ -3,16 +3,10 @@
 const Sequelize = require('sequelize');
 const crypto = require('crypto');
 
-var Queue = null;
-var Room = null;
-var Computer = null;
-var Profile = null;
-var Action = null;
-var Token = null;
+var Queue, Room, Computer, Profile, Action, Token, Task = null;
 
 var io = null;
 var connection = null;
-var locked_time_slots = {};
 var queuing = {};
 var timeouts = {};
 
@@ -30,7 +24,6 @@ exports.setConnection = (c) => {
 		name : Sequelize.STRING,
 		description: Sequelize.TEXT,
 		open: Sequelize.BOOLEAN,
-		auto_open: Sequelize.BIGINT,
 		force_comment: Sequelize.BOOLEAN,
 		force_action: Sequelize.BOOLEAN
 	});
@@ -87,45 +80,73 @@ exports.setConnection = (c) => {
 	
 	Token.belongsTo(Profile, { foreignKey: 'profile_id' });
 
+	Task = connection.define('tasks', {
+		id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+		type: Sequelize.STRING,
+		data: Sequelize.TEXT,
+		deadline: Sequelize.BIGINT
+	});
+
+	Task.belongsTo(Queue, { foreignKey: 'queue_id' });
+
 	connection.sync().then(() => {
 		Queue.findAll().then(queues => {
 			for (const queue of queues) {
 				queuing[queue.id] = [];
-				exports.auto_open_update(queue);
 			}
-		});
-	});
-};
 
-exports.auto_open_timeout = queue_id => {
-	delete timeouts[queue_id];
-	
-	Queue.findOne({ where: { id: queue_id } }).then(queue => {
-		queue.auto_open = null;
-		queue.open = true;
-		queue.save().then(() => {
-			exports.io_emit_update_queue(queue.id, {
-				auto_open: null,
-				open: true
+			Task.findAll().then(tasks => {
+				for (const task of tasks) {
+					exports.task_update(task);
+				}
 			});
 		});
 	});
 };
 
-exports.auto_open_update = queue => {
-	if (queue.id in timeouts) {
-		clearTimeout(timeouts[queue.id]);
-		delete timeouts[queue.id];
+exports.task_timeout = task_id => {
+	exports.get_task(task_id).then(task => {
+		const queue = task.queue;
+		const changes = {};
+
+		switch (task.type) {
+			case 'OPEN':
+				if (!queue.open) {
+					changes.open = true;
+					queue.open = true;
+				}
+				break;
+
+			case 'CLOSE':
+				if (queue.open) {
+					changes.open = false;
+					queue.open = false;
+				}
+				break;
+		}
+
+		if (Object.keys(changes).length > 0) {
+			queue.save().then(() => {
+				exports.io_emit_update_queue(queue, changes);
+			});
+		}
+		
+		exports.remove_task(task);
+	});
+};
+
+exports.task_update = task => {
+	if (task.id in timeouts) {
+		clearTimeout(timeouts[task.id]);
+		delete timeouts[task.id];
 	}
 	
-	if (queue.auto_open !== null) {
-		var duration = queue.auto_open - Date.now();
-		
-		if (duration <= 0) {
-			exports.auto_open_timeout(queue.id);
-		} else {
-			timeouts[queue.id] = setTimeout(exports.auto_open_timeout, duration, queue.id);
-		}
+	var duration = task.deadline - Date.now();
+	
+	if (duration <= 0) {
+		exports.task_timeout(task.id);
+	} else {
+		timeouts[task.id] = setTimeout(exports.task_timeout, duration, task.id);
 	}
 };
 
@@ -258,7 +279,6 @@ exports.get_or_create_queue = (name) => new Promise((resolve, reject) => {
 			name : name,
 			description: null,
 			open: false,
-			auto_open: null,
 			force_comment: true,
 			force_action: true
 		}
@@ -503,6 +523,53 @@ exports.remove_assistant_from_queue = (assistant, queue) => new Promise((resolve
 	});
 });
 
+exports.get_tasks = (queue) => new Promise((resolve, reject) => {
+	Task.findAll({ where: { queue_id: queue.id }, order: [ ['deadline', 'ASC'], ['id', 'ASC'] ] }).then(tasks => {
+		resolve(tasks);
+	});
+});
+
+exports.get_task = task_id => Task.findOne({ where: { id: task_id }, include: [{ model: Queue }] });
+
+exports.add_task_to_queue = (queue, type, data, deadline) => new Promise((resolve, reject) => {
+	Task.create({
+		queue_id: queue.id,
+		type: type,
+		data: JSON.stringify(data),
+		deadline: deadline
+	}).then(task => {
+		exports.task_update(task);
+
+		exports.io_emit_to_assistants(queue, 'add_task', {
+			queue: queue.id,
+			task: {
+				id: task.id,
+				type: task.type,
+				data: JSON.parse(task.data),
+				deadline: task.deadline
+			}
+		});
+
+		resolve(task);
+	});
+});
+
+exports.remove_task = task => new Promise((resolve, reject) => {
+	if (task.id in timeouts) {
+		clearTimeout(timeouts[task.id]);
+		delete timeouts[task.id];
+	}
+
+	task.destroy().then(() => {
+		exports.io_emit_to_assistants(task.queue, 'remove_task', {
+			queue: task.queue.id,
+			task: task.id
+		});
+
+		resolve();
+	});
+});
+
 // används för att se om en användare, givet ett köobjekt och användarens ID, har lärar- eller assistenträttigheter i en kö
 exports.has_permission = (queue, profile_id) => new Promise((resolve, reject) => {
 	if (profile_id === null) {
@@ -534,3 +601,18 @@ exports.io_emit_update_queue_queuing_student = (queue, student) => io.emit('upda
 	queue: queue.id,
 	student: student
 });
+
+exports.io_emit_to_assistants = (queue, key, message) => {
+	// berätta för de med rättigheter i kön om att den schemalagda aktiviteten har tagits bort
+	queue.getAssistants().then(assistants => {
+		const ids = assistants.map(a => a.id);
+
+		for (const k of Object.keys(io.sockets.sockets)) {
+			const socket = io.sockets.sockets[k];
+			
+			if (socket.handshake.session.hasOwnProperty('profile') && (socket.handshake.session.profile.teacher || ids.includes(socket.handshake.session.profile.id))) {
+				socket.emit(key, message);
+			}
+		}
+	});
+};

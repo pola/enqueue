@@ -212,7 +212,6 @@ router.get('/queues/:name', (req, res) => {
 									name: queue.name,
 									description: queue.description,
 									open: queue.open,
-									auto_open: queue.auto_open,
 									force_comment: queue.force_comment,
 									force_action: queue.force_action,
 									queuing: queuing,
@@ -565,10 +564,6 @@ const update_queue = (queue, changes, req, res, keys) => {
 			res.status(200);
 			res.end();
 			
-			if (changes_keys.includes('auto_open')) {
-				model.auto_open_update(queue);
-			}
-			
 			model.io_emit_update_queue(queue, changes);
 		});
 	} else {
@@ -642,30 +637,6 @@ const update_queue = (queue, changes, req, res, keys) => {
 
 			changes.open = req.body.open;
 
-			update_queue(queue, changes, req, res, keys);
-		} else if (key === 'auto_open') {
-			keys.shift();
-			
-			if (!(typeof req.body.auto_open === 'number')) {
-				res.status(400);
-				res.json({
-					error: 7,
-					message: 'The value for parameter auto_open must be a UNIX timestamp.'
-				});
-				return;
-			}
-			
-			if (Date.now() >= req.body.auto_open) {
-				res.status(400);
-				res.json({
-					error: 7,
-					message: 'The value for parameter auto_open is in the past.'
-				});
-				return;
-			}
-			
-			changes.auto_open = req.body.auto_open;
-			
 			update_queue(queue, changes, req, res, keys);
 		} else if (key === 'force_comment') {
 			keys.shift();
@@ -1291,6 +1262,136 @@ router.delete('/queues/:name/assistants/:user_id', (req, res) => {
 						return;
 					}
 			
+					res.status(200);
+					res.end();
+				});
+			});
+		});
+	});
+});
+
+router.get('/queues/:name/tasks', (req, res) => {
+	if (!req.session.hasOwnProperty('profile')) {
+		res.status(401);
+		res.end();
+		return;
+	}
+	
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+		
+		model.has_permission(queue, req.session.profile.id).then(has_permission => {
+			if (!has_permission) {
+				res.status(401);
+				res.end();
+				return;
+			}
+
+			model.get_tasks(queue).then(tasks => {
+				res.json(tasks.map(t => ({
+					id: t.id,
+					type: t.type,
+					data: JSON.parse(t.data),
+					deadline: t.deadline
+				})));
+			});
+		});
+	});
+});
+
+router.post('/queues/:name/tasks', (req, res) => {
+	if (!req.session.hasOwnProperty('profile')) {
+		res.status(401);
+		res.end();
+		return;
+	}
+	
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+		
+		var profile_promise = null;
+		
+		if (!req.body.hasOwnProperty('type') || (req.body.type !== 'OPEN' && req.body.type !== 'CLOSE')) {
+			res.status(400);
+			res.json({
+				error: 'INVALID_PARAMETER_TYPE',
+				message: 'Missing or invalid type parameter.'
+			});
+			return;
+		}
+
+		if (!req.body.hasOwnProperty('data') || typeof req.body !== 'object') {
+			res.status(400);
+			res.json({
+				error: 'INVALID_PARAMETER_DATA',
+				message: 'Missing or invalid data parameter.'
+			});
+			return;
+		}
+		
+		const data = {};
+		
+		if (!req.body.hasOwnProperty('deadline') || typeof req.body.deadline !== 'number') {
+			res.status(400);
+			res.json({
+				error: 'INVALID_PARAMETER_DEADLINE',
+				message: 'Missing or invalid deadline parameter. Must be a UNIX timestamp.'
+			});
+			return;
+		}
+
+		if (Date.now() >= req.body.deadline) {
+			res.status(400);
+			res.json({
+				error: 'DEADLINE_ALREADY_PASSED',
+				message: 'The deadline is in the past.'
+			});
+			return;
+		}
+		
+		model.add_task_to_queue(queue, req.body.type, data, req.body.deadline).then(task => {
+			res.status(201);
+			res.end();
+		});
+	});
+});
+
+router.delete('/queues/:name/tasks/:task_id', (req, res) => {
+	if (!req.session.hasOwnProperty('profile')) {
+		res.status(401);
+		res.end();
+		return;
+	}
+	
+	model.get_queue(req.params.name).then(queue => {
+		if (queue === null) {
+			res.status(404);
+			res.end();
+			return;
+		}
+		
+		model.has_permission(queue, req.session.profile.id).then(has_permission => {
+			if (!has_permission) {
+				res.status(401);
+				res.end();
+				return;
+			}
+			
+			model.get_task(req.params.task_id).then(task => {
+				if (task === null) {
+					res.status(404);
+					return;
+				}
+			
+				model.remove_task(task).then(() => {
 					res.status(200);
 					res.end();
 				});

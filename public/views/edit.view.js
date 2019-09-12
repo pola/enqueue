@@ -3,7 +3,7 @@ Vue.component('route-edit', {
 		return {
 			queue: null,
 			name_new: null,
-		
+			tasks: [],
 			colors: null,
 			user_name_assistant: null,
 			user_name_student: null,
@@ -11,16 +11,12 @@ Vue.component('route-edit', {
 			action_color: null,
 			clicked_rooms: [],
 			existing_rooms: null,
-			selectedTime: null,
+			task_type: null,
+			task_deadline: null,
 			promt_delete_queue: false
 		}
 	},
 	methods: {
-		login(){
-			window.location = '/login';
-			// TODO: skicka tillbaka till kön!
-		},
-
 		update_settings() {
 			fetch('/api/queues/' + this.queue.id, {
 				method: 'PATCH',
@@ -99,6 +95,7 @@ Vue.component('route-edit', {
 			}
 		},
 		
+		/*
 		update_auto_open() {
 			if (this.queue.auto_open === null) {
 				this.selectedTime = null;
@@ -106,7 +103,7 @@ Vue.component('route-edit', {
 				const dt = new Date(this.queue.auto_open);
 				this.selectedTime = dt.getFullYear() + '-' + (dt.getMonth() + 1).toString().padStart(2, '0') + '-' + dt.getDate().toString().padStart(2, '0') + ' ' + dt.getHours().toString().padStart(2, '0') + ':' + dt.getMinutes().toString().padStart(2, '0');
 			}
-		},
+		},*/
 
 		change_actions(){
 
@@ -232,14 +229,29 @@ Vue.component('route-edit', {
 			});
 		},
 
-		set_auto_open(){
-			const dt = this.selectedTime.split(/[ \-:]/);
-			const ts = new Date(parseInt(dt[0]), parseInt(dt[1]) - 1, parseInt(dt[2]), parseInt(dt[3]), parseInt(dt[4])).getTime();
-			
-			fetch('/api/queues/' + this.queue.id, {
-				method: 'PATCH',
+		add_task() {
+			fetch('/api/queues/'+ this.queue.id +'/tasks', {
+				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ auto_open: ts })
+				body: JSON.stringify({
+					type: this.task_type,
+					data: {},
+					deadline: new Date(this.task_deadline).valueOf()
+				})
+			}).then(res => {
+				if (res.status === 201) {
+					this.task_type = null;
+				} else {
+					res.json().then(j => {
+						console.log(j);
+					});
+				}
+			});
+		},
+
+		remove_task(task) {
+			fetch('/api/queues/'+ this.queue.id +'/tasks/' + task.id, {
+				method: 'DELETE'
 			}).then(res => {
 				if (res.status !== 200) {
 					res.json().then(j => {
@@ -248,7 +260,7 @@ Vue.component('route-edit', {
 				}
 			});
 		},
-		
+
 		fetch_queue() {
 			fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
 				this.queue = queue;
@@ -256,15 +268,32 @@ Vue.component('route-edit', {
 				if (queue.rooms.length > 0){
 					this.update_clicked_rooms();
 				}
-			
-				if (queue.auto_open !== null) {
-					this.update_auto_open();
-				}
 				
 				if (this.name_new === null) {
 					this.name_new = queue.name;
 				}
+
+				fetch('/api/queues/' + queue.name + '/tasks').then(res => res.json()).then(tasks => {
+					this.tasks = tasks;
+				});
 			});
+		},
+		
+		unix_to_human(unix) {
+			// TODO: övergå till något bibliotek, till exempel Moment
+			d = new Date(unix);
+
+			day = '0' + d.getDate();
+			month = '0' + (d.getMonth() + 1);
+			year = d.getFullYear();
+
+			hour = '0' + d.getHours();
+			min = '0' + d.getMinutes();
+			sec = '0' + d.getSeconds();
+
+			time = year + '-' + month.slice(-2) + '-' + day.slice(-2) + ' ' + hour.slice(-2) + ':' + min.slice(-2);
+
+			return time;
 		},
 		
 		socket_handle_update_queue(data) {
@@ -273,9 +302,27 @@ Vue.component('route-edit', {
    				
    				if (k === 'rooms') {
    					this.update_clicked_rooms();
-   				} else if (k === 'auto_open') {
-					this.update_auto_open();
-				}
+   				}
+			}
+		},
+		
+		socket_handle_remove_task(data) {
+			this.tasks = this.tasks.filter(t => t.id !== data.task);
+		},
+		
+		socket_handle_add_task(data) {
+			if (data.queue === this.queue.id) {
+				this.tasks.push(data.task);
+
+				this.tasks.sort((a, b) => {
+					if (a.deadline === b.deadline) {
+						if (a.id === b.id) { return 0; }
+
+						return a.id > b.id ? 1 : -1;
+					}
+
+					return a.deadline > b.deadline ? 1 : -1;
+				});
 			}
 		}
 	},
@@ -283,12 +330,24 @@ Vue.component('route-edit', {
 	beforeDestroy() {
 		this.$root.$data.socket.removeListener('connect', this.fetch_queue);
 		this.$root.$data.socket.removeListener('update_queue', this.socket_handle_update_queue);
+		this.$root.$data.socket.removeListener('remove_task', this.socket_handle_remove_task);
+		this.$root.$data.socket.removeListener('add_task', this.socket_handle_add_task);
 	},
 
 	created() {
 		this.$root.$data.socket.on('connect', this.fetch_queue);
 		this.$root.$data.socket.on('update_queue', this.socket_handle_update_queue);
+		this.$root.$data.socket.on('remove_task', this.socket_handle_remove_task);
+		this.$root.$data.socket.on('add_task', this.socket_handle_add_task);
 		
+		const now = new Date();
+
+		now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+		now.setSeconds(0);
+		now.setMilliseconds(0);
+
+		this.task_deadline = now.toISOString().slice(0, -1);
+
 		this.fetch_queue();
 		
 		fetch('/api/colors').then(res => res.json()).then(colors => {
@@ -337,12 +396,7 @@ Vue.component('route-edit', {
 					<label>Beskrivning</label>
 					<md-textarea id="new_description" name="new_description" v-model="queue.description"></md-textarea>
 				</md-field>
-				
-				<md-field>
-					<label>Datum och tid för automatisk upplåsning</label>
-					<md-input type="datetime-local" v-model="selectedTime" />
-				</md-field>
-				
+
 				<md-card-actions>
 			   		<md-button type="submit" class="md-primary">Spara ändringar</md-button>
 			   	</md-card-actions>
@@ -358,6 +412,52 @@ Vue.component('route-edit', {
 			<md-switch v-model="queue.force_comment" @change="update_force();">Kräv kommentar</md-switch>
 		</md-card-content>
 	</md-card>
+	
+	<br />
+	
+	<md-card>
+		<md-card-header>
+	        <h2 class="md-title">Schemalagda händelser</h2>
+	    </md-card-header>
+	    
+	    <md-card-content>
+			<form novalidate @submit.prevent="add_task" style="display: inline-flex;">
+				<md-field>
+					<label for="task_type">Händelse</label>
+					<md-select v-model="task_type" id="task_type" required>
+						<md-option value="OPEN">Öppna kön</md-option>
+						<md-option value="CLOSE">Stäng kön</md-option>
+					</md-select>
+				</md-field>
+
+				<md-field>
+					<label>Datum och tid</label>
+					<md-input type="datetime-local" v-model="task_deadline" />
+				</md-field>
+
+				<md-card-actions>
+					<md-button type="submit" class="md-primary" :disabled="task_type === null || task_deadline === null || task_deadline.length === 0">Schemalägg ny händelse</md-button>
+				</md-card-actions>
+			</form>
+
+			<md-table v-if="tasks.length > 0">
+				<md-table-row>
+					<md-table-head>Händelse</md-table-head>
+					<md-table-head>Tidpunkt</md-table-head>
+					<md-table-head>Alternativ</md-table-head>
+				</md-table-row>
+
+				<md-table-row v-for="task in tasks" :key="task.id">
+					<md-table-cell>
+						<span v-if="task.type === 'OPEN'">Öppna kön</span>
+						<span v-if="task.type === 'CLOSE'">Stäng kön</span>
+					</md-table-cell>
+					<md-table-cell>{{ unix_to_human(task.deadline) }}</md-table-cell>
+					<md-table-cell><md-button v-on:click="remove_task(task)" class="md-accent">Radera</md-button></md-table-cell>
+				</md-table-row>
+		   	</md-table>
+		</md-card-content>
+    </md-card>
 	
 	<br />
 	
