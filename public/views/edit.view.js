@@ -16,7 +16,8 @@ Vue.component('route-edit', {
 			clicked_rooms: [],
 			existing_rooms: null,
 
-			selectedTime: null
+			selectedTime: null,
+			promt_delete_queue: false
 		}
 	},
 	methods: {
@@ -132,11 +133,19 @@ Vue.component('route-edit', {
 		},
 
 		delete_queue(){
-			fetch('/api/queues/' + this.queue.id, {
-				method: 'DELETE'
-			}).then(res => {
-				console.log(res.status);
-			});
+			if (this.promt_delete_queue) {
+				fetch('/api/queues/' + this.queue.id, {
+					method: 'DELETE'
+				}).then(res => {
+					if (res.status === 200) {
+						this.$router.push('/queues');
+					} else {
+						alert('Ett fel inträffade när kön skulle raderas.');
+					}
+				});
+			} else {
+				this.promt_delete_queue = true;
+			}
 		},
 
 		add_assistant(){
@@ -316,6 +325,9 @@ Vue.component('route-edit', {
 
 	template: `
 <div v-if="queue !== null && colors !== null && existing_rooms !== null && is_assistant_in_queue">
+	<md-dialog-confirm :md-active.sync="promt_delete_queue" md-title="Vill du radera kön?"
+		md-confirm-text="Ja, radera kön" md-cancel-text="Nej, återgå" @md-confirm="delete_queue" @md-cancel="promt_delete_queue = false" />
+	
 	<h1>Inställningar för {{ this.queue.name }}</h1>
 	
 	<md-card>
