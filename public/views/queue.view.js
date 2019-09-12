@@ -412,6 +412,42 @@ Vue.component('route-queue', {
 	</md-dialog>
 	
 	<div class="md-layout md-gutter md-alignment-top">
+		<div class="md-layout-item md-xlarge-size-70 md-large-size-70 md-medium-size-70 md-small-size-70 md-xsmall-size-100">
+			<h1>
+				<md-icon v-if="!queue.open" class="md-size-2x md-accent">lock</md-icon>
+				<md-icon v-if="queue.open" class="md-size-2x">people</md-icon>
+				{{ queue.name }}
+			</h1>
+			
+			<p style="white-space: pre-line;">{{ queue.description }}</p>
+			
+			<md-table v-if="queue.queuing.length > 0">
+				<md-table-row>
+					<md-table-head style="width: 30%;">Namn</md-table-head>
+					<md-table-head style="width: 20%;">Tid</md-table-head>
+					<md-table-head style="width: 50%;">Kommentar</md-table-head>
+				</md-table-row>
+				
+				<md-table-row
+					v-if="view_entire_queue === true"
+					v-for="(user, index) in queue.queuing"
+					:key="user.profile.id"
+					v-on:click="open_menu = user"
+					:style="[{ cursor: is_assistant_in_queue ? 'pointer' : 'default' }]"
+					:class="[{ studentIsHandled: user.handlers.length > 0 }]">
+					<md-table-cell>
+						<md-badge v-if="user.action !== null" class="md-primary md-square" :md-content="user.action.name" />
+						<div v-if="user.profile.name !== null" style="white-space: nowrap;">{{ user.profile.name }}</div>
+						<span :class="[{ badLocation: user.bad_location }]">{{ nice_location(user.location) }} </span>
+					</md-table-cell>
+					<md-table-cell>{{ unix_to_time_ago(user.entered_at )}} </md-table-cell>
+					<md-table-cell>
+						<span v-if="user.comment !== null">{{ user.comment }}</span>
+					</md-table-cell>
+				</md-table-row>
+			</md-table>
+		</div>
+		
 		<div class="md-layout-item md-xlarge-size-30 md-large-size-30 md-medium-size-30 md-small-size-30 md-xsmall-size-100">
 			<md-card v-if="is_assistant_in_queue">
 				<md-card-header>
@@ -520,42 +556,6 @@ Vue.component('route-queue', {
 					</div>
 				</md-card-content>
 			</md-card>
-		</div>
-		
-		<div class="md-layout-item md-xlarge-size-70 md-large-size-70 md-medium-size-70 md-small-size-70 md-xsmall-size-100">
-			<h1>
-				<md-icon v-if="!queue.open" class="md-size-2x md-accent">lock</md-icon>
-				<md-icon v-if="queue.open" class="md-size-2x">people</md-icon>
-				{{ queue.name }}
-			</h1>
-			
-			<p style="white-space: pre-line;">{{ queue.description }}</p>
-			
-					<md-table v-if="queue.queuing.length > 0">
-						<md-table-row>
-							<md-table-head style="width: 30%;">Namn</md-table-head>
-							<md-table-head style="width: 20%;">Tid</md-table-head>
-							<md-table-head style="width: 50%;">Kommentar</md-table-head>
-						</md-table-row>
-						
-						<md-table-row
-							v-if="view_entire_queue === true"
-							v-for="(user, index) in queue.queuing"
-							:key="user.profile.id"
-							v-on:click="open_menu = user"
-							:style="[{ cursor: is_assistant_in_queue ? 'pointer' : 'default' }]"
-							:class="[{ studentIsHandled: user.handlers.length > 0 }]">
-							<md-table-cell>
-								<md-badge v-if="user.action !== null" class="md-primary md-square" :md-content="user.action.name" />
-								<div v-if="user.profile.name !== null" style="white-space: nowrap;">{{ user.profile.name }}</div>
-								<span :class="[{ badLocation: user.bad_location }]">{{ nice_location(user.location) }} </span>
-							</md-table-cell>
-							<md-table-cell>{{ unix_to_time_ago(user.entered_at )}} </md-table-cell>
-							<md-table-cell>
-								<span v-if="user.comment !== null">{{ user.comment }}</span>
-							</md-table-cell>
-						</md-table-row>
-					</md-table>
 		</div>
 	</div>
 </div>
