@@ -470,7 +470,6 @@ exports.add_student_to_queue = (student, queue) => new Promise((resolve, reject)
 		if (result.length === 0) {
 			resolve(false);
 		} else {
-			// TODO: skicka bara den här uppdateringen till assistenter, lärare och studenten själv
 			queue.getStudents().then(students => {
 				exports.io_emit_update_queue(queue, { students: students });
 			});
@@ -485,7 +484,6 @@ exports.remove_student_from_queue = (student, queue) => new Promise((resolve, re
 		if (result === 0) {
 			resolve(false);
 		} else {
-			// TODO: skicka bara den här uppdateringen till assistenter, lärare och studenten själv
 			queue.getStudents().then(students => {
 				exports.io_emit_update_queue(queue, { students: students });
 			});
