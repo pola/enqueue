@@ -432,7 +432,7 @@ Vue.component('route-edit', {
 
 				<md-field>
 					<label>Datum och tid</label>
-					<md-input type="datetime-local" v-model="task_deadline" />
+					<md-input type="datetime-local" v-model="task_deadline" required />
 				</md-field>
 
 				<md-card-actions>
