@@ -29,6 +29,18 @@ app.use((req, res, next) => {
 const finalize_login = (req, res, id, user_name, name, next) => {
 	model.get_or_create_profile(id, user_name, name).then(profile => {
 		req.session.profile = profile;
+
+		// när man är inloggad via REST, se till att eventuella (ska finnas!) websockets med samma cas_user också får sitt profilobjekt
+		for (const k of Object.keys(io.sockets.sockets)) {
+			const socket = io.sockets.sockets[k];
+			const session = socket.handshake.session;
+
+			if (session.hasOwnProperty('cas_user') && session.cas_user === profile.id) {
+				session.profile = profile;
+				socket.emit('profile', profile);
+			}
+		}
+
 		next();
 	});
 };

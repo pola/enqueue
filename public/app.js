@@ -54,3 +54,7 @@ app.$data.socket.on('connect', () => {
 app.$data.socket.on('disconnect', () => {
 	app.$data.socket_connected = false;
 });
+
+app.$data.socket.on('profile', profile => {
+	app.$data.profile = profile;
+});
