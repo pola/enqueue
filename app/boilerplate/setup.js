@@ -47,6 +47,7 @@ module.exports = () => {
 	const sequelize = new Sequelize(config.mysql.database, config.mysql.username, config.mysql.password, {
 		host: config.mysql.host,
 		dialect: 'mysql',
+		supportBigNumbers: true,
 		logging: config.debug ? console.log : false,
 		
 		pool: {
