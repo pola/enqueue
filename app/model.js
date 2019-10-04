@@ -2,6 +2,7 @@
 
 const Sequelize = require('sequelize');
 const crypto = require('crypto');
+const setTimeoutAt = require('safe-timers').setTimeoutAt;
 
 var Queue, Room, Computer, Profile, Action, Token, Task = null;
 
@@ -137,7 +138,7 @@ exports.task_timeout = task_id => {
 
 exports.task_update = task => {
 	if (task.id in timeouts) {
-		clearTimeout(timeouts[task.id]);
+		timeouts[task.id].clear();
 		delete timeouts[task.id];
 	}
 	
@@ -146,7 +147,7 @@ exports.task_update = task => {
 	if (duration <= 0) {
 		exports.task_timeout(task.id);
 	} else {
-		timeouts[task.id] = setTimeout(exports.task_timeout, duration, task.id);
+		timeouts[task.id] = setTimeoutAt(exports.task_timeout, task.deadline, task.id);
 	}
 };
 
@@ -554,7 +555,7 @@ exports.add_task_to_queue = (queue, type, data, deadline) => new Promise((resolv
 
 exports.remove_task = task => new Promise((resolve, reject) => {
 	if (task.id in timeouts) {
-		clearTimeout(timeouts[task.id]);
+		timeouts[task.id].clear();
 		delete timeouts[task.id];
 	}
 
