@@ -595,13 +595,13 @@ exports.io_emit_update_queue = (queue, changes) => io.emit('update_queue', {
 	changes: changes
 });
 
+// generellt uppdateringsanrop för klienterna när en specifik student ändras i en kö (t.ex. en student får hjälp)
 exports.io_emit_update_queue_queuing_student = (queue, student) => io.emit('update_queue_queuing_student', {
 	queue: queue.id,
 	student: student
 });
 
 exports.io_emit_to_assistants = (queue, key, message) => {
-	// berätta för de med rättigheter i kön om att den schemalagda aktiviteten har tagits bort
 	queue.getAssistants().then(assistants => {
 		const ids = assistants.map(a => a.id);
 
