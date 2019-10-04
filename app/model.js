@@ -590,16 +590,59 @@ exports.has_permission = (queue, profile_id) => new Promise((resolve, reject) =>
 exports.io_emit_update_queuing = (queue) => exports.io_emit_update_queue(queue, { queuing: queuing[queue.id] });
 
 // generellt uppdateringsanrop för klienterna när någonting ändras i en kö
-exports.io_emit_update_queue = (queue, changes) => io.emit('update_queue', {
-	queue: queue.id,
-	changes: changes
-});
+exports.io_emit_update_queue = (queue, changes) => {
+	const message_user = {
+		queue: queue.id,
+		changes: changes
+	};
+
+	const changes_clone = JSON.parse(JSON.stringify(changes));
+
+	const message_guest = {
+		queue: queue.id,
+		changes: changes_clone
+	};
+
+	if (changes.hasOwnProperty('queuing')) {
+		message_guest.changes.queuing = changes_clone.queuing.map(x => {
+			x.profile.user_name = null;
+			x.profile.name = null;
+
+			return x;
+		});
+	}
+
+	for (const k of Object.keys(io.sockets.sockets)) {
+		const socket = io.sockets.sockets[k];
+		socket.emit('update_queue', socket.handshake.session.hasOwnProperty('profile') ? message_user : message_guest);
+	}
+};
 
 // generellt uppdateringsanrop för klienterna när en specifik student ändras i en kö (t.ex. en student får hjälp)
-exports.io_emit_update_queue_queuing_student = (queue, student) => io.emit('update_queue_queuing_student', {
-	queue: queue.id,
-	student: student
-});
+exports.io_emit_update_queue_queuing_student = (queue, student) => {
+	const message_user = {
+		queue: queue.id,
+		student: student
+	};
+
+	const student_clone = JSON.parse(JSON.stringify(student));
+
+	const message_guest = {
+		queue: queue.id,
+		student: student_clone
+	};
+
+	message_guest.student.profile = {
+		id: student_clone.profile.id,
+		user_name: null,
+		name: null
+	};
+
+	for (const k of Object.keys(io.sockets.sockets)) {
+		const socket = io.sockets.sockets[k];
+		socket.emit('update_queue_queuing_student', socket.handshake.session.hasOwnProperty('profile') ? message_user : message_guest);
+	}
+}
 
 exports.io_emit_to_assistants = (queue, key, message) => {
 	queue.getAssistants().then(assistants => {
