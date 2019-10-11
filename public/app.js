@@ -41,6 +41,7 @@ const app = new Vue({
 				app.$data.profile = me.profile;
 				app.$data.location = me.location;
 				app.$data.assisting_in = me.assisting_in;
+				app.$data.is_kthlan = me.is_kthlan;
 			});
 		}
 	}
