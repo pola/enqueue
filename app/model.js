@@ -25,6 +25,7 @@ exports.setConnection = (c) => {
 		name : Sequelize.STRING,
 		description: Sequelize.TEXT,
 		open: Sequelize.BOOLEAN,
+		force_kthlan: Sequelize.BOOLEAN,
 		force_comment: Sequelize.BOOLEAN,
 		force_action: Sequelize.BOOLEAN
 	});
@@ -280,6 +281,7 @@ exports.get_or_create_queue = (name) => new Promise((resolve, reject) => {
 			name : name,
 			description: null,
 			open: false,
+			force_kthlan: false,
 			force_comment: true,
 			force_action: true
 		}

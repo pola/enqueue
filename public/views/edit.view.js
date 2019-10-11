@@ -39,6 +39,7 @@ Vue.component('route-edit', {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
+					force_kthlan: this.queue.force_kthlan,
 					force_action: this.queue.force_action,
 					force_comment: this.queue.force_comment
 				})
@@ -468,6 +469,8 @@ Vue.component('route-edit', {
 	    
 	    <md-card-content>
 			<p>Om inga anges kan studenterna sitta var som helst.</p>
+
+			<md-switch v-model="queue.force_kthlan" @change="update_force();">Kräv KTHLAN</md-switch>
 			
 			<form novalidate @submit.prevent="change_rooms">
 				<md-checkbox v-for="room in existing_rooms" v-model="clicked_rooms" v-on:change="change_room(room.id)" :key="room.id" :value="room.id">{{room.name}}</md-checkbox>

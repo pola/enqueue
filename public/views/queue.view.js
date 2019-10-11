@@ -512,6 +512,10 @@ Vue.component('route-queue', {
 						</ul>
 					</div>
 					
+					<div v-else-if="$root.$data.location === null && !$root.$data.is_kthlan && queue.force_kthlan">
+						<p>För att kunna ställa dig i kön måste du vara ansluten till KTHLAN, exempelvis via eduroam.</p>
+					</div>
+					
 					<div v-else-if="$root.$data.profile === null">
 						<p>För att kunna ställa dig i kön måste du logga in.</p>
 						<md-button class="md-primary md-raised" v-on:click="$root.redirect_login()">Logga in</md-button>

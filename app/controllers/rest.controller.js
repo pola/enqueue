@@ -2,7 +2,30 @@
 
 const model = require("../model.js");
 const express = require('express');
+const config = require('../config');
 const router = express.Router();
+
+const is_kthlan = ip => {
+	const split_ip = ip => {
+		const ip_parts = ip.split('.');
+		return (parseInt(ip_parts[0]) * Math.pow(2, 24)) + (parseInt(ip_parts[1]) * Math.pow(2, 16)) + (parseInt(ip_parts[2]) * Math.pow(2, 8)) + parseInt(ip_parts[3]);
+	};
+	
+	const ip_int = split_ip(ip);
+
+	for (const network of config.kthlan) {
+		const split = network.split('/');
+		const net_bit_count = parseInt(split[1]);
+
+		var net_int = split_ip(split[0]) & (~(Math.pow(2, net_bit_count) - 1) & 0xffffffff);
+		
+		if ((net_int & ip_int) === net_int) {
+			return true;
+		}
+	}
+
+	return false;
+};
 
 // hämta profilen för den inloggade användaren
 router.get('/me', (req, res) => {
@@ -16,7 +39,8 @@ router.get('/me', (req, res) => {
 							id: q.id,
 							name: q.name
 						})),
-						location: location
+						location: location,
+						is_kthlan: is_kthlan(req.connection.remoteAddress)
 					});
 				});
 			});
@@ -24,7 +48,8 @@ router.get('/me', (req, res) => {
 			res.json({
 				profile: null,
 				assisting_in: [],
-				location: location
+				location: location,
+				is_kthlan: is_kthlan(req.connection.remoteAddress)
 			});
 		}
 	});
@@ -212,6 +237,7 @@ router.get('/queues/:name', (req, res) => {
 									name: queue.name,
 									description: queue.description,
 									open: queue.open,
+									force_kthlan: queue.force_kthlan,
 									force_comment: queue.force_comment,
 									force_action: queue.force_action,
 									queuing: queuing,
@@ -375,6 +401,16 @@ router.post('/queues/:name/queuing', (req, res) => {
 					}
 					
 					location = req.body.location;
+				}
+
+				// om man har en fritextplacering kan det ibland vara så att man behöver sitta på KTHLAN
+				if (typeof location === 'string' && queue.force_kthlan && !is_kthlan(req.connection.remoteAddress)) {
+					res.status(400);
+					res.json({
+						error: 'NO_KTHLAN',
+						message: 'You must be connected to KTHLAN.'
+					});
+					return;
 				}
 				
 				model.get_action_by_id(req.body.action).then(action => {
@@ -636,6 +672,21 @@ const update_queue = (queue, changes, req, res, keys) => {
 			}
 
 			changes.open = req.body.open;
+
+			update_queue(queue, changes, req, res, keys);
+		} else if (key === 'force_kthlan') {
+			keys.shift();
+
+			if (!(typeof req.body.force_kthlan === 'boolean')) {
+				res.status(400);
+				res.json({
+					error: 8,
+					message: 'The value for parameter force_kthlan must be a boolean.'
+				});
+				return;
+			}
+
+			changes.force_kthlan = req.body.force_kthlan;
 
 			update_queue(queue, changes, req, res, keys);
 		} else if (key === 'force_comment') {
@@ -1511,6 +1562,16 @@ const update_student = (queue, student, changes, req, res, keys) => {
 							}
 
 							changes.location = req.body.location;
+						}
+
+						// om man har en fritextplacering kan det ibland vara så att man behöver sitta på KTHLAN
+						if (typeof location === 'string' && queue.force_kthlan && !is_kthlan(req.connection.remoteAddress)) {
+							res.status(400);
+							res.json({
+								error: 'NO_KTHLAN',
+								message: 'You must be connected to KTHLAN.'
+							});
+							return;
 						}
 						
 						if (student.bad_location) {
