@@ -177,7 +177,7 @@ router.post('/queues', (req, res) => {
 	if (!valid_queue_name(req.body.name)) {
 		res.status(400);
 		res.json({
-			error: 1,
+			error: 'INVALID_NAME',
 			message: 'The name is invalid.'
 		});
 		return;
@@ -316,7 +316,7 @@ router.post('/queues/:name/queuing', (req, res) => {
 		if (!req.body.hasOwnProperty('comment') || !req.body.hasOwnProperty('action') || !req.body.hasOwnProperty('location')) {
 			res.status(400);
 			res.json({
-				error: 3,
+				error: 'MISSING_FIELD',
 				message: 'Missing comment, action or location.'
 			});
 			return;
@@ -325,7 +325,7 @@ router.post('/queues/:name/queuing', (req, res) => {
 		if ((req.body.comment !== null && typeof(req.body.comment) !== 'string') || (req.body.action !== null && typeof(req.body.action) !== 'number') || (req.body.location !== null && typeof(req.body.location) !== 'string')) {
 			res.status(400);
 			res.json({
-				error: 4,
+				error: 'INVALID_PARAMETER_TYPE',
 				message: 'Invalid comment, action or location.'
 			});
 			return;
@@ -334,7 +334,7 @@ router.post('/queues/:name/queuing', (req, res) => {
 		if ((req.body.comment === null || req.body.comment.length === 0) && queue.force_comment) {
 			res.status(400);
 			res.json({
-				error: 5,
+				error: 'COMMENT_REQUIRED',
 				message: 'A comment is required.'
 			});
 			return;
@@ -343,7 +343,7 @@ router.post('/queues/:name/queuing', (req, res) => {
 		if (req.body.action === null && queue.force_action) {
 			res.status(400);
 			res.json({
-				error: 6,
+				error: 'ACTION_REQUIRED',
 				message: 'An action is required.'
 			});
 			return;
@@ -370,7 +370,7 @@ router.post('/queues/:name/queuing', (req, res) => {
 						if (!room_ok) {
 							res.status(400);
 							res.json({
-								error: 7,
+								error: 'INVALID_ROOM',
 								message: 'Invalid room.'
 							});
 							return;
@@ -385,7 +385,7 @@ router.post('/queues/:name/queuing', (req, res) => {
 				} else if (req.body.location === null) {
 					res.status(400);
 					res.json({
-						error: 8,
+						error: 'LOCATION_REQUIRED',
 						message: 'A location is required.'
 					});
 					return;
@@ -394,7 +394,7 @@ router.post('/queues/:name/queuing', (req, res) => {
 					if (rooms.length !== 0) {
 						res.status(400);
 						res.json({
-							error: 9,
+							error: 'SPECIFIC_ROOM_REQUIRED',
 							message: 'You must sit in one of the specified rooms.'
 						});
 						return;
@@ -418,7 +418,7 @@ router.post('/queues/:name/queuing', (req, res) => {
 						if (action === null || action.queue_id !== queue.id) {
 							res.status(400);
 							res.json({
-								error: 10,
+								error: 'INVALID_ACTION',
 								message: 'Unknown action.'
 							});
 							return;
@@ -435,7 +435,7 @@ router.post('/queues/:name/queuing', (req, res) => {
 					if (!queue.open) {
 						res.status(400);
 						res.json({
-							error: 1,
+							error: 'QUEUE_IS_CLOSED',
 							message: 'The queue is not open.'
 						});
 						return;
@@ -446,7 +446,7 @@ router.post('/queues/:name/queuing', (req, res) => {
 						if (student.profile.id === req.session.profile.id) {
 							res.status(400);
 							res.json({
-								error: 2,
+								error: 'ALREADY_IN_QUEUE',
 								message: 'You are already standing in the queue.'
 							});
 							return;
@@ -585,7 +585,7 @@ const update_queue = (queue, changes, req, res, keys) => {
 		if (changes_keys.length === 0) {
 			res.status(400);
 			res.json({
-				error: 1,
+				error: 'NOTHING_TO_CHANGE',
 				message: 'Specify at least one parameter to change.'
 			});
 			return;
@@ -605,22 +605,13 @@ const update_queue = (queue, changes, req, res, keys) => {
 	} else {
 		const key = keys[0];
 
-		if (key === 'name') {
+		if (key === 'name' && typeof req.body.name === 'string') {
 			keys.shift();
-
-			if (typeof req.body.name !== 'string') {
-				res.status(400);
-				res.json({
-					error: 3,
-					message: 'The value for parameter name must be a string.'
-				});
-				return;
-			}
 
 			if (!valid_queue_name(req.body.name)) {
 				res.status(400);
 				res.json({
-					error: 4,
+					error: 'INVALID_NAME',
 					message: 'The name is invalid.'
 				});
 				return;
@@ -630,7 +621,7 @@ const update_queue = (queue, changes, req, res, keys) => {
 				if (existing_queue !== null && existing_queue.id !== queue.id) {
 					res.status(400);
 					res.json({
-						error: 5,
+						error: 'NAME_IS_TAKEN',
 						message: 'The name is already used by another queue.'
 					});
 					return;
@@ -640,17 +631,8 @@ const update_queue = (queue, changes, req, res, keys) => {
 
 				update_queue(queue, changes, req, res, keys);
 			});
-		} else if (key === 'description') {
+		} else if (key === 'description' && (req.body.description === null || typeof req.body.description === 'string')) {
 			keys.shift();
-
-			if (req.body.description !== null && typeof req.body.description !== 'string') {
-				res.status(400);
-				res.json({
-					error: 6,
-					message: 'The value for parameter description must be a string.'
-				});
-				return;
-			}
 
 			changes.description = req.body.description;
 
@@ -659,62 +641,26 @@ const update_queue = (queue, changes, req, res, keys) => {
 			}
 
 			update_queue(queue, changes, req, res, keys);
-		} else if (key === 'open') {
+		} else if (key === 'open' && typeof req.body.open === 'boolean') {
 			keys.shift();
-
-			if (!(typeof req.body.open === 'boolean')) {
-				res.status(400);
-				res.json({
-					error: 7,
-					message: 'The value for parameter open must be a boolean.'
-				});
-				return;
-			}
 
 			changes.open = req.body.open;
 
 			update_queue(queue, changes, req, res, keys);
-		} else if (key === 'force_kthlan') {
+		} else if (key === 'force_kthlan' && typeof req.body.force_kthlan === 'boolean') {
 			keys.shift();
-
-			if (!(typeof req.body.force_kthlan === 'boolean')) {
-				res.status(400);
-				res.json({
-					error: 8,
-					message: 'The value for parameter force_kthlan must be a boolean.'
-				});
-				return;
-			}
 
 			changes.force_kthlan = req.body.force_kthlan;
 
 			update_queue(queue, changes, req, res, keys);
-		} else if (key === 'force_comment') {
+		} else if (key === 'force_comment' && typeof req.body.force_comment === 'boolean') {
 			keys.shift();
-
-			if (!(typeof req.body.force_comment === 'boolean')) {
-				res.status(400);
-				res.json({
-					error: 8,
-					message: 'The value for parameter force_comment must be a boolean.'
-				});
-				return;
-			}
 
 			changes.force_comment = req.body.force_comment;
 
 			update_queue(queue, changes, req, res, keys);
-		} else if (key === 'force_action') {
+		} else if (key === 'force_action' && typeof req.body.force_action === 'boolean') {
 			keys.shift();
-
-			if (!(typeof req.body.force_action === 'boolean')) {
-				res.status(400);
-				res.json({
-					error: 9,
-					message: 'The value for parameter force_action must be a boolean.'
-				});
-				return;
-			}
 
 			changes.force_action = req.body.force_action;
 
@@ -722,8 +668,8 @@ const update_queue = (queue, changes, req, res, keys) => {
 		} else {
 			res.status(400);
 			res.json({
-				error: 2,
-				message: 'An unknown parameter was specified.'
+				error: 'UNKNOWN_FIELD',
+				message: 'An unknown parameter or an invalid value was specified.'
 			});
 		}
 	}
@@ -794,7 +740,7 @@ router.post('/queues/:name/actions', (req, res) => {
 	if (!req.body.hasOwnProperty('name') || typeof req.body.name !== 'string' || !req.body.hasOwnProperty('color') || model.colors.indexOf(req.body.color) === -1) {
 		res.status(400);
 		res.json({
-			error: 1,
+			error: 'INVALID_PARAMETER',
 			message: 'Missing or invalid name or color parameters.'
 		});
 		return;
@@ -803,7 +749,7 @@ router.post('/queues/:name/actions', (req, res) => {
 	if (req.body.name.length === 0) {
 		res.status(400);
 		res.json({
-			error: 2,
+			error: 'NAME_IS_EMPTY',
 			message: 'The name cannot be empty.'
 		});
 		return;
@@ -827,7 +773,7 @@ router.post('/queues/:name/actions', (req, res) => {
 				if (existing_action !== null) {
 					res.status(400);
 					res.json({
-						error: 3,
+						error: 'NAME_IN_TAKEN',
 						message: 'The name is already in use.'
 					});
 					return;
@@ -1458,7 +1404,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 		if (changes_keys.length === 0) {
 			res.status(400);
 			res.json({
-				error: 1,
+				error: 'NOTHING_TO_CHANGE',
 				message: 'Specify at least one parameter to change.'
 			});
 			return;
@@ -1531,7 +1477,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 								if (!room_ok) {
 									res.status(400);
 									res.json({
-										error: 6,
+										error: 'INVALID_ROOM',
 										message: 'Invalid room.'
 									});
 									return;
@@ -1546,7 +1492,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 						} else if (req.body.location === null) {
 							res.status(400);
 							res.json({
-								error: 7,
+								error: 'LOCATION_REUQIRED',
 								message: 'A location is required.'
 							});
 							return;
@@ -1555,7 +1501,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 							if (rooms.length !== 0) {
 								res.status(400);
 								res.json({
-									error: 8,
+									error: 'SPECIFIC_ROOM_REQUIRED',
 									message: 'You must sit in one of the specified rooms.'
 								});
 								return;
@@ -1589,7 +1535,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 				if ((req.body.comment === null || req.body.comment.length === 0) && queue.force_comment) {
 					res.status(400);
 					res.json({
-						error: 3,
+						error: 'COMMENT_REQUIRED',
 						message: 'A comment is required.'
 					});
 					return;
@@ -1607,7 +1553,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 					if (queue.force_action) {
 						res.status(400);
 						res.json({
-							error: 4,
+							error: 'ACTION_REQUIRED',
 							message: 'An action is required.'
 						});
 						return;
@@ -1621,7 +1567,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 						if (action === null || action.queue_id !== queue.id) {
 							res.status(400);
 							res.json({
-								error: 5,
+								error: 'INVALID_ACTION',
 								message: 'Unknown action.'
 							});
 							return;
@@ -1661,7 +1607,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 					if (!found) {
 						res.status(400);
 						res.json({
-							error: 10,
+							error: 'INVALID_MOVE_AFTER_STUDENT',
 							message: 'Cannot find the student specified in parameter move_after.'
 						});
 						return;
@@ -1735,7 +1681,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 		} else {
 			res.status(400);
 			res.json({
-				error: 2,
+				error: 'UNKNOWN_FIELD',
 				message: 'An unknown parameter or an invalid value was specified.'
 			});
 			return;
