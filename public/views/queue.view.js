@@ -26,12 +26,31 @@ Vue.component('route-queue', {
 			fetch('/api/queues/' + this.queue.name + '/queuing', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ 	
+				body: JSON.stringify({
 					'location': this.location,
-				'action': this.action,
-					'comment': this.comment})})
-			.then(res => {
+					'action': this.action,
+					'comment': this.comment
+				})
+			}).then(res => {
 				if (res.status !== 201) {
+					res.json().then (data => {
+						alert(data.message);
+					});
+				}
+			});
+		},
+
+		update_own_details() {
+			fetch('/api/queues/' + this.queue.name + '/queuing/' + this.$root.$data.profile.id, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					'location': this.location,
+					'action': this.action,
+					'comment': this.comment
+				})
+			}).then(res => {
+				if (res.status !== 200) {
 					res.json().then (data => {
 						alert(data.message);
 					});
@@ -43,7 +62,12 @@ Vue.component('route-queue', {
 			fetch('/api/queues/' + this.queue.name + '/queuing/' + student.profile.id, {
 				method: 'DELETE'
 			}).then(res => {
-				if (res.status !== 200) {
+				if (res.status === 200) {
+					if (student.profile.id === this.$root.$data.profile.id) {
+						this.comment = null;
+						this.action = null;
+					}
+				} else {
 					res.json().then (data => {
 						alert(data.message);
 					});
@@ -298,10 +322,17 @@ Vue.component('route-queue', {
 			}
 			
 			for (const student of this.queue.queuing) {
-				if (this.$root.$data.profile.id === student.profile.id){
+				if (this.$root.$data.profile.id === student.profile.id) {
+					this.comment = student.comment;
+					this.location = typeof student.location === 'string' ? student.location : student.location.name;
+
+					// om en student har en action som inte längre finns nullsätter vi variabeln
+					this.action = (student.action !== null && this.queue.actions.findIndex(x => x.id === student.action.id) !== -1) ? student.action.id : null;
+
 					return true;
 				}
 			}
+
 			return false;
 		},
 		
@@ -495,7 +526,7 @@ Vue.component('route-queue', {
 				</md-card-header>
 				
 				<md-card-content>
-					<div v-if="!queue.open && !in_queue">
+					<div v-if="!in_queue && !queue.open">
 						<div v-if="$root.$data.profile === null">
 							<p>Kön är stängd och du är inte inloggad.</p>
 							<md-button class="md-primary md-raised" v-on:click="$root.redirect_login()">Logga in</md-button>
@@ -504,7 +535,7 @@ Vue.component('route-queue', {
 						<p v-else>Kön är stängd.</p>
 					</div>
 					
-					<div v-else-if="queue.rooms.length > 0 && ($root.$data.location === null || !queue.rooms.map(x => x.id).includes($root.$data.location.room_id))">
+					<div v-else-if="!in_queue && (queue.rooms.length > 0 && ($root.$data.location === null || !queue.rooms.map(x => x.id).includes($root.$data.location.room_id)))">
 						<p>För att kunna ställa dig i kön måste du vara inloggad på en dator i någon av följande rum.</p>
 						
 						<ul>
@@ -512,7 +543,7 @@ Vue.component('route-queue', {
 						</ul>
 					</div>
 					
-					<div v-else-if="$root.$data.location === null && !$root.$data.is_kthlan && queue.force_kthlan">
+					<div v-else-if="!in_queue && $root.$data.location === null && !$root.$data.is_kthlan && queue.force_kthlan">
 						<p>För att kunna ställa dig i kön måste du vara ansluten till KTHLAN, exempelvis via eduroam.</p>
 					</div>
 					
@@ -521,35 +552,33 @@ Vue.component('route-queue', {
 						<md-button class="md-primary md-raised" v-on:click="$root.redirect_login()">Logga in</md-button>
 					</div>
 					
-					<div v-else-if="blocked_by_whitelist">
+					<div v-else-if="!in_queue && blocked_by_whitelist">
 						<p>Den här kön kan du inte ställa dig i.</p>
 					</div>
 					
 					<div v-else>
-						<form novalidate>
-							<md-field v-if="$root.$data.location === null">
-								<label for="location">Plats</label>
-								<md-input id="location" type="text" v-model="location" required />
-							</md-field>
+						<md-field v-if="$root.$data.location === null">
+							<label for="location">Plats</label>
+							<md-input id="location" type="text" v-model="location" required />
+						</md-field>
 
-							<md-field>
-								<label for="comment">Kommentar</label>
-								<md-input :required="queue.force_comment" type="text" id="comment" v-model="comment" />
-							</md-field>
+						<md-field>
+							<label for="comment">Kommentar</label>
+							<md-input :required="queue.force_comment" type="text" id="comment" v-model="comment" />
+						</md-field>
 
-							<div v-for="p_action in queue.actions">
-								<!--class="md-get-palette-color(green, A200)" -->
-								<md-radio v-model="action" :value="p_action.id" :class="'md-' + p_action.color"> {{ p_action.name }} </md-radio>
-							</div>
-						</form>
+						<div v-for="p_action in queue.actions">
+							<!--class="md-get-palette-color(green, A200)" -->
+							<md-radio v-model="action" :value="p_action.id" :class="'md-' + p_action.color"> {{ p_action.name }} </md-radio>
+						</div>
 
-						<md-card-actions>
-							<span v-if="in_queue">
-								<md-button v-on:click="dequeue($root.$data)" type="submit" class="md-accent">Lämna kön</md-button>
-							</span>
-							<span v-else>
-								<md-button v-if="!in_queue" :disabled="!queue.open || (queue.force_comment && (comment === null || comment.length === 0)) || (queue.force_action && action === null)" v-on:click="enqueue" type="submit" class="md-primary"><md-icon>person_add</md-icon> Gå med i kön</md-button>
-							</span>
+						<md-card-actions v-if="in_queue">
+							<md-button v-on:click="dequeue($root.$data)" type="submit" class="md-accent"><md-icon>person_add_disabled</md-icon> Lämna kön</md-button>
+							<md-button :disabled="(queue.force_comment && (comment === null || comment.length === 0)) || (queue.force_action && action === null)" v-on:click="update_own_details" type="submit" class="md-primary"><md-icon>update</md-icon> Uppdatera</md-button>
+						</md-card-actions>
+
+						<md-card-actions v-else>
+							<md-button :disabled="!queue.open || (queue.force_comment && (comment === null || comment.length === 0)) || (queue.force_action && action === null)" v-on:click="enqueue" type="submit" class="md-primary"><md-icon>person_add</md-icon> Gå med i kön</md-button>
 						</md-card-actions>
 					</div>
 				</md-card-content>
