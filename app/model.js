@@ -695,7 +695,6 @@ exports.create_booking = (queue, external_id, timestamp, removal_duration, comme
 });
 
 exports.remove_expired_bookings = () => {
-	console.log('remove_expired_bookings');
 	clearTimeout(booking_timer);
 
 	Booking.findAll({
