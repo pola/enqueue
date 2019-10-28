@@ -4,11 +4,13 @@ const Sequelize = require('sequelize');
 const crypto = require('crypto');
 const setTimeoutAt = require('safe-timers').setTimeoutAt;
 
-var Queue, Room, Computer, Profile, Action, Token, Task = null;
+var Queue, Room, Computer, Profile, Action, Booking, Token, Task = null;
 
 var io = null;
 var connection = null;
+var booking_timer = null;
 var queuing = {};
+var bookings_vinfo = {};
 var timeouts = {};
 
 exports.setIo = (i) => {
@@ -75,6 +77,23 @@ exports.setConnection = (c) => {
 
 	// För att ange vilka actions en student kan välja på i kön
 	Action.belongsTo(Queue, { foreignKey: 'queue_id' });
+
+	// bokningar
+	Booking = connection.define('bookings', {
+		id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+		external_id: Sequelize.STRING,
+		timestamp: Sequelize.BIGINT,
+		removal_duration: Sequelize.BIGINT,
+		comment: Sequelize.STRING,
+		location: Sequelize.STRING
+	});	
+
+	// vilken kö varje bokning tillhör
+	Booking.belongsTo(Queue, { foreignKey: 'queue_id' });
+
+	// För att koppla studenter till bokningar
+	Booking.belongsToMany(Profile, { as: 'BookingStudents', through: 'bookings_students', foreignKey: 'booking_id' });
+	Profile.belongsToMany(Booking, { as: 'StudentInBookings', through: 'bookings_students', foreignKey: 'student_id' });
 	
 	Token = connection.define('tokens', {
 		token: { type: Sequelize.STRING, primaryKey: true }
@@ -103,6 +122,8 @@ exports.setConnection = (c) => {
 				}
 			});
 		});
+
+		exports.remove_expired_bookings();
 	});
 };
 
@@ -167,7 +188,7 @@ exports.create_token = profile_id => Token.create({
 
 exports.get_profile = id => Profile.findOne({ where: { id: id } });
 
-exports.get_profile_by_user_name = (user_name) => Profile.findOne({ where: { user_name: user_name } });
+exports.get_profile_by_user_name = user_name => Profile.findOne({ where: { user_name: user_name } });
 
 exports.get_or_create_profile = (id, user_name, name) => new Promise((resolve, reject) => {
 	Profile.findOrCreate({
@@ -272,7 +293,67 @@ exports.get_queues = () => new Promise((resolve, reject) => {
 	});
 });
 
-exports.get_queue = (name_or_id) => /^([0-9]+)$/.test(name_or_id) ? Queue.findOne({ where: { id: parseInt(name_or_id) } }) : Queue.findOne({ where: { name: name_or_id } });
+exports.get_queue = (name_or_id) => Queue.findOne({
+	where: (/^([0-9]+)$/.test(name_or_id) ? {
+		id: parseInt(name_or_id)
+	}:{
+		name: name_or_id
+	}),
+	include: [{
+		all: true
+	}]
+});
+
+exports.get_booking = (queue, booking_id) => Booking.findOne({
+	where: {
+		id: booking_id,
+		queue_id: queue.id
+	},
+	include: [{
+		all: true
+	}]
+});
+
+exports.get_booking_vinfo = booking => {
+	if (bookings_vinfo.hasOwnProperty(booking.id)) {
+		return bookings_vinfo[booking.id];
+	} else {
+		return {
+			bad_location: false,
+			handlers: []
+		};
+	}
+};
+
+exports.set_booking_bad_location = (booking, bad_location) => {
+	if (!bookings_vinfo.hasOwnProperty(booking.id)) {
+		bookings_vinfo[booking.id] = {
+			bad_location: bad_location,
+			handlers: []
+		};
+	} else {
+		bookings_vinfo[booking.id].bad_location = bad_location;
+	}
+
+	if (!bad_location && bookings_vinfo[booking.id].handlers.length === 0) {
+		delete bookings_vinfo[booking.id];
+	}
+};
+
+exports.set_booking_handlers = (booking, handlers) => {
+	if (!bookings_vinfo.hasOwnProperty(booking.id)) {
+		bookings_vinfo[booking.id] = {
+			bad_location: false,
+			handlers: handlers
+		};
+	} else {
+		bookings_vinfo[booking.id].handlers = handlers;
+	}
+
+	if (handlers.length === 0 && !bookings_vinfo[booking.id].bad_location) {
+		delete bookings_vinfo[booking.id];
+	}
+};
 
 exports.get_or_create_queue = (name) => new Promise((resolve, reject) => {
 	Queue.findOrCreate({
@@ -306,12 +387,24 @@ exports.get_or_create_queue = (name) => new Promise((resolve, reject) => {
 	});
 });
 
-exports.delete_queue = (queue) => new Promise((resolve, reject) => {
+exports.delete_queue = queue => new Promise((resolve, reject) => {
 	Queue.destroy({ where: { id: queue.id } }).then(() => {
 		delete queuing[queue.id];
 
 		io.emit('delete_queue', queue.id);
+		resolve();
+	});
+});
 
+exports.delete_booking = booking => new Promise((resolve, reject) => {
+	booking.destroy().then(() => {
+		exports.remove_expired_bookings();
+
+		if (bookings_vinfo.hasOwnProperty(booking.id)) {
+			delete bookings_vinfo[booking.id];
+		}
+
+		io.emit('delete_booking', booking.id);
 		resolve();
 	});
 });
@@ -379,6 +472,15 @@ exports.delete_action = (queue, action) => new Promise((resolve, reject) => {
 });
 
 exports.get_queuing = queue => queuing[queue.id];
+
+exports.get_bookings = queue => Booking.findAll({
+	where: {
+		queue_id: queue.id
+	},
+	include: [{
+		all: true
+	}]
+});
 
 exports.add_student = (queue, profile, comment, location, action) => {
 	queuing[queue.id].push({
@@ -571,6 +673,127 @@ exports.remove_task = task => new Promise((resolve, reject) => {
 	});
 });
 
+exports.create_booking = (queue, external_id, timestamp, removal_duration, comment, location, students) => new Promise((resolve, reject) => {
+	Booking.create({
+		queue_id: queue.id,
+		external_id: external_id,
+		timestamp: timestamp,
+		removal_duration: removal_duration,
+		comment: comment,
+		location: location
+	}).then(booking_lazy => {
+		booking_lazy.setBookingStudents(students).then(() =>{
+			Booking.findOne({
+				where: { id: booking_lazy.id },
+				include: [{ all: true }]
+			}).then(booking => {
+				exports.remove_expired_bookings();
+				resolve(booking);
+			});
+		});
+	});
+});
+
+exports.remove_expired_bookings = () => {
+	console.log('remove_expired_bookings');
+	clearTimeout(booking_timer);
+
+	Booking.findAll({
+		where: {
+			removal_duration: {
+				[Sequelize.Op.ne]: null
+			}
+		}
+	}).then(bookings => {
+		var smallest_not_expired = null;
+		const now = Date.now();
+
+		const expired = [];
+
+		for (const booking of bookings) {
+			const expiration = booking.timestamp + booking.removal_duration;
+
+			if (expiration <= now) {
+				expired.push(booking.id);
+			} else if (smallest_not_expired === null || smallest_not_expired > expiration) {
+				smallest_not_expired = expiration;
+			}
+		}
+
+		if (expired.length > 0) {
+			Booking.destroy({
+				where: {
+					id: expired
+				}
+			}).then(() => {
+				for (var id of expired) {
+					if (bookings_vinfo.hasOwnProperty(id)) {
+						delete bookings_vinfo[id];
+					}
+	
+					io.emit('delete_booking', id);
+				}
+			});
+		}
+		
+		if (smallest_not_expired !== null) {
+			booking_timer = setTimeout(exports.remove_expired_bookings, smallest_not_expired - now);
+		} else {
+			booking_timer = null;
+		}
+	});
+};
+
+exports.get_students = raw_list => new Promise((resolve, reject) => {
+	const where_id = [];
+	const where_user_name = [];
+
+	for (const raw_item of raw_list) {
+		if (typeof raw_item !== 'object' || (raw_item.hasOwnProperty('id') && raw_item.hasOwnProperty('user_name'))) {
+			resolve(null);
+			return;
+		}
+
+		if (raw_item.hasOwnProperty('id')) {
+			where_id.push(raw_item.id);
+		} else if (raw_item.hasOwnProperty('user_name')) {
+			where_user_name.push(raw_item.user_name);
+		} else {
+			resolve(null);
+			return;
+		}
+	}
+
+	Profile.findAll({
+		where: {
+			[Sequelize.Op.or]: {
+				id: {
+					[Sequelize.Op.in]: where_id
+				},
+				user_name: {
+					[Sequelize.Op.in]: where_user_name
+				}
+			}
+		}
+	}).then(profiles => {
+		for (var one_id of where_id) {
+			if (profiles.findIndex(x => x.id === one_id) === -1) {
+				resolve(null);
+				return;
+			}
+		}
+
+		for (var one_user_name of where_user_name) {
+			if (profiles.findIndex(x => x.user_name === one_user_name) === -1) {
+				resolve(null);
+				return;
+			}
+		}
+
+		resolve(profiles);
+	});
+});
+
 // används för att se om en användare, givet ett köobjekt och användarens ID, har lärar- eller assistenträttigheter i en kö
 exports.has_permission = (queue, profile_id) => new Promise((resolve, reject) => {
 	if (profile_id === null) {
@@ -659,4 +882,29 @@ exports.io_emit_to_assistants = (queue, key, message) => {
 			}
 		}
 	});
+};
+
+exports.io_emit_update_booking = (queue, nice_booking) => {
+	const message_user = {
+		queue: queue.id,
+		booking: nice_booking
+	};
+
+	const booking_clone = JSON.parse(JSON.stringify(nice_booking));
+
+	booking_clone.students = booking_clone.students.map(x => ({
+		id: x.id,
+		user_name: null,
+		name: null
+	}));
+
+	const message_guest = {
+		queue: queue.id,
+		booking: booking_clone
+	};
+
+	for (const k of Object.keys(io.sockets.sockets)) {
+		const socket = io.sockets.sockets[k];
+		socket.emit('update_booking', socket.handshake.session.hasOwnProperty('profile') ? message_user : message_guest);
+	}
 };

@@ -18,7 +18,9 @@ Vue.component('route-queue', {
 			promt_notify_faculty: false,
 			promt_clear_queue: false,
 			message: null,
-			open_menu: null
+			booking_location: null,
+			dialog_queuing: null,
+			dialog_booking: null
 		}
 	},
 	methods: {
@@ -75,7 +77,7 @@ Vue.component('route-queue', {
 			});
 		},
 		
-		receiving_help(profile) {
+		queuing_handle(profile) {
 			const qs = this.queue.queuing.find(x => x.profile.id === profile.id);
 			const is_handling = qs.handlers.find(x => x.id === this.$root.$data.profile.id) === undefined;
 			
@@ -159,49 +161,51 @@ Vue.component('route-queue', {
 			this.message = null;
 		},
 		
-		bad_location(student) {
-			if (student.bad_location === true){
-				fetch('/api/queues/'+ this.queue.name +'/queuing/' + student.profile.id, {
-					method: 'PATCH',
-					headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ bad_location: false }) 
-				}).then(res => {
-					if (res.status !== 200) {
-						res.json().then(j => {
-							console.log(j);
-						});
-					}
-				});
-      		} else {
-      			fetch('/api/queues/'+ this.queue.name +'/queuing/' + student.profile.id, {
-					method: 'PATCH',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ bad_location: true }) 
-				}).then(res => {
-					if (res.status !== 200) {
-						res.json().then(j => {
-							console.log(j);
-						});
-					}
-				});
-			}
+		queuing_bad_location(student) {
+			fetch('/api/queues/' + this.queue.name +'/queuing/' + student.profile.id, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ bad_location: !student.bad_location })
+			}).then(res => {
+				if (res.status !== 200) {
+					res.json().then(j => {
+						console.log(j);
+					});
+				}
+			});
 		},
 		
       	unix_to_time_ago(unix) {
 			// TODO: övergå till något bibliotek, till exempel Moment
-			d = new Date(unix);
+			const d = new Date(unix);
 			
-			day = '0' + d.getDate();
-			month = '0' + (d.getMonth() + 1);
-			year = d.getFullYear();
+			const hour = '0' + d.getHours();
+			const min = '0' + d.getMinutes();
+			
+			return hour.slice(-2) + ':' + min.slice(-2);
+		},
+
+		unix_to_datetime(unix) {
+			// TODO: övergå till något bibliotek, till exempel Moment
+			const d = new Date(unix);
+			const today = new Date();
 			
 			hour = '0' + d.getHours();
 			min = '0' + d.getMinutes();
-			sec = '0' + d.getSeconds();
 			
-			time = year + month + day + ' ' + hour + min + sec;
-			
-			return hour.slice(-2) + ':' + min.slice(-2);
+			const time = hour.slice(-2) + ':' + min.slice(-2);
+
+			if (today.getDate() === d.getDate() && today.getMonth() === d.getMonth() && today.getFullYear() === d.getFullYear()) {
+				return time;
+			}
+
+			var date = d.getDate() + ' ' + (['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'][d.getMonth()]);
+
+			if (today.getFullYear() !== d.getFullYear()) {
+				date += ' ' + d.getFullYear();
+			}
+
+			return date + ', ' + time;
 		},
 		
 		nice_location(location) {
@@ -237,7 +241,71 @@ Vue.component('route-queue', {
 				if (this.$root.$data.location !== null){
 					this.location = this.$root.$data.location.name;
 				}
+
+				this.sort_bookings();
 			});
+		},
+
+		sort_bookings() {
+			this.queue.bookings.sort((a, b) => {
+				if (a.timestamp < b.timestamp) {
+					return -1;
+				} else if (a.timestamp > b.timestamp) {
+					return 1;
+				} else {
+					if (a.id < b.id) {
+						return -1;
+					} else if (a.id > b.id) {
+						return 1;
+					} else {
+						return 0;
+					}
+				}
+			});
+		},
+
+		booking_set_location() {
+			fetch('/api/queues/' + this.queue.id + '/bookings/' + this.dialog_booking.id, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ location: this.booking_location })
+			}).then(res => {
+				if (res.ok) {
+					this.dialog_booking = null;
+				}
+			});
+		},
+
+		booking_bad_location() {
+			fetch('/api/queues/' + this.queue.name +'/bookings/' + this.dialog_booking.id, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ bad_location: !this.dialog_booking.bad_location })
+			}).then(res => {
+				if (res.status !== 200) {
+					res.json().then(j => {
+						console.log(j);
+					});
+				}
+			});
+		},
+
+		booking_handle() {
+			fetch('/api/queues/' + this.queue.name + '/bookings/' + this.dialog_booking.id, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ is_handling: this.dialog_booking.handlers.findIndex(x => x.id === this.$root.$data.profile.id) === -1 })
+			}).then(res => {
+				if (res.status !== 200) {
+					res.json().then(j => {
+						console.log(j);
+					});
+				}
+			});
+		},
+
+		booking_remove() {
+			fetch('/api/queues/' + this.queue.id + '/bookings/' + this.dialog_booking.id, { method: 'DELETE' });
 		},
 		
 		// ändrar data om en kö (inklusive t.ex. queuing-listan)
@@ -251,10 +319,10 @@ Vue.component('route-queue', {
 			}
 			
 			// om en assistent har öppnat rutan med inställningar för en köande student, justera den
-			if (this.open_menu !== null) {
-				const qsi = this.queue.queuing.findIndex(x => x.profile.id === this.open_menu.profile.id);
+			if (this.dialog_queuing !== null) {
+				const qsi = this.queue.queuing.findIndex(x => x.profile.id === this.dialog_queuing.profile.id);
 
-				this.open_menu = qsi === -1 ? null : this.queue.queuing[qsi];
+				this.dialog_queuing = qsi === -1 ? null : this.queue.queuing[qsi];
 			}
 		},
 		
@@ -272,6 +340,29 @@ Vue.component('route-queue', {
 					
 					break;
 				}
+			}
+		},
+
+		socket_handle_update_booking(data) {
+			if (data.queue !== this.queue.id) {
+				return;
+			}
+
+			this.queue.bookings = this.queue.bookings.filter(x => x.id !== data.booking.id);
+			this.queue.bookings.push(data.booking);
+			this.sort_bookings();
+
+			if (this.dialog_booking !== null && this.dialog_booking.id === data.booking.id) {
+				this.dialog_booking = data.booking;
+				this.booking_location = data.booking.location;
+			}
+		},
+
+		socket_handle_delete_booking(booking_id) {
+			this.queue.bookings = this.queue.bookings.filter(x => x.id !== booking_id);
+
+			if (this.dialog_booking !== null && this.dialog_booking.id === booking_id) {
+				this.dialog_booking = null;
 			}
 		},
 		
@@ -300,6 +391,8 @@ Vue.component('route-queue', {
 		this.$root.$data.socket.removeListener('connect', this.fetch_queue);
 		this.$root.$data.socket.removeListener('update_queue', this.socket_handle_update_queue);
 		this.$root.$data.socket.removeListener('update_queue_queuing_student', this.socket_handle_update_queue_queuing_student);
+		this.$root.$data.socket.removeListener('update_booking', this.socket_handle_update_booking);
+		this.$root.$data.socket.removeListener('delete_booking', this.socket_handle_delete_booking);
 		this.$root.$data.socket.removeListener('broadcast', this.socket_handle_broadcast);
 		this.$root.$data.socket.removeListener('notify', this.socket_handle_notify);
 	},
@@ -308,13 +401,15 @@ Vue.component('route-queue', {
 		this.$root.$data.socket.on('connect', this.fetch_queue);
 		this.$root.$data.socket.on('update_queue', this.socket_handle_update_queue);
 		this.$root.$data.socket.on('update_queue_queuing_student', this.socket_handle_update_queue_queuing_student);
+		this.$root.$data.socket.on('update_booking', this.socket_handle_update_booking);
+		this.$root.$data.socket.on('delete_booking', this.socket_handle_delete_booking);
 		this.$root.$data.socket.on('broadcast', this.socket_handle_broadcast);		
 		this.$root.$data.socket.on('notify', this.socket_handle_notify);
 		
 		this.fetch_queue();
 	},
 	
-	computed:{
+	computed: {
 		in_queue() {
 			// testar om den inloggade profilen står i kön
 			if (this.$root.$data.profile === null) {
@@ -393,6 +488,20 @@ Vue.component('route-queue', {
 			})
 		}
 	},
+
+	watch: {
+		dialog_queuing: function(n, o) {
+			this.dialog_booking = null;
+		},
+
+		dialog_booking: function(n, o) {
+			this.dialog_queuing = null;
+
+			if (n !== null) {
+				this.booking_location = n.location;
+			}
+		}
+	},
 	
 	template: `
 <div v-if="queue">
@@ -411,32 +520,75 @@ Vue.component('route-queue', {
 	<md-dialog-confirm :md-active.sync="promt_clear_queue && queue.queuing.length !== 0" md-title="Vill du rensa kön?"
 		md-confirm-text="Ja, rensa kön" md-cancel-text="Nej, återgå" @md-confirm="purge()" @md-cancel="promt_clear_queue = false"/>
 	
-	<md-dialog v-if="open_menu !== null" :md-active="true">
+	<md-dialog v-if="dialog_queuing !== null" :md-active="true">
 		<md-dialog-content>
 			<h2>
-				{{ queue.queuing.findIndex(x => x.profile.id === open_menu.profile.id ) + 1 }}.
-				<span v-if="open_menu.profile.user_name !== null">{{ open_menu.profile.name }} ({{ open_menu.profile.user_name }})</span>
+				{{ queue.queuing.findIndex(x => x.profile.id === dialog_queuing.profile.id ) + 1 }}.
+				<span v-if="dialog_queuing.profile.user_name !== null">{{ dialog_queuing.profile.name }} ({{ dialog_queuing.profile.user_name }})</span>
 			</h2>
-			<strong>Gick in i kön:</strong> {{ unix_to_time_ago(open_menu.entered_at) }}<br />
-			<strong>Plats:</strong> <span :class="[{ badLocation: open_menu.bad_location }]"">{{ nice_location(open_menu.location) }}</span><br />
-			<strong>Kommentar:</strong> {{ open_menu.comment }}
+			<strong>Gick in i kön:</strong> {{ unix_to_time_ago(dialog_queuing.entered_at) }}<br />
+			<strong>Plats:</strong> <span :class="[{ badLocation: dialog_queuing.bad_location }]"">{{ nice_location(dialog_queuing.location) }}</span><br />
 			
-			<div v-if="open_menu.handlers.length > 0">
-				<strong>Assisteras av:</strong> {{ open_menu.handlers.map(x => x.name + ' (' + x.user_name + ')').join(', ') }}
-			</div>
+			<template v-if="dialog_queuing.comment !== null">
+				<strong>Kommentar:</strong> {{ dialog_queuing.comment }}<br />
+			</template>
+			
+			<template v-if="dialog_queuing.handlers.length > 0">
+				<strong>Assisteras av:</strong> {{ dialog_queuing.handlers.map(x => x.name + ' (' + x.user_name + ')').join(', ') }}
+			</template>
 		</md-dialog-content>
 		
 		<md-dialog-actions>
 			<span v-if="is_assistant_in_queue">
-				<md-button class="md-accent" @click="dequeue(open_menu)">Ta bort</md-button>
-				<md-button class="md-accent" v-if="!open_menu.bad_location" @click="bad_location(open_menu)">Placering</md-button>
-				<md-button v-else @click="bad_location(open_menu)">Placering</md-button>
-				
-				<md-button class="md-primary" @click="receiving_help(open_menu.profile)" v-if="open_menu.handlers.find(x => x.id === $root.$data.profile.id) === undefined">Assistera</md-button>
-				<md-button @click="receiving_help(open_menu.profile)" v-else>Sluta assistera</md-button>
+				<md-button class="md-accent" @click="dequeue(dialog_queuing)">Ta bort</md-button>
+				<md-button :class="[{ 'md-accent': !dialog_queuing.bad_location }]" @click="queuing_bad_location(dialog_queuing)">Placering</md-button>
+				<md-button class="md-primary" @click="queuing_handle(dialog_queuing.profile)" v-if="dialog_queuing.handlers.find(x => x.id === $root.$data.profile.id) === undefined">Assistera</md-button>
+				<md-button @click="queuing_handle(dialog_queuing.profile)" v-else>Sluta assistera</md-button>
 			</span>
 
-			<md-button class="md-primary" @click="open_menu = null">Stäng</md-button>
+			<md-button class="md-primary" @click="dialog_queuing = null">Stäng</md-button>
+		</md-dialog-actions>
+	</md-dialog>
+
+	<md-dialog v-if="dialog_booking !== null" :md-active="true">
+		<md-dialog-content>
+			<h2>Tidslucka {{ unix_to_datetime(dialog_booking.timestamp) }}</h2>
+			<strong>Namn:</strong> {{ dialog_booking.students.map(x => x.name + ' (' + x.user_name + ')').join(', ') }}<br />
+			<strong>Plats:</strong> <span v-if="dialog_booking.location === null" class="noLocation">ingen plats angiven</span><span v-else :class="[{ badLocation: dialog_booking.bad_location }]"">{{ dialog_booking.location }}</span><br />
+			
+			<template v-if="dialog_booking.comment !== null">
+				<strong>Kommentar:</strong> {{ dialog_booking.comment }}<br />
+			</template>
+			
+			<template v-if="dialog_booking.handlers.length > 0">
+				<strong>Assisteras av:</strong> {{ dialog_booking.handlers.map(x => x.name + ' (' + x.user_name + ')').join(', ') }}
+			</template>
+
+		</md-dialog-content>
+
+		<md-dialog-content>
+			<form v-if="dialog_booking.students.findIndex(x => x.id === $root.$data.profile.id) !== -1" @submit.prevent="booking_set_location" style="display: inline-flex;">
+				<md-field>
+					<label for="booking_location">Ange plats</label>
+					<md-input type="text" id="booking_location" v-model="booking_location" />
+				</md-field>
+
+				<md-card-actions>
+					<md-button type="submit" class="md-primary">Spara</md-button>
+				</md-card-actions>
+			</form>
+		</md-dialog-content>
+		
+		<md-dialog-actions>
+			<span v-if="is_assistant_in_queue">
+				<md-button class="md-accent" @click="booking_remove(dialog_booking)">Ta bort</md-button>
+				<md-button :class="[{ 'md-accent': !dialog_booking.bad_location }]" @click="booking_bad_location" v-if="dialog_booking.location !== null">Placering</md-button>
+
+				<md-button class="md-primary" @click="booking_handle" v-if="dialog_booking.handlers.find(x => x.id === $root.$data.profile.id) === undefined">Assistera</md-button>
+				<md-button @click="booking_handle" v-else>Sluta assistera</md-button>
+			</span>
+
+			<md-button class="md-primary" @click="dialog_booking = null">Stäng</md-button>
 		</md-dialog-actions>
 	</md-dialog>
 	
@@ -450,6 +602,33 @@ Vue.component('route-queue', {
 			
 			<p style="white-space: pre-line;">{{ queue.description }}</p>
 			
+			<md-table v-if="queue.bookings.length > 0">
+				<md-table-row>
+					<md-table-head style="width: 30%;">Tidslucka</md-table-head>
+					<md-table-head style="width: 30%;">Namn</md-table-head>
+					<md-table-head style="width: 40%;">Kommentar</md-table-head>
+				</md-table-row>
+				
+				<md-table-row
+					v-for="(booking, index) in queue.bookings"
+					:key="booking.id"
+					v-on:click="dialog_booking = booking"
+					style="cursor: pointer;"
+					:class="[{ studentIsHandled: booking.handlers.length > 0 }, { myQueueRow: $root.$data.profile !== null && booking.students.findIndex(x => x.id === $root.$data.profile.id) !== -1 }]">
+					<md-table-cell>
+						{{ unix_to_datetime(booking.timestamp) }}<br />
+						<div v-if="booking.location !== null" :class="[{ badLocation: booking.bad_location }]">{{ booking.location }}</div>
+						<div v-else class="noLocation">ingen plats angiven</div>
+					</md-table-cell>
+					<md-table-cell>
+						<div v-for="student in booking.students">{{ student.name }}</div>
+					</md-table-cell>
+					<md-table-cell>
+						<span v-if="booking.comment !== null">{{ booking.comment }}</span>
+					</md-table-cell>
+				</md-table-row>
+			</md-table>
+
 			<md-table v-if="queue.queuing.length > 0">
 				<md-table-row>
 					<md-table-head style="width: 30%;">Namn</md-table-head>
@@ -461,7 +640,7 @@ Vue.component('route-queue', {
 					v-if="view_entire_queue === true"
 					v-for="(user, index) in queue.queuing"
 					:key="user.profile.id"
-					v-on:click="open_menu = user"
+					v-on:click="dialog_queuing = user"
 					style="cursor: pointer;"
 					:class="[{ studentIsHandled: user.handlers.length > 0 }, { myQueueRow: $root.$data.profile !== null && user.profile.id === $root.$data.profile.id }]">
 					<md-table-cell>
