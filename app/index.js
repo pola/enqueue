@@ -2,6 +2,7 @@
 
 const setupBoilerplate = require('./boilerplate/setup');
 const config = require('./config');
+const kth = require('./kth-data-fetcher');
 const fetch = require('node-fetch');
 
 const { app, io, sequelize,  listen } = setupBoilerplate();
@@ -10,15 +11,9 @@ app.use((req, res, next) => {
 	if (!req.session.hasOwnProperty('cas_user') || req.session.hasOwnProperty('profile')) {
 		next();
 	} else {
-		fetch('https://hodis.datasektionen.se/ugkthid/' + req.session.cas_user).then(result => {
-			if (result.status === 200) {
-				result.json().then(data => {
-					if (data.hasOwnProperty('uid') && data.hasOwnProperty('displayName') && typeof data.uid === 'string' && typeof data.displayName === 'string') {
-						finalize_login(req, res, req.session.cas_user, data.uid, data.displayName, next);
-					} else {
-						finalize_login(req, res, req.session.cas_user, null, null, next);
-					}
-				});
+		kth.from_id(req.session.cas_user).then(result => {
+			if (result !== null) {
+				finalize_login(req, res, result.id, result.user_name, result.name, next);
 			} else {
 				finalize_login(req, res, req.session.cas_user, null, null, next);
 			}
