@@ -187,6 +187,95 @@ exports.create_token = profile_id => Token.create({
 	profile_id: profile_id
 });
 
+exports.get_profiles = raw_list => new Promise((resolve, reject) => {
+	const where_id = [];
+	const where_user_name = [];
+
+	for (const raw_item of raw_list) {
+		if (typeof raw_item !== 'object' || (raw_item.hasOwnProperty('id') && raw_item.hasOwnProperty('user_name'))) {
+			resolve(null);
+			return;
+		}
+
+		if (raw_item.hasOwnProperty('id')) {
+			where_id.push(raw_item.id);
+		} else if (raw_item.hasOwnProperty('user_name')) {
+			where_user_name.push(raw_item.user_name);
+		} else {
+			resolve(null);
+			return;
+		}
+	}
+
+	Profile.findAll({
+		where: {
+			[Sequelize.Op.or]: {
+				id: {
+					[Sequelize.Op.in]: where_id
+				},
+				user_name: {
+					[Sequelize.Op.in]: where_user_name
+				}
+			}
+		}
+	}).then(profiles => {
+		const resolved = profiles.map(x => x);
+		const unresolved = [];
+
+		for (var one_id of where_id) {
+			if (resolved.findIndex(x => x.id === one_id) === -1) {
+				unresolved.push({ id: one_id });
+			}
+		}
+
+		for (var one_user_name of where_user_name) {
+			if (profiles.findIndex(x => x.user_name === one_user_name) === -1) {
+				unresolved.push({ user_name: one_user_name });
+			}
+		}
+
+		if (unresolved.length === 0) {
+			resolve(resolved);
+		} else {
+			get_profiles_resolver(resolved, unresolved, resolve);
+		}
+	});
+});
+
+const get_profiles_resolver = (resolved, unresolved, resolve) => {
+	if (unresolved.length === 0) {
+		const final_list = [];
+
+		// ge en lista av unika profiler
+		for (const profile of resolved) {
+			if (final_list.findIndex(x => x.id === profile.id) === -1) {
+				final_list.push(profile);
+			}
+		}
+
+		resolve(final_list);
+	} else {
+		var p = null;
+		const one = unresolved.shift();
+
+		if (one.hasOwnProperty('id')) {
+			p = get_profile(id);
+		} else if (one.hasOwnProperty('user_name')) {
+			p = this.get_profile_by_user_name(one.user_name);
+		}
+
+		p.then(profile => {
+			if (profile === null) {
+				resolve(null);
+				return;
+			}
+
+			resolved.push(profile);
+			get_profiles_resolver(resolved, unresolved, resolve);
+		});
+	}
+};
+
 exports.get_profile = id => new Promise((resolve, reject) => {
 	Profile.findOne({ where: { id: id } }).then(profile => {
 		if (profile !== null) {
@@ -761,56 +850,6 @@ exports.remove_expired_bookings = () => {
 		}
 	});
 };
-
-exports.get_students = raw_list => new Promise((resolve, reject) => {
-	const where_id = [];
-	const where_user_name = [];
-
-	for (const raw_item of raw_list) {
-		if (typeof raw_item !== 'object' || (raw_item.hasOwnProperty('id') && raw_item.hasOwnProperty('user_name'))) {
-			resolve(null);
-			return;
-		}
-
-		if (raw_item.hasOwnProperty('id')) {
-			where_id.push(raw_item.id);
-		} else if (raw_item.hasOwnProperty('user_name')) {
-			where_user_name.push(raw_item.user_name);
-		} else {
-			resolve(null);
-			return;
-		}
-	}
-
-	Profile.findAll({
-		where: {
-			[Sequelize.Op.or]: {
-				id: {
-					[Sequelize.Op.in]: where_id
-				},
-				user_name: {
-					[Sequelize.Op.in]: where_user_name
-				}
-			}
-		}
-	}).then(profiles => {
-		for (var one_id of where_id) {
-			if (profiles.findIndex(x => x.id === one_id) === -1) {
-				resolve(null);
-				return;
-			}
-		}
-
-		for (var one_user_name of where_user_name) {
-			if (profiles.findIndex(x => x.user_name === one_user_name) === -1) {
-				resolve(null);
-				return;
-			}
-		}
-
-		resolve(profiles);
-	});
-});
 
 // används för att se om en användare, givet ett köobjekt och användarens ID, har lärar- eller assistenträttigheter i en kö
 exports.has_permission = (queue, profile_id) => new Promise((resolve, reject) => {

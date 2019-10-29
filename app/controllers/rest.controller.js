@@ -1818,7 +1818,16 @@ router.post('/queues/:name/bookings', (req, res) => {
 			return;
 		}
 
-		model.get_students(req.body.students).then(students => {
+		if (req.body.students.length > 50) {
+			res.status(400);
+			res.json({
+				error: 'LIST_TOO_LONG',
+				message: 'The list of students cannot exceed 50 items.'
+			});
+			return;
+		}
+
+		model.get_profiles(req.body.students).then(students => {
 			if (students === null) {
 				res.status(400);
 				res.json({
@@ -1981,7 +1990,16 @@ const update_booking = (queue, booking, changes, req, res, keys) => {
 
 			update_booking(queue, booking, changes, req, res, keys);
 		} else if (key === 'students' && Array.isArray(req.body.students) && req.body.students.filter(x => typeof x !== 'object' || x === null).length === 0) {
-			model.get_students(req.body.students).then(students => {
+			if (req.body.students.length > 50) {
+				res.status(400);
+				res.json({
+					error: 'LIST_TOO_LONG',
+					message: 'The list of students cannot exceed 50 items.'
+				});
+				return;
+			}
+
+			model.get_profiles(req.body.students).then(students => {
 				if (students === null) {
 					res.status(400);
 					res.json({
