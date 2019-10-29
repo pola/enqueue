@@ -228,6 +228,8 @@ router.get('/queues/:name', (req, res) => {
 					}
 					
 					var queuing = model.get_queuing(queue);
+
+					bookings = bookings.map(b => nice_booking(b));
 					
 					if (!req.session.hasOwnProperty('profile')) {
 						queuing = queuing.map(s => {
@@ -241,6 +243,14 @@ router.get('/queues/:name', (req, res) => {
 							
 							return s_copy;
 						});
+
+						for (const booking of bookings) {
+							booking.students = booking.students.map(x => ({
+								id: x.id,
+								user_name: null,
+								name: null
+							}));
+						}
 					}
 					
 					res.json({
@@ -271,7 +281,7 @@ router.get('/queues/:name', (req, res) => {
 							user_name: a.user_name,
 							name: a.name
 						})),
-						bookings: bookings.map(b => nice_booking(b))
+						bookings: bookings
 					});
 				});
 			});
@@ -1707,7 +1717,19 @@ router.get('/queues/:name/bookings', (req, res) => {
 		}
 
 		model.get_bookings(queue).then(bookings => {
-			res.json(bookings.map(b => nice_booking(b)));
+			bookings = bookings.map(b => nice_booking(b));
+
+			if (!req.session.hasOwnProperty('profile')) {
+				for (const booking of bookings) {
+					booking.students = booking.students.map(x => ({
+						id: x.id,
+						user_name: null,
+						name: null
+					}));
+				}
+			}
+
+			res.json(bookings);
 		});
 	});
 });

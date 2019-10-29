@@ -553,7 +553,10 @@ Vue.component('route-queue', {
 	<md-dialog v-if="dialog_booking !== null" :md-active="true">
 		<md-dialog-content>
 			<h2>Tidslucka {{ unix_to_datetime(dialog_booking.timestamp) }}</h2>
-			<strong>Namn:</strong> {{ dialog_booking.students.map(x => x.name + ' (' + x.user_name + ')').join(', ') }}<br />
+			<template v-if="$root.$data.profile !== null">
+				<strong>Namn:</strong> {{ dialog_booking.students.map(x => x.name + ' (' + x.user_name + ')').join(', ') }}<br />
+			</template>
+
 			<strong>Plats:</strong> <span v-if="dialog_booking.location === null" class="noLocation">ingen plats angiven</span><span v-else :class="[{ badLocation: dialog_booking.bad_location }]"">{{ dialog_booking.location }}</span><br />
 			
 			<template v-if="dialog_booking.comment !== null">
@@ -567,7 +570,7 @@ Vue.component('route-queue', {
 		</md-dialog-content>
 
 		<md-dialog-content>
-			<form v-if="dialog_booking.students.findIndex(x => x.id === $root.$data.profile.id) !== -1" @submit.prevent="booking_set_location" style="display: inline-flex;">
+			<form v-if="$root.$data.profile !== null && dialog_booking.students.findIndex(x => x.id === $root.$data.profile.id) !== -1" @submit.prevent="booking_set_location" style="display: inline-flex;">
 				<md-field>
 					<label for="booking_location">Ange plats</label>
 					<md-input type="text" id="booking_location" v-model="booking_location" />
@@ -605,8 +608,9 @@ Vue.component('route-queue', {
 			<md-table v-if="queue.bookings.length > 0">
 				<md-table-row>
 					<md-table-head style="width: 30%;">Tidslucka</md-table-head>
-					<md-table-head style="width: 30%;">Namn</md-table-head>
-					<md-table-head style="width: 40%;">Kommentar</md-table-head>
+					<md-table-head style="width: 30%;" v-if="$root.$data.profile !== null">Namn</md-table-head>
+					<md-table-head style="width: 40%;" v-if="$root.$data.profile !== null">Kommentar</md-table-head>
+					<md-table-head style="width: 70%;" v-else>Kommentar</md-table-head>
 				</md-table-row>
 				
 				<md-table-row
@@ -620,7 +624,7 @@ Vue.component('route-queue', {
 						<div v-if="booking.location !== null" :class="[{ badLocation: booking.bad_location }]">{{ booking.location }}</div>
 						<div v-else class="noLocation">ingen plats angiven</div>
 					</md-table-cell>
-					<md-table-cell>
+					<md-table-cell v-if="$root.$data.profile !== null">
 						<div v-for="student in booking.students">{{ student.name }}</div>
 					</md-table-cell>
 					<md-table-cell>
