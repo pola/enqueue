@@ -3,7 +3,6 @@
 const setupBoilerplate = require('./boilerplate/setup');
 const config = require('./config');
 const kth = require('./kth-data-fetcher');
-const fetch = require('node-fetch');
 
 const { app, io, sequelize,  listen } = setupBoilerplate();
 

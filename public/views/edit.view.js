@@ -95,16 +95,6 @@ Vue.component('route-edit', {
 				}
 			}
 		},
-		
-		/*
-		update_auto_open() {
-			if (this.queue.auto_open === null) {
-				this.selectedTime = null;
-			} else {
-				const dt = new Date(this.queue.auto_open);
-				this.selectedTime = dt.getFullYear() + '-' + (dt.getMonth() + 1).toString().padStart(2, '0') + '-' + dt.getDate().toString().padStart(2, '0') + ' ' + dt.getHours().toString().padStart(2, '0') + ':' + dt.getMinutes().toString().padStart(2, '0');
-			}
-		},*/
 
 		change_actions(){
 
