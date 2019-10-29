@@ -844,7 +844,7 @@ exports.remove_expired_bookings = () => {
 		}
 		
 		if (smallest_not_expired !== null) {
-			booking_timer = setTimeout(exports.remove_expired_bookings, smallest_not_expired - now);
+			booking_timer = setTimeoutAt(exports.remove_expired_bookings, smallest_not_expired);
 		} else {
 			booking_timer = null;
 		}
