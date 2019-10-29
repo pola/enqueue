@@ -2,6 +2,7 @@
 
 const Sequelize = require('sequelize');
 const crypto = require('crypto');
+const kth = require('./kth-data-fetcher');
 const setTimeoutAt = require('safe-timers').setTimeoutAt;
 
 var Queue, Room, Computer, Profile, Action, Booking, Token, Task = null;
@@ -186,9 +187,41 @@ exports.create_token = profile_id => Token.create({
 	profile_id: profile_id
 });
 
-exports.get_profile = id => Profile.findOne({ where: { id: id } });
+exports.get_profile = id => new Promise((resolve, reject) => {
+	Profile.findOne({ where: { id: id } }).then(profile => {
+		if (profile !== null) {
+			resolve(profile);
+		} else {
+			kth.from_id(id).then(profile_data => {
+				if (profile_data !== null) {
+					exports.get_or_create_profile(profile_data.id, profile_data.user_name, profile_data.name).then(new_profile => {
+						resolve(new_profile);
+					});
+				} else {
+					resolve(null);
+				}
+			});
+		}
+	});
+});
 
-exports.get_profile_by_user_name = user_name => Profile.findOne({ where: { user_name: user_name } });
+exports.get_profile_by_user_name = user_name => new Promise((resolve, reject) => {
+	Profile.findOne({ where: { user_name: user_name } }).then(profile => {
+		if (profile !== null) {
+			resolve(profile);
+		} else {
+			kth.from_user_name(user_name).then(profile_data => {
+				if (profile_data !== null) {
+					exports.get_or_create_profile(profile_data.id, profile_data.user_name, profile_data.name).then(new_profile => {
+						resolve(new_profile);
+					});
+				} else {
+					resolve(null);
+				}
+			});
+		}
+	});
+});
 
 exports.get_or_create_profile = (id, user_name, name) => new Promise((resolve, reject) => {
 	Profile.findOrCreate({
@@ -253,39 +286,25 @@ exports.get_rooms = () => new Promise((resolve, reject) => {
 
 exports.get_teachers = () => Profile.findAll({ where: { teacher: true } });
 
-exports.add_teacher = (user_name) => new Promise((resolve, reject) => {
-	Profile.findOne({ where: {user_name: user_name} }).then(profile => {
-		if (profile === null) {
-			reject();
-		} else {
-			profile.teacher = true;
-			profile.save().then(() => {
-				Profile.findAll({ where: { teacher: true } }).then(teachers => {
-					io.sockets.emit('teachers', teachers);
-				});
-			});
+exports.add_teacher = profile => {
+	profile.teacher = true;
 
-			resolve(profile);
-		}
+	profile.save().then(() => {
+		exports.get_teachers().then(teachers => {
+			io.sockets.emit('teachers', teachers);
+		});
 	});
-});
+};
 
-exports.remove_teacher = (id) => new Promise((resolve, reject) => {
-	Profile.findOne({ where: { id: id } }).then(profile => {
-		if (profile === null) {
-			reject();
-		} else {
-			profile.teacher = false;
-			profile.save().then(() => {
-				Profile.findAll({ where: { teacher: true } }).then(teachers => {
-					io.sockets.emit('teachers', teachers);
-				});
-			});
+exports.remove_teacher = profile => {
+	profile.teacher = false;
 
-			resolve();
-		}
+	profile.save().then(() => {
+		exports.get_teachers().then(teachers => {
+			io.sockets.emit('teachers', teachers);
+		});
 	});
-});
+};
 
 exports.get_queues = () => new Promise((resolve, reject) => {
 	Queue.findAll().then(queues => {

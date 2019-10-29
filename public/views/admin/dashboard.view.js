@@ -15,15 +15,27 @@ Vue.component('route-admin-dashboard', {
 		        headers: { "Content-Type": "application/json" },
 		        body: JSON.stringify({ user_name: this.user_name })
     		}).then(res => {
-				if (res.status === 400) {
-					alert('Ogiltigt KTH-användarnamn.');
-				} else if (res.status === 401) {
-					alert('Åtkomst nekad.');
-				} else if (res.status === 201) {
-					this.user_name = '';
+				if (res.ok) {
+					this.user_name = null;
+				} else {
+					res.json().then(data => {
+						switch (data.error) {
+							case 'UNKNOWN_USER':
+								alert('Användaren hittades inte.');
+								break;
+							
+							case 'ALREADY_TEACHER':
+								alert('Användaren har redan lärarbehörighet.');
+								break;
+							
+							default:
+								alert(data.message);
+						}
+					})
 				}
 			});
 		},
+
 		remove_teacher(teacher) {
 			fetch('/api/admin/teachers/' + teacher.id, {
        			method: "DELETE"
@@ -35,6 +47,7 @@ Vue.component('route-admin-dashboard', {
 				}
 			});
 		},
+
 		add_queue() {
 			fetch('/api/queues', {
 		        method: "POST",

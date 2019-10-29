@@ -121,12 +121,26 @@ router.post('/admin/teachers', (req, res) => {
 		return;
 	}
 
-	model.add_teacher(req.body.user_name).then(profile => {
-		res.status(201);
-		res.end();
-	}).catch(() => {
-		res.status(400);
-		res.end();
+	model.get_profile_by_user_name(req.body.user_name).then(profile => {
+		if (profile === null) {
+			res.status(400);
+			res.json({
+				error: 'UNKNOWN_USER',
+				message: 'No user with the given user name exists.'
+			});
+			return;
+		}
+
+		if (profile.teacher) {
+			res.status(400);
+			res.json({
+				error: 'ALREADY_TEACHER',
+				message: 'The user is already a teacher.'
+			});
+			return;
+		}
+
+		model.add_teacher(profile);
 	});
 });
 
@@ -138,19 +152,21 @@ router.delete('/admin/teachers/:id', (req, res) => {
 		return;
 	}
 
-	// man kan inte ta bort sig själv som lärare
-	if (req.params.id === req.session.profile.id) {
-		res.status(401);
-		res.end();
-		return;
-	}
+	model.get_profile(req.params.id).then(profile => {
+		if (profile === null || !profile.teacher) {
+			res.status(404);
+			res.end();
+			return;
+		}
 
-	model.remove_teacher(req.params.id).then(() => {
-		res.status(200);
-		res.end();
-	}).catch(() => {
-		res.status(400);
-		res.end();
+		// man kan inte ta bort sig själv som lärare
+		if (profile.id === req.session.profile.id) {
+			res.status(401);
+			res.end();
+			return;
+		}
+
+		model.remove_teacher(profile);
 	});
 });
 
