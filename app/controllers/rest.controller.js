@@ -1,8 +1,9 @@
 'use strict';
 
-const model = require("../model.js");
+const model = require('../model.js');
 const express = require('express');
 const config = require('../config');
+const kth = require('../kth-data-fetcher');
 const router = express.Router();
 
 const is_kthlan = ip => {
@@ -1453,80 +1454,78 @@ router.post('/queues/:name/assistants', (req, res) => {
 			return;
 		}
 		
-		if (req.body.hasOwnProperty('user_id') && req.body.hasOwnProperty('user_name')) {
-			res.status(400);
-			res.json({
-				error: 'DUPLICATE_PARAMETERS',
-				message: 'Specify either user_id or user_name as parameter.'
-			});
-			return;
-		}
-		
-		var profile_promise = null;
-		
-		if (req.body.hasOwnProperty('user_id')) {
-			if (typeof req.body.user_id !== 'string') {
+		if (Array.isArray(req.body)) {
+			if (req.body.filter(x => typeof x !== 'object' || x === null).length > 0) {
 				res.status(400);
 				res.json({
-					error: 'INVALID_PARAMETER_USER_ID',
-					message: 'Missing or invalid user_id parameter.'
+					error: 'INVALID_LIST',
+					message: 'The body should be a list.'
 				});
 				return;
 			}
-			
-			profile_promise = model.get_profile(req.body.user_id);
-		} else if (req.body.hasOwnProperty('user_name')) {
-			if (typeof req.body.user_name !== 'string') {
-				res.status(400);
-				res.json({
-					error: 'INVALID_PARAMETER_USER_NAME',
-					message: 'Missing or invalid user_name parameter.'
-				});
-				return;
-			}
-			
-			profile_promise = model.get_profile_by_user_name(req.body.user_name);
-		} else {
-			res.status(400);
-			res.json({
-				error: 'MISSING_PARAMETER',
-				message: 'Specify one of user_id and user_name as parameter.'
-			});
-			return;
-		}
-		
-		profile_promise.then(assistant => {
-			if (assistant === null) {
-				res.status(400);
-				res.json({
-					error: 'UNKNOWN_USER',
-					message: 'No user with the given ID exists.'
-				});
-				return;
-			}
-			
-			model.has_permission(queue, req.session.profile.id).then(has_permission => {
-				if (!has_permission) {
-					res.status(401);
-					res.end();
+
+			model.get_profiles(req.body).then(users => {
+				if (users === null) {
+					res.status(400);
+					res.json({
+						error: 'INVALID_LIST_ELEMENT',
+						message: 'At least one element in the users list is invalid.'
+					});
 					return;
 				}
-			
-				model.add_assistant_to_queue(assistant, queue).then(was_added => {
-					if (!was_added) {
+
+				model.add_assistants_to_queue(users, queue).then(count_added => {
+					res.status(201);
+					res.json({
+						count_added: count_added
+					});
+				});
+			});
+		} else if (req.body.hasOwnProperty('course')) {
+			if (typeof req.body.course !== 'string' || !/^[A-Za-z]{2}[A-Z0-9]{4}$/.test(req.body.course)) {
+				res.status(400);
+				res.json({
+					error: 'INVALID_COURSE_CODE',
+					message: 'The course code is not valid.'
+				});
+				return;
+			}
+
+			kth.assistants_in_course(req.body.course).then(kth_assistants => {
+				if (kth_assistants === null) {
+					res.status(400);
+					res.json({
+						error: 'RETRIEVAL_FAILED',
+						message: 'Could not read information from given course.'
+					});
+					return;
+				}
+
+				model.get_profiles(kth_assistants).then(users => {
+					if (users === null) {
 						res.status(400);
 						res.json({
-							error: 'ALREADY_ASSISTANT',
-							message: 'The user is already an assistant for this queue.'
+							error: 'INVALID_KTH_ASSISTANT',
+							message: 'At least one of the asisstants on KTH\'s course web is not valid.'
 						});
 						return;
 					}
-				
-					res.status(201);
-					res.end();
+	
+					model.add_assistants_to_queue(users, queue).then(count_added => {
+						res.status(201);
+						res.json({
+							count_added: count_added
+						});
+					});	
 				});
 			});
-		});
+		} else {
+			res.status(400);
+			res.json({
+				error: 'INVALID_BODY',
+				message: 'Specify either a list of assistants or a course.'
+			});
+		}
 	});
 });
 

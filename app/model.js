@@ -706,17 +706,14 @@ exports.remove_student_from_queue = (student, queue) => new Promise((resolve, re
 	});
 });
 
-exports.add_assistant_to_queue = (assistant, queue) => new Promise((resolve, reject) => {
-	assistant.addAssistantInQueue(queue).then(result => {
-		if (result.length === 0) {
-			resolve(false);
-		} else {
-			queue.getAssistants().then(assistants => {
-				exports.io_emit_update_queue(queue, { assistants: assistants });
-			});
+exports.add_assistants_to_queue = (assistants, queue) => new Promise((resolve, reject) => {
+	queue.addAssistants(assistants).then(result => {
 		
-			resolve(true);
-		}
+		queue.getAssistants().then(assistants => {
+			exports.io_emit_update_queue(queue, { assistants: assistants });
+		});
+
+		resolve(result === undefined ? 0 : result.length);
 	});
 });
 

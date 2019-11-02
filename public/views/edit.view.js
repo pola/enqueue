@@ -6,6 +6,7 @@ Vue.component('route-edit', {
 			tasks: [],
 			colors: null,
 			user_name_assistant: null,
+			course_code_assistant: null,
 			user_name_student: null,
 			action_name: null,
 			action_color: null,
@@ -131,18 +132,68 @@ Vue.component('route-edit', {
 			}
 		},
 
-		add_assistant(){
+		add_assistant() {
 			fetch('/api/queues/'+ this.queue.id +'/assistants', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ user_name: this.user_name_assistant }) // mpola, jark etc.
+				body: JSON.stringify([{ user_name: this.user_name_assistant }])
 			}).then(res => {
-				if (res.status !== 201) {
-					res.json().then(j => {
-						console.log(j);
+				if (res.ok) {
+					this.user_name_assistant = null;
+					
+					res.json().then(data => {
+						if (data.count_added === 0) {
+							alert('Personen är redan assistent i den här kön.');
+						}
+					});
+				} else if (res.status === 400) {
+					res.json().then(data => {
+						switch (data.error) {
+							case 'INVALID_LIST_ELEMENT':
+								alert('Ogiltigt eller okänt användarnamn.');
+								break;
+							
+							default:
+								alert(error.message);
+						}
 					});
 				} else {
-					this.user_name_assistant = '';
+					alert('Ett fel inträffade. Se webbläsarens konsol.');
+				}
+			});
+		},
+
+		add_assistants_from_course() {
+			fetch('/api/queues/'+ this.queue.id +'/assistants', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ course: this.course_code_assistant })
+			}).then(res => {
+				if (res.ok) {
+					this.course_code_assistant = null;
+					
+					res.json().then(data => {
+						if (data.count_added === 0) {
+							alert('Inga nya assistenter lades till.');
+						}
+					});
+				} else if (res.status === 400) {
+					res.json().then(data => {
+						switch (data.error) {
+							case 'INVALID_COURSE_CODE':
+								alert('Ogiltig kurskod.');
+								break;
+
+							case 'RETRIEVAL_FAILED':
+								alert('Misslyckades med att hämta assistentlistan från KTH. Felaktig kurskod?');
+								break;
+							
+							default:
+								alert(error.message);
+						}
+					});
+				} else {
+					alert('Ett fel inträffade. Se webbläsarens konsol.');
 				}
 			});
 		},
@@ -315,7 +366,17 @@ Vue.component('route-edit', {
 					return a.deadline > b.deadline ? 1 : -1;
 				});
 			}
-		}
+		},
+
+		sort_users: users => users.sort((a, b) => {
+			if (a.name < b.name) {
+				return -1;
+			} else if (a.name > b.name) {
+				return 1;
+			} else {
+				return 0;
+			}
+		})
 	},
 	
 	beforeDestroy() {
@@ -365,6 +426,14 @@ Vue.component('route-edit', {
 
 			// man kan annars vara assistent i den aktuella kön
 			return this.queue.assistants.findIndex(x => x.id === this.$root.$data.profile.id) !== -1;
+		},
+
+		sorted_assistants: function() {
+			return this.sort_users(this.queue.assistants);
+		},
+		
+		sorted_students: function() {
+			return this.sort_users(this.queue.students);
 		}
 	},
 
@@ -477,16 +546,31 @@ Vue.component('route-edit', {
 	    </md-card-header>
 		
 		<md-card-content>
-			<form novalidate @submit.prevent="add_assistant" style="display: inline-flex;">
-				<md-field>
-					<label for="user_name_assistant">KTH-användarnamn</label>
-					<md-input type="text" id="user_name_assistant" v-model="user_name_assistant" />
-				</md-field>
+			<div class="md-layout">
+				<form novalidate @submit.prevent="add_assistant" style="display: inline-flex;" class="md-layout-item">
+					<md-field>
+						<label for="user_name_assistant">KTH-användarnamn</label>
+						<md-input type="text" id="user_name_assistant" v-model="user_name_assistant" />
+					</md-field>
 
-				<md-card-actions>
-					<md-button type="submit" class="md-primary" :disabled="user_name_assistant === null || user_name_assistant.length === 0">Lägg till assistent</md-button>
-				</md-card-actions>
-			</form>
+					<md-card-actions>
+						<md-button type="submit" class="md-primary" :disabled="user_name_assistant === null || user_name_assistant.length === 0">Lägg till assistent</md-button>
+					</md-card-actions>
+				</form>
+
+				<div class="md-layout-item"></div>
+
+				<form novalidate @submit.prevent="add_assistants_from_course" style="display: inline-flex;" class="md-layout-item">
+					<md-field>
+						<label for="course_code_assistant">Kurskod</label>
+						<md-input type="text" id="course_code_assistant" v-model="course_code_assistant" />
+					</md-field>
+
+					<md-card-actions>
+						<md-button type="submit" class="md-primary" :disabled="course_code_assistant === null || course_code_assistant.length === 0">Lägg till assistenter från kurs</md-button>
+					</md-card-actions>
+				</form>
+			</div>
 		
 			<md-table v-if="queue.assistants.length > 0">
 				<md-table-row>
@@ -495,7 +579,7 @@ Vue.component('route-edit', {
 					<md-table-head>Alternativ</md-table-head>
 				</md-table-row>
 
-				<md-table-row v-for="assistant in queue.assistants" :key="assistant.id">
+				<md-table-row v-for="assistant in sorted_assistants" :key="assistant.id">
 					<md-table-cell>{{ assistant.user_name }}</md-table-cell>
 					<md-table-cell>{{ assistant.name }}</md-table-cell>
 					<md-table-cell><md-button v-on:click="remove_assistant(assistant)" class="md-accent">Radera</md-button></md-table-cell>
@@ -530,7 +614,7 @@ Vue.component('route-edit', {
 					<md-table-head>Alternativ</md-table-head>
 				</md-table-row>
 
-				<md-table-row v-for="student in queue.students" :key="student.id">
+				<md-table-row v-for="student in sorted_students" :key="student.id">
 					<md-table-cell>{{ student.user_name }}</md-table-cell>
 					<md-table-cell>{{ student.name }}</md-table-cell>
 					<md-table-cell><md-button v-on:click="remove_student(student)" class="md-accent">Radera</md-button></md-table-cell>

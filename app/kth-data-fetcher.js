@@ -27,4 +27,30 @@ const fetch_user = url => new Promise((resolve, reject) => {
 module.exports = {
     from_id: id => fetch_user('https://hodis.datasektionen.se/ugkthid/' + id),
     from_user_name: user_name => fetch_user('https://hodis.datasektionen.se/uid/' + user_name),
+    assistants_in_course: course_code => new Promise((resolve, reject) => {
+        fetch('https://www.kth.se/social/course/' + course_code.toUpperCase() + '/').then(res => {
+            if (!res.ok) {
+                resolve(null);
+                return;
+            }
+
+            res.text().then(html => {
+                var m;
+                const user_names = [];
+                const reg = /<span itemscope itemtype="http:\/\/schema\.org\/Person"><a href="https:\/\/www\.kth\.se\/profile\/([a-z0-9]+)\/"/g;
+
+                do {
+                    m = reg.exec(html);
+
+                    if (m) {
+                        user_names.push({ user_name: m[1] });
+                    }
+                } while (m);
+
+                resolve(user_names);
+            });
+        }).catch(() => {
+            resolve(null);
+        });
+    })
 };
