@@ -174,16 +174,6 @@ Vue.component('route-queue', {
 				}
 			});
 		},
-		
-      	unix_to_time_ago(unix) {
-			// TODO: övergå till något bibliotek, till exempel Moment
-			const d = new Date(unix);
-			
-			const hour = '0' + d.getHours();
-			const min = '0' + d.getMinutes();
-			
-			return hour.slice(-2) + ':' + min.slice(-2);
-		},
 
 		unix_to_datetime(unix) {
 			// TODO: övergå till något bibliotek, till exempel Moment
@@ -526,7 +516,7 @@ Vue.component('route-queue', {
 				{{ queue.queuing.findIndex(x => x.profile.id === dialog_queuing.profile.id ) + 1 }}.
 				<span v-if="dialog_queuing.profile.user_name !== null">{{ dialog_queuing.profile.name }} ({{ dialog_queuing.profile.user_name }})</span>
 			</h2>
-			<strong>Gick in i kön:</strong> {{ unix_to_time_ago(dialog_queuing.entered_at) }}<br />
+			<strong>Gick in i kön:</strong> {{ unix_to_datetime(dialog_queuing.entered_at) }}<br />
 			<strong>Plats:</strong> <span :class="[{ badLocation: dialog_queuing.bad_location }]"">{{ nice_location(dialog_queuing.location) }}</span><br />
 			
 			<template v-if="dialog_queuing.comment !== null">
@@ -652,7 +642,7 @@ Vue.component('route-queue', {
 						<div v-if="user.profile.name !== null" style="white-space: nowrap;">{{ index + 1 }}. {{ user.profile.name }}</div>
 						<span :class="[{ badLocation: user.bad_location }]">{{ nice_location(user.location) }} </span>
 					</md-table-cell>
-					<md-table-cell>{{ unix_to_time_ago(user.entered_at )}} </md-table-cell>
+					<md-table-cell>{{ unix_to_datetime(user.entered_at )}} </md-table-cell>
 					<md-table-cell>
 						<span v-if="user.comment !== null">{{ user.comment }}</span>
 					</md-table-cell>

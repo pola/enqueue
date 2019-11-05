@@ -329,21 +329,27 @@ Vue.component('route-edit', {
 			});
 		},
 		
-		unix_to_human(unix) {
+		unix_to_datetime(unix) {
 			// TODO: övergå till något bibliotek, till exempel Moment
-			d = new Date(unix);
-
-			day = '0' + d.getDate();
-			month = '0' + (d.getMonth() + 1);
-			year = d.getFullYear();
-
+			const d = new Date(unix);
+			const today = new Date();
+			
 			hour = '0' + d.getHours();
 			min = '0' + d.getMinutes();
-			sec = '0' + d.getSeconds();
+			
+			const time = hour.slice(-2) + ':' + min.slice(-2);
 
-			time = year + '-' + month.slice(-2) + '-' + day.slice(-2) + ' ' + hour.slice(-2) + ':' + min.slice(-2);
+			if (today.getDate() === d.getDate() && today.getMonth() === d.getMonth() && today.getFullYear() === d.getFullYear()) {
+				return time;
+			}
 
-			return time;
+			var date = d.getDate() + ' ' + (['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'][d.getMonth()]);
+
+			if (today.getFullYear() !== d.getFullYear()) {
+				date += ' ' + d.getFullYear();
+			}
+
+			return date + ', ' + time;
 		},
 		
 		socket_handle_update_queue(data) {
@@ -520,7 +526,7 @@ Vue.component('route-edit', {
 						<span v-if="task.type === 'OPEN'">Öppna kön</span>
 						<span v-if="task.type === 'CLOSE'">Stäng kön</span>
 					</md-table-cell>
-					<md-table-cell>{{ unix_to_human(task.deadline) }}</md-table-cell>
+					<md-table-cell>{{ unix_to_datetime(task.deadline) }}</md-table-cell>
 					<md-table-cell><md-button v-on:click="remove_task(task)" class="md-accent">Radera</md-button></md-table-cell>
 				</md-table-row>
 		   	</md-table>
