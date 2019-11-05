@@ -27,11 +27,19 @@ Vue.component('route-edit', {
 					description: this.queue.description
 				})
 			}).then(res => {
-				if (res.status !== 200) {
-					res.json().then(j => {
-						alert(j);
-					});
+				if (res.ok) {
+					fetch('/api/queues/' + this.queue.id).then(res => res.json()).then(queue_data => this.$router.push('/queues/' + queue_data.name));
+				} else {
+					if (res.status === 400) {
+						res.json().then(data => {
+							alert(data.message);
+						});
+					} else {
+						alert('Ett fel inträffade. Se webbläsarens konsol.');
+					}
 				}
+			}).catch(() => {
+				alert('Misslyckades med att kontakta Enqueue. Är du ansluten till internet?');
 			});
 		},
 
