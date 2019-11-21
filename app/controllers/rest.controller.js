@@ -465,15 +465,13 @@ router.post('/queues/:name/queuing', (req, res) => {
 				}
 				
 				// man kan inte gå in i en kö som man redan står i (då får man PUT:a med ny data)
-				for (const student of model.get_queuing(queue)) {
-					if (student.profile.id === req.session.profile.id) {
-						res.status(400);
-						res.json({
-							error: 'ALREADY_IN_QUEUE',
-							message: 'You are already standing in the queue.'
-						});
-						return;
-					}
+				if (model.get_queuing(queue).findIndex(x => x.profile.id === req.session.profile.id) !== -1) {
+					res.status(400);
+					res.json({
+						error: 'ALREADY_IN_QUEUE',
+						message: 'You are already standing in the queue.'
+					});
+					return;
 				}
 				
 				const profile = {
@@ -514,7 +512,7 @@ router.delete('/queues/:name/queuing', (req, res) => {
 				return;
 			}
 
-			model.get_queuing(queue).length = 0;
+			model.empty_queue(queue);
 
 			res.status(200);
 			res.end();
@@ -539,37 +537,29 @@ router.delete('/queues/:name/queuing/:id', (req, res) => {
 			return;
 		}
 
-		var found = false;
 		const queuing = model.get_queuing(queue);
+		const index = queuing.findIndex(x => x.profile.id === req.params.id);
 
-		for (var i = 0; i < queuing.length; i++) {
-			if (queuing[i].profile.id === req.params.id) {
-				found = true;
-
-				model.has_permission(queue, req.session.profile.id).then(has_permission => {
-					if (queuing[i].profile.id !== req.session.profile.id && !has_permission) {
-						res.status(401);
-						res.end();
-						return;
-					}
-
-					queuing.splice(i, 1);
-
-					res.status(200);
-					res.end();
-
-					model.io_emit_update_queuing(queue);
-				});
-
-				break;
-			}
-		}
-
-		if (!found) {
+		if (index == -1 || queuing[index].id === null) {
 			res.status(404);
 			res.end();
 			return;
 		}
+
+		model.has_permission(queue, req.session.profile.id).then(has_permission => {
+			if (queuing[index].profile.id !== req.session.profile.id && !has_permission) {
+				res.status(401);
+				res.end();
+				return;
+			}
+
+			model.remove_student(queue, index);
+
+			res.status(200);
+			res.end();
+
+			model.io_emit_update_queuing(queue);
+		});
 	});
 });
 
@@ -611,6 +601,26 @@ const update_queue = (queue, changes, req, res, keys) => {
 				message: 'Specify at least one parameter to change.'
 			});
 			return;
+		}
+
+		// vissa ändringar vill vi minnas i databasen
+		for (const changes_key of changes_keys) {
+			switch (changes_key) {
+				case 'description':
+					if (changes.description !== queue.description) {
+						model.save_event(queue.id, req.session.profile.id, 'DESCRIPTION', {
+							old: queue.description,
+							new: changes.description
+						});
+					}
+					break;
+
+				case 'open':
+					if (changes.open !== queue.open) {
+						model.save_event(queue.id, req.session.profile.id, changes.open ? 'OPEN' : 'CLOSE', null);
+					}
+					break;
+			}
 		}
 
 		// spara ändringarna
@@ -713,14 +723,7 @@ router.patch('/queues/:name/queuing/:id', (req, res) => {
 		}
 
 		// hitta vilken student i kön det berör
-		var student = null;
-
-		for (const s of model.get_queuing(queue)) {
-			if (s.profile.id === req.params.id) {
-				student = s;
-				break;
-			}
-		}
+		var student = model.get_queuing(queue).find(x => x.profile.id === req.params.id);
 
 		if (student === null) {
 			res.status(404);
@@ -753,11 +756,11 @@ const update_student = (queue, student, changes, req, res, keys) => {
 				model.move_student_after(queue, student, changes.move_after);
 				update_entire_queue = true;
 			} else if (changes_key === 'handlers') {
-				if (changes[changes_key].is_handling) {
-					student.handlers.push(changes[changes_key].profile);
+				if (changes.handlers.is_handling) {
+					student.handlers.push(changes.handlers.profile);
 				} else {
 					for (var i = 0; i < student.handlers.length; i++) {
-						if (student.handlers[i].id === changes[changes_key].profile.id) {
+						if (student.handlers[i].id === changes.handlers.profile.id) {
 							student.handlers.splice(i, 1);
 							break;
 						}
@@ -766,6 +769,25 @@ const update_student = (queue, student, changes, req, res, keys) => {
 			} else {
 				student[changes_key] = changes[changes_key];
 			}
+		}
+
+		// vissa ändringar vill man även lägga in i databasen
+		if (changes_keys.includes('comment') || changes_keys.includes('location') || changes_keys.includes('action') || changes_keys.includes('handlers')) {
+			model.get_queueing(student.id).then(queue_queuing => {
+				queue_queuing.comment = student.comment,
+				queue_queuing.location = typeof student.location === 'string' ? student.location : student.location.name;
+				queue_queuing.action = student.action === null ? null : student.action.name;
+
+				if (changes_keys.includes('handlers')) {
+					if (changes.handlers.is_handling) {
+						model.queue_handling_assistant_add(queue_queuing, changes.handlers.profile.id);
+					} else {
+						model.queue_handling_assistant_remove(queue_queuing, changes.handlers.profile.id);
+					}
+				}
+
+				queue_queuing.save();
+			});
 		}
 
 		res.status(200);
@@ -977,14 +999,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 					return;
 				}
 				
-				var currently_handling = false;
-				
-				for (const handler of student.handlers) {
-					if (handler.id === req.session.profile.id) {
-						currently_handling = true;
-						break;
-					}
-				}
+				var currently_handling = student.handlers.findIndex(x => x.id === req.session.profile.id) !== -1;
 				
 				if (currently_handling && req.body.is_handling) {
 					res.status(400);

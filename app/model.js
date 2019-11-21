@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const kth = require('./kth-data-fetcher');
 const setTimeoutAt = require('safe-timers').setTimeoutAt;
 
-var Queue, Room, Computer, Profile, Action, Booking, Token, Task = null;
+var Queue, Room, Computer, Profile, Action, Booking, Token, Task, Event, QueueQueuing, QueueQueuingHandler = null;
 
 var io = null;
 var connection = null;
@@ -97,13 +97,20 @@ exports.setConnection = (c) => {
 	Profile.belongsToMany(Booking, { as: 'StudentInBookings', through: 'bookings_students', foreignKey: 'student_id' });
 	
 	Token = connection.define('tokens', {
-		token: { type: Sequelize.STRING, primaryKey: true }
+		token: {
+			type: Sequelize.STRING,
+			primaryKey: true
+		}
 	});
 	
 	Token.belongsTo(Profile, { foreignKey: 'profile_id' });
 
 	Task = connection.define('tasks', {
-		id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+		id: {
+			type: Sequelize.INTEGER,
+			primaryKey: true,
+			autoIncrement: true
+		},
 		type: Sequelize.STRING,
 		data: Sequelize.TEXT,
 		deadline: Sequelize.BIGINT
@@ -111,7 +118,82 @@ exports.setConnection = (c) => {
 
 	Task.belongsTo(Queue, { foreignKey: 'queue_id' });
 
+	Event = connection.define('events', {
+		id: {
+			type: Sequelize.INTEGER,
+			primaryKey: true,
+			autoIncrement: true
+		},
+		timestamp: {
+			type: Sequelize.BIGINT,
+			allowNull: false
+		},
+		type: {
+			type: Sequelize.ENUM('OPEN', 'CLOSE', 'DESCRIPTION'),
+			allowNull: false
+		},
+		data: Sequelize.TEXT,
+		queue_id: {
+			type: Sequelize.INTEGER,
+			allowNull: true
+		},
+		user_id: {
+			type: Sequelize.STRING,
+			allowNull: true
+		}
+	});
+
+	Event.belongsTo(Queue, { foreignKey: 'queue_id' });
+	Event.belongsTo(Profile, { foreignKey: 'user_id' });
+
+	QueueQueuing = connection.define('queues_queuings', {
+		id: {
+			type: Sequelize.INTEGER,
+			primaryKey: true,
+			autoIncrement: true
+		},
+		timestamp_enter: {
+			type: Sequelize.BIGINT,
+			allowNull: false
+		},
+		timestamp_leave: Sequelize.BIGINT,
+		comment: { type: Sequelize.STRING },
+		location: {
+			type: Sequelize.STRING,
+			allowNull: false
+		},
+		action: { type: Sequelize.STRING }
+	});
+
+	QueueQueuing.belongsTo(Queue, { foreignKey: 'queue_id' });
+	QueueQueuing.belongsTo(Profile, { foreignKey: 'user_id' });
+
+	QueueQueuingHandler = connection.define('queues_queuings_handlers', {
+		id: {
+			type: Sequelize.INTEGER,
+			primaryKey: true,
+			autoIncrement: true
+		},
+		timestamp_enter: {
+			type: Sequelize.BIGINT,
+			allowNull: false
+		},
+		timestamp_leave: {
+			type: Sequelize.BIGINT,
+			allowNull: true
+		}
+	});
+
+	QueueQueuingHandler.belongsTo(QueueQueuing, { foreignKey: 'queue_student_id' });
+	QueueQueuingHandler.belongsTo(Profile, { foreignKey: 'user_id' });
+
 	connection.sync().then(() => {
+		QueueQueuing.destroy({
+			where: {
+				timestamp_leave: null
+			}
+		});
+
 		Queue.findAll().then(queues => {
 			for (const queue of queues) {
 				queuing[queue.id] = [];
@@ -138,6 +220,8 @@ exports.task_timeout = task_id => {
 				if (!queue.open) {
 					changes.open = true;
 					queue.open = true;
+
+					exports.save_event(queue.id, null, 'OPEN', null);
 				}
 				break;
 
@@ -145,6 +229,8 @@ exports.task_timeout = task_id => {
 				if (queue.open) {
 					changes.open = false;
 					queue.open = false;
+
+					exports.save_event(queue.id, null, 'CLOSE', null);
 				}
 				break;
 		}
@@ -344,6 +430,14 @@ exports.get_or_create_profile = (id, user_name, name) => new Promise((resolve, r
 			resolve(profile);
 		}
 	});
+});
+
+exports.save_event = (queue_id, user_id, type, data) => Event.create({
+	queue_id: queue_id,
+	user_id: user_id,
+	type: type,
+	timestamp: Date.now(),
+	data: data === null ? null : JSON.stringify(data)
 });
 
 exports.get_room = id => Room.findOne({ where: { id: id } });
@@ -591,7 +685,8 @@ exports.get_bookings = queue => Booking.findAll({
 });
 
 exports.add_student = (queue, profile, comment, location, action) => {
-	queuing[queue.id].push({
+	const queuing_student = {
+		id: null,
 		profile: profile,
 		entered_at: Date.now(),
 		comment: comment,
@@ -599,10 +694,78 @@ exports.add_student = (queue, profile, comment, location, action) => {
 		action: action,
 		bad_location: false,
 		handlers: []
+	};
+
+	queuing[queue.id].push(queuing_student);
+
+	QueueQueuing.create({
+		timestamp_enter: queuing_student.entered_at,
+		comment: comment,
+		location: typeof(location) === 'string' ? location : location.name,
+		action: action === null ? null : action.name,
+		queue_id: queue.id,
+		user_id: profile.id
+	}).then(queue_queuing => {
+		queuing_student.id = queue_queuing.id;
 	});
 
 	exports.io_emit_update_queuing(queue);
 };
+
+exports.remove_student = (queue, index) => {
+	QueueQueuing.findOne({
+		where: {
+			id: queuing[queue.id][index].id
+		}
+	}).then(queue_queuing => {
+		queue_queuing.timestamp_leave = Date.now();
+		queue_queuing.save();
+	})
+
+	queuing[queue.id].splice(index, 1);
+};
+
+exports.get_queueing = id => 
+	QueueQueuing.findOne({
+		where: {
+			id: id
+		}
+});
+
+exports.empty_queue = queue => {
+	QueueQueuing.update({
+		timestamp_leave: Date.now()
+	}, {
+		where: {
+			id: queuing[queue.id].filter(x => x.id !== null).map(x => x.id)
+		}
+	});
+
+	queuing[queue.id].length = 0;
+};
+
+exports.queue_handling_assistant_add = (queue_queuing, user_id) => QueueQueuingHandler.findOrCreate({
+	where: {
+		queue_student_id: queue_queuing.id,
+		user_id: user_id,
+		timestamp_leave: null
+	},
+	defaults: {
+		timestamp_enter: Date.now(),
+		timestamp_leave: null,
+		queue_student_id: queue_queuing.id,
+		user_id: user_id
+	}
+});
+
+exports.queue_handling_assistant_remove = (queue_queuing, user_id) => QueueQueuingHandler.update({
+	timestamp_leave: Date.now()
+}, {
+	where: {
+		queue_student_id: queue_queuing.id,
+		user_id: user_id
+	}
+});
 
 exports.move_student_after = (queue, student, move_after) => {
 	const s = exports.get_queuing(queue);
