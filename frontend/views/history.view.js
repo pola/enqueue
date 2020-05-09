@@ -257,7 +257,7 @@ Vue.component('route-history', {
 						<span style="white-space: nowrap;">{{ unix_to_datetime(queuing.timestamp_leave) || '...' }}</span>
 					</md-table-cell>
 					<md-table-cell v-if="is_assistant_in_queue">
-						<span :title="queuing.profile.user_name + '@kth.se'">{{ queuing.profile.name }}</span>
+						<span style="white-space: nowrap;" :title="queuing.profile.user_name + '@kth.se'">{{ queuing.profile.name }}</span>
 					</md-table-cell>
 					<md-table-cell>
 						{{ queuing.location }}
@@ -267,7 +267,7 @@ Vue.component('route-history', {
 						<div v-if="queuing.comment !== null">{{ queuing.comment }}</div>
 					</md-table-cell>
 					<md-table-cell>
-						<div :title="handler.user_name + '@kth.se'" v-for="handler in queuing.handlers">{{ handler.name }}</div>
+						<div style="white-space: nowrap;" :title="handler.user_name + '@kth.se'" v-for="handler in queuing.handlers">{{ handler.name }}</div>
 					</md-table-cell>
 				</md-table-row>
 			</md-table>
