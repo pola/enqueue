@@ -57,13 +57,31 @@ Vue.component('route-history', {
 				if (res.ok) {
 					res.json().then(data => {
 						if (!data.filtered) {
-							this.events = data.events.map(x => {
-								x.nice_description = this.generate_nice_description(x)
-								return x
-							}).sort((a, b) => b.timestamp - a.timestamp)
+							this.events = data.events.sort((a, b) => b.timestamp - a.timestamp)
+
+							for (const event of this.events) {
+								event.nice_description = this.generate_nice_description(event)
+							}
 						}
 
 						this.queuings = data.queuings.sort((a, b) => b.timestamp_enter - a.timestamp_enter)
+
+						// samma assistent kan assistera flera gånger (dock förmodligen med olika tidsstämplar), så här plockar vi ut de unika assistenterna
+						for (const queuing of this.queuings) {
+							const handlers = []
+
+							for (const handler of queuing.handlers) {
+								if (handlers.findIndex(x => x.user_id === handler.user_id) === -1) {
+									handlers.push({
+										user_id: handler.user_id,
+										name: handler.profile.name,
+										user_name: handler.profile.user_name
+									})
+								}
+							}
+
+							queuing.handlers = handlers
+						}
 					})
 				} else if (res.status === 400) {
 					res.json().then(data => {
@@ -249,7 +267,7 @@ Vue.component('route-history', {
 						<div v-if="queuing.comment !== null">{{ queuing.comment }}</div>
 					</md-table-cell>
 					<md-table-cell>
-						<div :title="handler.profile.user_name + '@kth.se'" v-for="handler in queuing.handlers">{{ handler.profile.name }}</div>
+						<div :title="handler.user_name + '@kth.se'" v-for="handler in queuing.handlers">{{ handler.name }}</div>
 					</md-table-cell>
 				</md-table-row>
 			</md-table>
