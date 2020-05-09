@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 const router = new VueRouter({
 	mode: 'history',
@@ -7,11 +7,12 @@ const router = new VueRouter({
 		{ path: '/queues', component: Vue.component('route-queues') },
 		{ path: '/queues/:name', component: Vue.component('route-queue') },
 		{ path: '/admin', component: Vue.component('route-admin-dashboard') },
-		{ path: '/queues/:name/edit', component: Vue.component('route-edit') }
+		{ path: '/queues/:name/edit', component: Vue.component('route-edit') },
+		{ path: '/queues/:name/history', component: Vue.component('route-history') }
 	]
-});
+})
 
-Vue.use(VueMaterial.default);
+Vue.use(VueMaterial.default)
 
 // Create VueApp
 // Docs: https://vuejs.org/v2/guide
@@ -28,34 +29,34 @@ const app = new Vue({
 	methods: {
 		redirect(target) {
 			// Used in the navigation
-			this.$router.push(target);
+			this.$router.push(target)
 		},
 		set_location(location) {
-			window.location = location;
+			window.location = location
 		},
 		redirect_login() {
-			window.location = '/login?returnTo=' + encodeURIComponent(window.location.pathname);
+			window.location = '/login?returnTo=' + encodeURIComponent(window.location.pathname)
 		},
 		fetch_me() {
 			fetch('/api/me').then(res => res.json()).then(me => {
-				app.$data.profile = me.profile;
-				app.$data.location = me.location;
-				app.$data.assisting_in = me.assisting_in;
-				app.$data.is_kthlan = me.is_kthlan;
-			});
+				app.$data.profile = me.profile
+				app.$data.location = me.location
+				app.$data.assisting_in = me.assisting_in
+				app.$data.is_kthlan = me.is_kthlan
+			})
 		}
 	}
-}).$mount('#app');
+}).$mount('#app')
 
 app.$data.socket.on('connect', () => {
-	app.$data.socket_connected = true;
-	app.fetch_me();
-});
+	app.$data.socket_connected = true
+	app.fetch_me()
+})
 
 app.$data.socket.on('disconnect', () => {
-	app.$data.socket_connected = false;
-});
+	app.$data.socket_connected = false
+})
 
 app.$data.socket.on('profile', profile => {
-	app.$data.profile = profile;
-});
+	app.$data.profile = profile
+})

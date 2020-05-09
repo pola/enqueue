@@ -1,6 +1,3 @@
-
-
-
 Vue.component('route-queue', {
 	data() {
 		return {
@@ -36,10 +33,10 @@ Vue.component('route-queue', {
 			}).then(res => {
 				if (res.status !== 201) {
 					res.json().then (data => {
-						alert(data.message);
-					});
+						alert(data.message)
+					})
 				}
-			});
+			})
 		},
 
 		update_own_details() {
@@ -54,10 +51,10 @@ Vue.component('route-queue', {
 			}).then(res => {
 				if (res.status !== 200) {
 					res.json().then (data => {
-						alert(data.message);
-					});
+						alert(data.message)
+					})
 				}
-			});
+			})
 		},
 		
 		dequeue(student) {
@@ -66,20 +63,20 @@ Vue.component('route-queue', {
 			}).then(res => {
 				if (res.status === 200) {
 					if (student.profile.id === this.$root.$data.profile.id) {
-						this.comment = null;
-						this.action = null;
+						this.comment = null
+						this.action = null
 					}
 				} else {
 					res.json().then (data => {
-						alert(data.message);
-					});
+						alert(data.message)
+					})
 				}
-			});
+			})
 		},
 		
 		queuing_handle(profile) {
-			const qs = this.queue.queuing.find(x => x.profile.id === profile.id);
-			const is_handling = qs.handlers.find(x => x.id === this.$root.$data.profile.id) === undefined;
+			const qs = this.queue.queuing.find(x => x.profile.id === profile.id)
+			const is_handling = qs.handlers.find(x => x.id === this.$root.$data.profile.id) === undefined
 			
 			fetch('/api/queues/' + this.queue.name + '/queuing/' + qs.profile.id, {
 				method: 'PATCH',
@@ -88,10 +85,10 @@ Vue.component('route-queue', {
 			}).then(res => {
 				if (res.status !== 200) {
 					res.json().then(j => {
-						console.log(j);
-					});
+						console.log(j)
+					})
 				}
-			});
+			})
 		},
 		
 		move_student_first(student) {
@@ -102,22 +99,22 @@ Vue.component('route-queue', {
 			}).then(res => {
 				if (res.status !== 200) {
 					res.json().then(j => {
-						console.log(j);
-					});
+						console.log(j)
+					})
 				}
-			});
+			})
 		},
 		
 		move_student_to_position(student) {
-			var new_position = parseInt(document.getElementById('pos').value);
+			var new_position = parseInt(document.getElementById('pos').value)
 			
 			if (new_position > this.queue.queuing.length || new_position < 1 || isNaN(new_position)) {
-				alert('Positionen du valt är inte giltig.');
+				alert('Positionen du valt är inte giltig.')
 			} else if (new_position === 1) {
-				this.move_student_first(student);
+				this.move_student_first(student)
 			} else {
 				// om man vill ställa sig på position x (1-idicerat) måste vi veta vem som står på positionen innan samt översätta till 0-indicerat
-				var student_before = this.queue.queuing[new_position-2];
+				var student_before = this.queue.queuing[new_position-2]
 				
 				fetch('/api/queues/'+ this.queue.name +'/students/' + student.profile.id, {
 					method: 'PATCH',
@@ -126,10 +123,10 @@ Vue.component('route-queue', {
 				}).then(res => {
 					if (res.status !== 200) {
 						res.json().then(j => {
-							console.log(j);
-						});
+							console.log(j)
+						})
 					}
-				});
+				})
 			}
 		},
 		
@@ -138,27 +135,27 @@ Vue.component('route-queue', {
 				queue: this.queue.id,
 				message: this.message,
 				recipient: student.profile.id
-			});
+			})
 			
-			this.message = null;
+			this.message = null
 		},
 		
 		broadcast() {
 			this.$root.$data.socket.emit('broadcast', {
 				queue: this.queue.id,
 				message: this.message
-			});
+			})
 			
-			this.message = null;
+			this.message = null
 		},
 		
 		broadcast_faculty() {
 			this.$root.$data.socket.emit('notify_faculty', {
 				queue: this.queue.id,
 				message: this.message
-			});
+			})
 			
-			this.message = null;
+			this.message = null
 		},
 		
 		queuing_bad_location(student) {
@@ -169,52 +166,59 @@ Vue.component('route-queue', {
 			}).then(res => {
 				if (res.status !== 200) {
 					res.json().then(j => {
-						console.log(j);
-					});
+						console.log(j)
+					})
 				}
-			});
+			})
 		},
 
 		unix_to_datetime(unix) {
 			// TODO: övergå till något bibliotek, till exempel Moment
-			const d = new Date(unix);
-			const today = new Date();
+			const d = new Date(unix)
+			const today = new Date()
 			
-			hour = '0' + d.getHours();
-			min = '0' + d.getMinutes();
+			hour = '0' + d.getHours()
+			min = '0' + d.getMinutes()
 			
-			const time = hour.slice(-2) + ':' + min.slice(-2);
+			const time = hour.slice(-2) + ':' + min.slice(-2)
 
 			if (today.getDate() === d.getDate() && today.getMonth() === d.getMonth() && today.getFullYear() === d.getFullYear()) {
-				return time;
+				return time
 			}
 
-			var date = d.getDate() + ' ' + (['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'][d.getMonth()]);
+			var date = d.getDate() + ' ' + (['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'][d.getMonth()])
 
 			if (today.getFullYear() !== d.getFullYear()) {
-				date += ' ' + d.getFullYear();
+				date += ' ' + d.getFullYear()
 			}
 
-			return date + ', ' + time;
+			return date + ', ' + time
 		},
 		
 		nice_location(location) {
-			return typeof(location) === 'string' ? location : location.name;
+			return typeof(location) === 'string' ? location : location.name
 		},
 		
 		redirect (url) {
-			if (url === 'edit'){
-				this.$router.push('/queues/' + this.queue.name + '/edit');
+			switch (url) {
+				case 'edit':
+					this.$router.push('/queues/' + this.queue.name + '/edit')
+					break
+
+				case 'history':
+					this.$router.push('/queues/' + this.queue.name + '/history')
+					break
+				
+				case 'queues':
+					this.$router.push('/queues')
+					break
 			}
-			else if (url === 'queues'){
-				this.$router.push('/queues');
-			}	
 		},
 		
 		purge() {
 			fetch('/api/queues/' + this.queue.id + '/queuing', {
 				method: 'DELETE'
-			});
+			})
 		},
 		
 		toggle_open() {
@@ -222,36 +226,36 @@ Vue.component('route-queue', {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ open: !this.queue.open })
-			});
+			})
 		},
 		
 		fetch_queue() {
 			fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
-				this.queue = queue;
+				this.queue = queue
 				if (this.$root.$data.location !== null){
-					this.location = this.$root.$data.location.name;
+					this.location = this.$root.$data.location.name
 				}
 
-				this.sort_bookings();
-			});
+				this.sort_bookings()
+			})
 		},
 
 		sort_bookings() {
 			this.queue.bookings.sort((a, b) => {
 				if (a.timestamp < b.timestamp) {
-					return -1;
+					return -1
 				} else if (a.timestamp > b.timestamp) {
-					return 1;
+					return 1
 				} else {
 					if (a.id < b.id) {
-						return -1;
+						return -1
 					} else if (a.id > b.id) {
-						return 1;
+						return 1
 					} else {
-						return 0;
+						return 0
 					}
 				}
-			});
+			})
 		},
 
 		booking_set_location() {
@@ -261,9 +265,9 @@ Vue.component('route-queue', {
 				body: JSON.stringify({ location: this.booking_location })
 			}).then(res => {
 				if (res.ok) {
-					this.dialog_booking = null;
+					this.dialog_booking = null
 				}
-			});
+			})
 		},
 
 		booking_bad_location() {
@@ -274,10 +278,10 @@ Vue.component('route-queue', {
 			}).then(res => {
 				if (res.status !== 200) {
 					res.json().then(j => {
-						console.log(j);
-					});
+						console.log(j)
+					})
 				}
-			});
+			})
 		},
 
 		booking_handle() {
@@ -288,207 +292,207 @@ Vue.component('route-queue', {
 			}).then(res => {
 				if (res.status !== 200) {
 					res.json().then(j => {
-						console.log(j);
-					});
+						console.log(j)
+					})
 				}
-			});
+			})
 		},
 
 		booking_remove() {
-			fetch('/api/queues/' + this.queue.id + '/bookings/' + this.dialog_booking.id, { method: 'DELETE' });
+			fetch('/api/queues/' + this.queue.id + '/bookings/' + this.dialog_booking.id, { method: 'DELETE' })
 		},
 		
 		// ändrar data om en kö (inklusive t.ex. queuing-listan)
 		socket_handle_update_queue(data) {
 			if (data.queue !== this.queue.id) {
-				return;
+				return
 			}
 			
 			for (var k of Object.keys(data.changes)) {
-				this.queue[k] = data.changes[k];
+				this.queue[k] = data.changes[k]
 			}
 			
 			// om en assistent har öppnat rutan med inställningar för en köande student, justera den
 			if (this.dialog_queuing !== null) {
-				const qsi = this.queue.queuing.findIndex(x => x.profile.id === this.dialog_queuing.profile.id);
+				const qsi = this.queue.queuing.findIndex(x => x.profile.id === this.dialog_queuing.profile.id)
 
-				this.dialog_queuing = qsi === -1 ? null : this.queue.queuing[qsi];
+				this.dialog_queuing = qsi === -1 ? null : this.queue.queuing[qsi]
 			}
 		},
 		
 		// ändrar data om en specifik köande student inuti queuing-listan
 		socket_handle_update_queue_queuing_student(data) {
 			if (data.queue !== this.queue.id) {
-				return;
+				return
 			}
 			
 			for (const queuing_student of this.queue.queuing) {
 				if (queuing_student.profile.id === data.student.profile.id) {
 					for (const k of Object.keys(data.student)) {
-						queuing_student[k] = data.student[k];
+						queuing_student[k] = data.student[k]
 					}
 					
-					break;
+					break
 				}
 			}
 		},
 
 		socket_handle_update_booking(data) {
 			if (data.queue !== this.queue.id) {
-				return;
+				return
 			}
 
-			this.queue.bookings = this.queue.bookings.filter(x => x.id !== data.booking.id);
-			this.queue.bookings.push(data.booking);
-			this.sort_bookings();
+			this.queue.bookings = this.queue.bookings.filter(x => x.id !== data.booking.id)
+			this.queue.bookings.push(data.booking)
+			this.sort_bookings()
 
 			if (this.dialog_booking !== null && this.dialog_booking.id === data.booking.id) {
-				this.dialog_booking = data.booking;
-				this.booking_location = data.booking.location;
+				this.dialog_booking = data.booking
+				this.booking_location = data.booking.location
 			}
 		},
 
 		socket_handle_delete_booking(booking_id) {
-			this.queue.bookings = this.queue.bookings.filter(x => x.id !== booking_id);
+			this.queue.bookings = this.queue.bookings.filter(x => x.id !== booking_id)
 
 			if (this.dialog_booking !== null && this.dialog_booking.id === booking_id) {
-				this.dialog_booking = null;
+				this.dialog_booking = null
 			}
 		},
 		
 		// tar emot ett broadcastmeddelande för en kö
 		socket_handle_broadcast(data) {
 			if (data.queue !== this.queue.id) {
-				return;
+				return
 			}
 			
-			this.broadcast_active = true;
-			this.broadcast_message = data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>';
+			this.broadcast_active = true
+			this.broadcast_message = data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>'
 		},
 		
 		// tar emot ett broadcastmeddelande för en kö
 		socket_handle_notify(data) {
 			if (data.queue !== this.queue.id) {
-				return;
+				return
 			}
 			
-			this.notify_active = true;
-			this.notification_message = 'Personligt meddelande:\n' + data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>';
+			this.notify_active = true
+			this.notification_message = 'Personligt meddelande:\n' + data.message + '\n\nHälsningar från ' + data.sender.name + ' <' + data.sender.user_name + '@kth.se>'
 		}
 	},
 	
 	beforeDestroy() {
-		this.$root.$data.socket.removeListener('connect', this.fetch_queue);
-		this.$root.$data.socket.removeListener('update_queue', this.socket_handle_update_queue);
-		this.$root.$data.socket.removeListener('update_queue_queuing_student', this.socket_handle_update_queue_queuing_student);
-		this.$root.$data.socket.removeListener('update_booking', this.socket_handle_update_booking);
-		this.$root.$data.socket.removeListener('delete_booking', this.socket_handle_delete_booking);
-		this.$root.$data.socket.removeListener('broadcast', this.socket_handle_broadcast);
-		this.$root.$data.socket.removeListener('notify', this.socket_handle_notify);
+		this.$root.$data.socket.removeListener('connect', this.fetch_queue)
+		this.$root.$data.socket.removeListener('update_queue', this.socket_handle_update_queue)
+		this.$root.$data.socket.removeListener('update_queue_queuing_student', this.socket_handle_update_queue_queuing_student)
+		this.$root.$data.socket.removeListener('update_booking', this.socket_handle_update_booking)
+		this.$root.$data.socket.removeListener('delete_booking', this.socket_handle_delete_booking)
+		this.$root.$data.socket.removeListener('broadcast', this.socket_handle_broadcast)
+		this.$root.$data.socket.removeListener('notify', this.socket_handle_notify)
 	},
 	
 	created() {
-		this.$root.$data.socket.on('connect', this.fetch_queue);
-		this.$root.$data.socket.on('update_queue', this.socket_handle_update_queue);
-		this.$root.$data.socket.on('update_queue_queuing_student', this.socket_handle_update_queue_queuing_student);
-		this.$root.$data.socket.on('update_booking', this.socket_handle_update_booking);
-		this.$root.$data.socket.on('delete_booking', this.socket_handle_delete_booking);
+		this.$root.$data.socket.on('connect', this.fetch_queue)
+		this.$root.$data.socket.on('update_queue', this.socket_handle_update_queue)
+		this.$root.$data.socket.on('update_queue_queuing_student', this.socket_handle_update_queue_queuing_student)
+		this.$root.$data.socket.on('update_booking', this.socket_handle_update_booking)
+		this.$root.$data.socket.on('delete_booking', this.socket_handle_delete_booking)
 		this.$root.$data.socket.on('broadcast', this.socket_handle_broadcast);		
-		this.$root.$data.socket.on('notify', this.socket_handle_notify);
+		this.$root.$data.socket.on('notify', this.socket_handle_notify)
 		
-		this.fetch_queue();
+		this.fetch_queue()
 	},
 	
 	computed: {
 		in_queue() {
 			// testar om den inloggade profilen står i kön
 			if (this.$root.$data.profile === null) {
-				return false;
+				return false
 			}
 			
 			for (const student of this.queue.queuing) {
 				if (this.$root.$data.profile.id === student.profile.id) {
-					this.comment = student.comment;
-					this.location = typeof student.location === 'string' ? student.location : student.location.name;
+					this.comment = student.comment
+					this.location = typeof student.location === 'string' ? student.location : student.location.name
 
 					// om en student har en action som inte längre finns nullsätter vi variabeln
-					this.action = (student.action !== null && this.queue.actions.findIndex(x => x.id === student.action.id) !== -1) ? student.action.id : null;
+					this.action = (student.action !== null && this.queue.actions.findIndex(x => x.id === student.action.id) !== -1) ? student.action.id : null
 
-					return true;
+					return true
 				}
 			}
 
-			return false;
+			return false
 		},
 		
 		is_assistant_in_queue() {
 			// för att få tillgång till admin måste personen vara inloggad
 			if (this.$root.$data.profile === null) {
-				return false;
+				return false
 			}
 			
 			// är man lärare är man alltid assistent
 			if (this.$root.$data.profile.teacher === true){
-				return true;
+				return true
 			}
 
 			// man kan annars vara assistent i den aktuella kön
-			return this.queue.assistants.findIndex(x => x.id === this.$root.$data.profile.id) !== -1;
+			return this.queue.assistants.findIndex(x => x.id === this.$root.$data.profile.id) !== -1
 		},
 		
 		blocked_by_whitelist() {
 			if (this.queue.students.length === 0) {
-				return false;
+				return false
 			}
 			
 			if (this.is_assistant_in_queue === true) {
-				return false;
+				return false
 			}
 			
 			for (const student of this.queue.students) {
 				if (student !== null && student.id === this.$root.$data.profile.id) {
-					return false;
+					return false
 				}
 			}
 			
-			return true;
+			return true
 		},
 		
 		profile_in_white_list() {
 			for (const student of this.queue.students) {
 				if (student !== null && this.$root.$data.profile.id === student.id){
-					return true;
+					return true
 				}
 			}
 			
-			return false;
+			return false
 		},
 		
 		has_white_list_and_profile_in_it() {
-			return (this.has_white_list && this.profile_in_white_list);
+			return (this.has_white_list && this.profile_in_white_list)
 		},
 		
 		view_entire_queue() {
-			return (!this.has_white_list || this.is_assistant_in_queue);
+			return (!this.has_white_list || this.is_assistant_in_queue)
 		},
 		
 		profile_queuing: function() {
 			return this.queue.queuing.filter(function(u) {
-				return u.id === this.$root.$data.profile.id;
+				return u.id === this.$root.$data.profile.id
 			})
 		}
 	},
 
 	watch: {
 		dialog_queuing: function(n, o) {
-			this.dialog_booking = null;
+			this.dialog_booking = null
 		},
 
 		dialog_booking: function(n, o) {
-			this.dialog_queuing = null;
+			this.dialog_queuing = null
 
 			if (n !== null) {
-				this.booking_location = n.location;
+				this.booking_location = n.location
 			}
 		}
 	},
@@ -684,6 +688,11 @@ Vue.component('route-queue', {
 							<md-icon>settings</md-icon>
 							<span class="md-list-item-text">Inställningar</span>
 						</md-list-item>
+						
+						<md-list-item v-on:click="redirect('history')">
+							<md-icon>history</md-icon>
+							<span class="md-list-item-text">Historik</span>
+						</md-list-item>
 					</md-list>
 				</md-card-content>
 			</md-card>
@@ -760,4 +769,4 @@ Vue.component('route-queue', {
 	</div>
 </div>
 	`
-});
+})

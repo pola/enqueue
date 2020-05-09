@@ -6,25 +6,25 @@ Vue.component('route-queues', {
 	},
 	methods: {
 		open_queue(queue) {
-			this.$router.push('/queues/' + queue.name);
+			this.$router.push('/queues/' + queue.name)
 		}
 	},
 	created() {
 		fetch('/api/queues').then(res => res.json()).then(queues => {
 			this.queues = queues.sort((x, y) => {
 				if (x.open && !y.open) {
-					return -1;
+					return -1
 				} else if (!x.open && y.open) {
-					return 1;
+					return 1
 				} else if (x.name < y.name) {
-					return -1;
+					return -1
 				} else if (x.name > y.name) {
-					return 1;
+					return 1
 				} else {
-					return 0;
+					return 0
 				}
-			});
-		});
+			})
+		})
 	},
 
 	template: `
@@ -51,4 +51,4 @@ Vue.component('route-queues', {
 	</md-card>
 </div>
 	`
-});
+})

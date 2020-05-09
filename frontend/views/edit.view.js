@@ -28,19 +28,19 @@ Vue.component('route-edit', {
 				})
 			}).then(res => {
 				if (res.ok) {
-					fetch('/api/queues/' + this.queue.id).then(res => res.json()).then(queue_data => this.$router.push('/queues/' + queue_data.name));
+					fetch('/api/queues/' + this.queue.id).then(res => res.json()).then(queue_data => this.$router.push('/queues/' + queue_data.name))
 				} else {
 					if (res.status === 400) {
 						res.json().then(data => {
-							alert(data.message);
-						});
+							alert(data.message)
+						})
 					} else {
-						alert('Ett fel inträffade. Se webbläsarens konsol.');
+						alert('Ett fel inträffade. Se webbläsarens konsol.')
 					}
 				}
 			}).catch(() => {
-				alert('Misslyckades med att kontakta Enqueue. Är du ansluten till internet?');
-			});
+				alert('Misslyckades med att kontakta Enqueue. Är du ansluten till internet?')
+			})
 		},
 
 		update_force() {
@@ -55,10 +55,10 @@ Vue.component('route-edit', {
 			}).then(res => {
 				if (res.status !== 200) {
 					res.json().then(j => {
-						alert(j);
-					});
+						alert(j)
+					})
 				}
-			});
+			})
 		},
 
 		change_room(room_id){
@@ -68,10 +68,10 @@ Vue.component('route-edit', {
 				}).then(res => {
 					if (res.status !== 200) {
 						res.json().then(j => {
-							console.log(j);
-						});
+							console.log(j)
+						})
 					}
-				});
+				})
 			}
 
 			else {
@@ -82,25 +82,25 @@ Vue.component('route-edit', {
 				}).then(res => {
 					if (res.status !== 201) {
 						res.json().then(j => {
-							console.log(j);
-						});
+							console.log(j)
+						})
 					}
-				});
+				})
 
 			}
 		},
 		
 		update_clicked_rooms() {
 			if (this.queue === null || this.existing_rooms === null) {
-				return;
+				return
 			}
 			
-			const clicked_rooms = this.queue.rooms.map(r => r.id);
-			this.clicked_rooms = [];
+			const clicked_rooms = this.queue.rooms.map(r => r.id)
+			this.clicked_rooms = []
 			
 			for (const room of this.existing_rooms) {
 				if (clicked_rooms.includes(room.id)) {
-					this.clicked_rooms.push(room.id);
+					this.clicked_rooms.push(room.id)
 				}
 			}
 		},
@@ -114,14 +114,14 @@ Vue.component('route-edit', {
 			}).then(res => {
 				if (res.status !== 201) {
 					res.json().then(j => {
-						console.log(j);
-					});
+						console.log(j)
+					})
 				}
 				else {
-					this.action_name = null;
-					this.action_color = null;
+					this.action_name = null
+					this.action_color = null
 				}
-			});
+			})
 		},
 
 		delete_queue(){
@@ -130,13 +130,13 @@ Vue.component('route-edit', {
 					method: 'DELETE'
 				}).then(res => {
 					if (res.status === 200) {
-						this.$router.push('/queues');
+						this.$router.push('/queues')
 					} else {
-						alert('Ett fel inträffade när kön skulle raderas.');
+						alert('Ett fel inträffade när kön skulle raderas.')
 					}
-				});
+				})
 			} else {
-				this.promt_delete_queue = true;
+				this.promt_delete_queue = true
 			}
 		},
 
@@ -147,28 +147,28 @@ Vue.component('route-edit', {
 				body: JSON.stringify([{ user_name: this.user_name_assistant }])
 			}).then(res => {
 				if (res.ok) {
-					this.user_name_assistant = null;
+					this.user_name_assistant = null
 					
 					res.json().then(data => {
 						if (data.count_added === 0) {
-							alert('Personen är redan assistent i den här kön.');
+							alert('Personen är redan assistent i den här kön.')
 						}
-					});
+					})
 				} else if (res.status === 400) {
 					res.json().then(data => {
 						switch (data.error) {
 							case 'INVALID_LIST_ELEMENT':
-								alert('Ogiltigt eller okänt användarnamn.');
-								break;
+								alert('Ogiltigt eller okänt användarnamn.')
+								break
 							
 							default:
-								alert(error.message);
+								alert(error.message)
 						}
-					});
+					})
 				} else {
-					alert('Ett fel inträffade. Se webbläsarens konsol.');
+					alert('Ett fel inträffade. Se webbläsarens konsol.')
 				}
-			});
+			})
 		},
 
 		add_assistants_from_course() {
@@ -178,32 +178,32 @@ Vue.component('route-edit', {
 				body: JSON.stringify({ course: this.course_code_assistant })
 			}).then(res => {
 				if (res.ok) {
-					this.course_code_assistant = null;
+					this.course_code_assistant = null
 					
 					res.json().then(data => {
 						if (data.count_added === 0) {
-							alert('Inga nya assistenter lades till.');
+							alert('Inga nya assistenter lades till.')
 						}
-					});
+					})
 				} else if (res.status === 400) {
 					res.json().then(data => {
 						switch (data.error) {
 							case 'INVALID_COURSE_CODE':
-								alert('Ogiltig kurskod.');
-								break;
+								alert('Ogiltig kurskod.')
+								break
 
 							case 'RETRIEVAL_FAILED':
-								alert('Misslyckades med att hämta assistentlistan från KTH. Felaktig kurskod?');
-								break;
+								alert('Misslyckades med att hämta assistentlistan från KTH. Felaktig kurskod?')
+								break
 							
 							default:
-								alert(error.message);
+								alert(error.message)
 						}
-					});
+					})
 				} else {
-					alert('Ett fel inträffade. Se webbläsarens konsol.');
+					alert('Ett fel inträffade. Se webbläsarens konsol.')
 				}
-			});
+			})
 		},
 
 		remove_assistant (assistant){
@@ -212,10 +212,10 @@ Vue.component('route-edit', {
 			}).then(res => {
 				if (res.status !== 200) {
 					res.json().then(j => {
-						console.log(j);
-					});
+						console.log(j)
+					})
 				}
-			});
+			})
 		},
 
 		add_student () {
@@ -226,12 +226,12 @@ Vue.component('route-edit', {
 			}).then(res => {
 				if (res.status !== 201) {
 					res.json().then(j => {
-						console.log(j);
-					});
+						console.log(j)
+					})
 				} else {
-					this.user_name_student = '';
+					this.user_name_student = ''
 				}
-			});
+			})
 
 		},
 
@@ -241,10 +241,10 @@ Vue.component('route-edit', {
 			}).then(res => {
 				if (res.status !== 200) {
 					res.json().then(j => {
-						console.log(j);
-					});
+						console.log(j)
+					})
 				}
-			});
+			})
 		},
 
 		add_action (){
@@ -256,15 +256,15 @@ Vue.component('route-edit', {
 					color: this.action_color
 				})
 			}).then(res => {
-				this.action_name = null;
-				this.action_color = null;
+				this.action_name = null
+				this.action_color = null
 				
 				if (res.status !== 201) {
 					res.json().then(j => {
-						console.log(j);
-					});
+						console.log(j)
+					})
 				}
-			});
+			})
 		},
 
 		remove_action(action) {
@@ -273,10 +273,10 @@ Vue.component('route-edit', {
 			}).then(res => {
 				if (res.status !== 200) {
 					res.json().then(j => {
-						console.log(j);
-					});
+						console.log(j)
+					})
 				}
-			});
+			})
 		},
 
 		add_task() {
@@ -290,13 +290,13 @@ Vue.component('route-edit', {
 				})
 			}).then(res => {
 				if (res.status === 201) {
-					this.task_type = null;
+					this.task_type = null
 				} else {
 					res.json().then(j => {
-						console.log(j);
-					});
+						console.log(j)
+					})
 				}
-			});
+			})
 		},
 
 		remove_task(task) {
@@ -305,149 +305,149 @@ Vue.component('route-edit', {
 			}).then(res => {
 				if (res.status !== 200) {
 					res.json().then(j => {
-						console.log(j);
-					});
+						console.log(j)
+					})
 				}
-			});
+			})
 		},
 
 		fetch_queue() {
 			fetch('/api/queues/' + this.$route.params.name).then(res => res.json()).then(queue => {
-				this.queue = queue;
+				this.queue = queue
 			
 				if (queue.rooms.length > 0){
-					this.update_clicked_rooms();
+					this.update_clicked_rooms()
 				}
 				
 				if (this.name_new === null) {
-					this.name_new = queue.name;
+					this.name_new = queue.name
 				}
 
 				fetch('/api/queues/' + queue.name + '/tasks').then(res => res.json()).then(tasks => {
-					this.tasks = tasks;
-				});
-			});
+					this.tasks = tasks
+				})
+			})
 		},
 		
 		unix_to_datetime(unix) {
 			// TODO: övergå till något bibliotek, till exempel Moment
-			const d = new Date(unix);
-			const today = new Date();
+			const d = new Date(unix)
+			const today = new Date()
 			
-			hour = '0' + d.getHours();
-			min = '0' + d.getMinutes();
+			hour = '0' + d.getHours()
+			min = '0' + d.getMinutes()
 			
-			const time = hour.slice(-2) + ':' + min.slice(-2);
+			const time = hour.slice(-2) + ':' + min.slice(-2)
 
 			if (today.getDate() === d.getDate() && today.getMonth() === d.getMonth() && today.getFullYear() === d.getFullYear()) {
-				return time;
+				return time
 			}
 
-			var date = d.getDate() + ' ' + (['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'][d.getMonth()]);
+			var date = d.getDate() + ' ' + (['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'][d.getMonth()])
 
 			if (today.getFullYear() !== d.getFullYear()) {
-				date += ' ' + d.getFullYear();
+				date += ' ' + d.getFullYear()
 			}
 
-			return date + ', ' + time;
+			return date + ', ' + time
 		},
 		
 		socket_handle_update_queue(data) {
 			for (var k of Object.keys(data.changes)) {
-   				this.queue[k] = data.changes[k];
+   				this.queue[k] = data.changes[k]
    				
    				if (k === 'rooms') {
-   					this.update_clicked_rooms();
+   					this.update_clicked_rooms()
    				}
 			}
 		},
 		
 		socket_handle_remove_task(data) {
-			this.tasks = this.tasks.filter(t => t.id !== data.task);
+			this.tasks = this.tasks.filter(t => t.id !== data.task)
 		},
 		
 		socket_handle_add_task(data) {
 			if (data.queue === this.queue.id) {
-				this.tasks.push(data.task);
+				this.tasks.push(data.task)
 
 				this.tasks.sort((a, b) => {
 					if (a.deadline === b.deadline) {
 						if (a.id === b.id) { return 0; }
 
-						return a.id > b.id ? 1 : -1;
+						return a.id > b.id ? 1 : -1
 					}
 
-					return a.deadline > b.deadline ? 1 : -1;
-				});
+					return a.deadline > b.deadline ? 1 : -1
+				})
 			}
 		},
 
 		sort_users: users => users.sort((a, b) => {
 			if (a.name < b.name) {
-				return -1;
+				return -1
 			} else if (a.name > b.name) {
-				return 1;
+				return 1
 			} else {
-				return 0;
+				return 0
 			}
 		})
 	},
 	
 	beforeDestroy() {
-		this.$root.$data.socket.removeListener('connect', this.fetch_queue);
-		this.$root.$data.socket.removeListener('update_queue', this.socket_handle_update_queue);
-		this.$root.$data.socket.removeListener('remove_task', this.socket_handle_remove_task);
-		this.$root.$data.socket.removeListener('add_task', this.socket_handle_add_task);
+		this.$root.$data.socket.removeListener('connect', this.fetch_queue)
+		this.$root.$data.socket.removeListener('update_queue', this.socket_handle_update_queue)
+		this.$root.$data.socket.removeListener('remove_task', this.socket_handle_remove_task)
+		this.$root.$data.socket.removeListener('add_task', this.socket_handle_add_task)
 	},
 
 	created() {
-		this.$root.$data.socket.on('connect', this.fetch_queue);
-		this.$root.$data.socket.on('update_queue', this.socket_handle_update_queue);
-		this.$root.$data.socket.on('remove_task', this.socket_handle_remove_task);
-		this.$root.$data.socket.on('add_task', this.socket_handle_add_task);
+		this.$root.$data.socket.on('connect', this.fetch_queue)
+		this.$root.$data.socket.on('update_queue', this.socket_handle_update_queue)
+		this.$root.$data.socket.on('remove_task', this.socket_handle_remove_task)
+		this.$root.$data.socket.on('add_task', this.socket_handle_add_task)
 		
-		const now = new Date();
+		const now = new Date()
 
-		now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
-		now.setSeconds(0);
-		now.setMilliseconds(0);
+		now.setMinutes(now.getMinutes()-now.getTimezoneOffset())
+		now.setSeconds(0)
+		now.setMilliseconds(0)
 
-		this.task_deadline = now.toISOString().slice(0, -1);
+		this.task_deadline = now.toISOString().slice(0, -1)
 
-		this.fetch_queue();
+		this.fetch_queue()
 		
 		fetch('/api/colors').then(res => res.json()).then(colors => {
-			this.colors = colors;
-		});
+			this.colors = colors
+		})
 
 		fetch('/api/rooms').then(res => res.json()).then(rooms => {
-			this.existing_rooms = rooms;
-			this.update_clicked_rooms();
-		});
+			this.existing_rooms = rooms
+			this.update_clicked_rooms()
+		})
 	},
 
 	computed: {
 		is_assistant_in_queue() {
 			// för att få tillgång till admin måste personen vara inloggad
 			if (this.$root.$data.profile === null) {
-				return false;
+				return false
 			}
 			
 			// är man lärare är man alltid assistent
 			if (this.$root.$data.profile.teacher === true){
-				return true;
+				return true
 			}
 
 			// man kan annars vara assistent i den aktuella kön
-			return this.queue.assistants.findIndex(x => x.id === this.$root.$data.profile.id) !== -1;
+			return this.queue.assistants.findIndex(x => x.id === this.$root.$data.profile.id) !== -1
 		},
 
 		sorted_assistants: function() {
-			return this.sort_users(this.queue.assistants);
+			return this.sort_users(this.queue.assistants)
 		},
 		
 		sorted_students: function() {
-			return this.sort_users(this.queue.students);
+			return this.sort_users(this.queue.students)
 		}
 	},
 
@@ -697,4 +697,4 @@ Vue.component('route-edit', {
 	</md-card>
 </div>
 	`
-});
+})

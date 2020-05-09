@@ -1,8 +1,8 @@
 {
-  "name": "Enqueue",
+  "name": "enqueue",
   "version": "1.0.0",
   "scripts": {
-    "start": "node app/index.js"
+    "start": "node backend/index.js"
   },
   "dependencies": {
     "better-logging": "^3.5.0",

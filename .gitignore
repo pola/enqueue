@@ -1,5 +1,5 @@
 node_modules
-app/config.js
+backend/config.js
 .DS_Store
 .expo
 .watchmanconfig

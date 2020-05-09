@@ -10,58 +10,58 @@ Vue.component('route-admin-dashboard', {
 	},
 	methods: {
 		add_teacher() {
-			fetch('/api/admin/teachers', {
-		        method: "POST",
-		        headers: { "Content-Type": "application/json" },
+			fetch('/api/teachers', {
+		        method: 'POST',
+		        headers: { 'Content-Type': 'application/json' },
 		        body: JSON.stringify({ user_name: this.user_name })
     		}).then(res => {
 				if (res.ok) {
-					this.user_name = null;
+					this.user_name = null
 				} else {
 					res.json().then(data => {
 						switch (data.error) {
 							case 'UNKNOWN_USER':
-								alert('Användaren hittades inte.');
-								break;
+								alert('Användaren hittades inte.')
+								break
 							
 							case 'ALREADY_TEACHER':
-								alert('Användaren har redan lärarbehörighet.');
-								break;
+								alert('Användaren har redan lärarbehörighet.')
+								break
 							
 							default:
-								alert(data.message);
+								alert(data.message)
 						}
 					})
 				}
-			});
+			})
 		},
 
 		remove_teacher(teacher) {
-			fetch('/api/admin/teachers/' + teacher.id, {
-       			method: "DELETE"
+			fetch('/api/teachers/' + teacher.id, {
+       			method: 'DELETE'
     		}).then(res => {
 				if (res.status === 404) {
-					alert('Läraren hittades inte.');
+					alert('Läraren hittades inte.')
 				} else if (res.status === 401) {
-					alert('Åtkomst nekad.');
+					alert('Åtkomst nekad.')
 				}
-			});
+			})
 		},
 
 		add_queue() {
 			fetch('/api/queues', {
-		        method: "POST",
-		        headers: { "Content-Type": "application/json" },
+		        method: 'POST',
+		        headers: { 'Content-Type': 'application/json' },
 		        body: JSON.stringify({ name: this.queue_name })
 	    	}).then(res => {
 				if (res.status === 400) {
-					alert('Namnet är ogiltigt.');
+					alert('Namnet är ogiltigt.')
 				} else if (res.status === 201) {
 					res.json().then(queue => {
-						this.$router.push('/queues/' + queue.name);
-					});
+						this.$router.push('/queues/' + queue.name)
+					})
 				}
-			});
+			})
 		},
 
 		add_room() {
@@ -73,17 +73,17 @@ Vue.component('route-admin-dashboard', {
 		}
 	},
 	created() {
-		fetch('/api/admin/teachers').then(res => res.json()).then(teachers => {
-			this.teachers = teachers;
-		});
+		fetch('/api/teachers').then(res => res.json()).then(teachers => {
+			this.teachers = teachers
+		})
 
 		fetch('/api/rooms').then(res => res.json()).then(rooms => {
-			this.rooms = rooms;
-		});
+			this.rooms = rooms
+		})
 
 		this.$root.$data.socket.on('teachers', teachers => {
-			this.teachers = teachers;
-    	});
+			this.teachers = teachers
+		})
 	},
 	template: `
 	<div>
@@ -108,18 +108,18 @@ Vue.component('route-admin-dashboard', {
 				
 				<md-table>
 				  <md-table-row>
-					<md-table-head>Användarnamn</md-table-head>
-					<md-table-head>Namn</md-table-head>
-					<md-table-head>Alternativ</md-table-head>
+						<md-table-head>Användarnamn</md-table-head>
+						<md-table-head>Namn</md-table-head>
+						<md-table-head>Alternativ</md-table-head>
 				  </md-table-row>
 
 				  <md-table-row v-for="teacher in teachers" :key="teacher.id">
-					<md-table-cell>{{ teacher.user_name }}</md-table-cell>
-					<md-table-cell>{{ teacher.name }}</md-table-cell>
-					<md-table-cell><md-button v-if="teacher.id !== $root.$data.profile.id" v-on:click="remove_teacher(teacher)" class="md-accent">Radera</md-button></md-table-cell>
+						<md-table-cell>{{ teacher.user_name }}</md-table-cell>
+						<md-table-cell>{{ teacher.name }}</md-table-cell>
+						<md-table-cell><md-button v-if="teacher.id !== $root.$data.profile.id" v-on:click="remove_teacher(teacher)" class="md-accent">Radera</md-button></md-table-cell>
 				  </md-table-row>
 		   		</md-table>
-		   	</md-card-content>
+			</md-card-content>
 		</md-card>
 		
 		<br />
@@ -177,4 +177,4 @@ Vue.component('route-admin-dashboard', {
 		</md-card>
 	</div>
 	`
-});
+})
