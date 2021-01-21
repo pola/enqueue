@@ -17,7 +17,7 @@
     "npm": "^6.14.5",
     "safe-timers": "^1.1.0",
     "sequelize": "^5.21.7",
-    "socket.io": "^2.3.0",
+    "socket.io": "^2.4.0",
     "vue-dropdowns": "^1.1.1",
     "vue-material": "^1.0.0-beta-13",
     "vuetify": "^2.2.27"
