@@ -110,7 +110,6 @@ app.use('/api/teachers', require('./api/teachers'))
 app.use('/', require('./api/cas'))
 
 io.on('connection', socket => {
-	console.log('socket connection!')
 	socket_controller(socket, io)
 })
 
