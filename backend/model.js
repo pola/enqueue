@@ -1124,10 +1124,9 @@ exports.io_emit_update_queue = (queue, changes) => {
 		})
 	}
 
-	for (const k of Object.keys(io.sockets.sockets)) {
-		const socket = io.sockets.sockets[k]
+	io.sockets.sockets.forEach(socket => {
 		socket.emit('update_queue', socket.handshake.session.hasOwnProperty('profile') ? message_user : message_guest)
-	}
+	})
 }
 
 // generellt uppdateringsanrop för klienterna när en specifik student ändras i en kö (t.ex. en student får hjälp)
@@ -1150,23 +1149,20 @@ exports.io_emit_update_queue_queuing_student = (queue, student) => {
 		name: null
 	}
 
-	for (const k of Object.keys(io.sockets.sockets)) {
-		const socket = io.sockets.sockets[k]
+	io.sockets.sockets.forEach(socket => {
 		socket.emit('update_queue_queuing_student', socket.handshake.session.hasOwnProperty('profile') ? message_user : message_guest)
-	}
+	})
 }
 
 exports.io_emit_to_assistants = (queue, key, message) => {
 	queue.getAssistants().then(assistants => {
 		const ids = assistants.map(a => a.id)
 
-		for (const k of Object.keys(io.sockets.sockets)) {
-			const socket = io.sockets.sockets[k]
-			
+		io.sockets.sockets.forEach(socket => {
 			if (socket.handshake.session.hasOwnProperty('profile') && (socket.handshake.session.profile.teacher || ids.includes(socket.handshake.session.profile.id))) {
 				socket.emit(key, message)
 			}
-		}
+		})
 	})
 }
 
@@ -1189,8 +1185,7 @@ exports.io_emit_update_booking = (queue, nice_booking) => {
 		booking: booking_clone
 	}
 
-	for (const k of Object.keys(io.sockets.sockets)) {
-		const socket = io.sockets.sockets[k]
+	io.sockets.sockets.forEach(socket => {
 		socket.emit('update_booking', socket.handshake.session.hasOwnProperty('profile') ? message_user : message_guest)
-	}
+	})
 }

@@ -1,19 +1,15 @@
 module.exports = {
 	debug: true,
-	hostname: 'http://test.kth.se:8989',
+	hostname: 'http://test.kth.se:8080',
 	listen: {
 		ip: '0.0.0.0',
-		port: 8989
+		port: 1234,
 	},
 	mysql: {
 		host: '',
 		username: '',
 		password: '',
-		database: ''
-	},
-	ssl: {
-		key: null,
-		cert: null
+		database: '',
 	},
 	kthlan: [
 		'130.229.128.0/18',
@@ -51,5 +47,5 @@ module.exports = {
 		'193.11.167.0/24',
 		'193.11.168.0/21',
 		'194.132.192.0/22'
-	]
+	],
 }

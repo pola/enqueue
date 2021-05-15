@@ -1,0 +1,40 @@
+{
+  "name": "enqueue-frontend",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "vue-cli-service serve",
+    "build:prod": "vue-cli-service build",
+    "build:dev": "vue-cli-service build --mode development",
+    "build": "npm run build:dev",
+    "lint": "vue-cli-service lint",
+    "lint:fix": "vue-cli-service lint --fix"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "core-js": "^3.12.1",
+    "socket.io-client": "^4.1.1",
+    "vue": "^2.6.12",
+    "vue-material": "^1.0.0-beta-15",
+    "vue-moment": "^4.1.0",
+    "vue-router": "^3.5.1",
+    "vuex": "^3.6.2",
+    "webpack": "^4.44.0"
+  },
+  "author": "Martin Pola & Sandra Järkeborn",
+  "repository": "https://github.com/pola/enqueue",
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^4.5.13",
+    "@vue/cli-plugin-eslint": "^4.5.13",
+    "@vue/cli-plugin-router": "^4.5.13",
+    "@vue/cli-plugin-vuex": "^4.5.13",
+    "@vue/cli-service": "^4.5.13",
+    "babel-eslint": "^10.1.0",
+    "deepmerge": "^4.2.2",
+    "eslint": "^6.8.0",
+    "eslint-plugin-vue": "^7.9.0",
+    "fibers": "^5.0.0",
+    "sass": "^1.26.10",
+    "sass-loader": "^9.0.2",
+    "vue-template-compiler": "^2.6.12"
+  }
+}

@@ -5,8 +5,6 @@ const expressSession = require('express-session')
 const sharedSession = require('express-socket.io-session')
 const express = require('express')
 const http = require('http')
-const https = require('https')
-const fs = require('fs')
 const history = require('connect-history-api-fallback')
 const Sequelize = require('sequelize')
 
@@ -17,16 +15,7 @@ const socket_controller = require('./socket_controller')
 
 const app = express()
 
-var httpServer
-
-if (config.ssl.key !== null && config.ssl.cert !== null) {
-	httpServer = https.createServer({
-		key: fs.readFileSync(config.ssl.key),
-		cert: fs.readFileSync(config.ssl.cert)
-	}, app)
-} else {
-	httpServer = http.Server(app)
-}
+const httpServer = http.Server(app)
 
 const io = require('socket.io')(httpServer, {
 	timeout: 5000,
@@ -99,15 +88,14 @@ const finalize_login = (req, res, id, user_name, name, next) => {
 		req.session.profile = profile
 
 		// när man är inloggad via REST, se till att eventuella (ska finnas!) websockets med samma cas_user också får sitt profilobjekt
-		for (const k of Object.keys(io.sockets.sockets)) {
-			const socket = io.sockets.sockets[k]
+		io.sockets.sockets.forEach(socket => {
 			const session = socket.handshake.session
 
 			if (session.hasOwnProperty('cas_user') && session.cas_user === profile.id) {
 				session.profile = profile
 				socket.emit('profile', profile)
 			}
-		}
+		})
 
 		next()
 	})
@@ -122,6 +110,7 @@ app.use('/api/teachers', require('./api/teachers'))
 app.use('/', require('./api/cas'))
 
 io.on('connection', socket => {
+	console.log('socket connection!')
 	socket_controller(socket, io)
 })
 

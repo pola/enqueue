@@ -148,10 +148,8 @@ module.exports = (socket, io) =>
 					user_name: socket.handshake.session.profile.user_name,
 					name: socket.handshake.session.profile.name
 				}
-				
-				for (const k of Object.keys(io.sockets.sockets)) {
-					const socket = io.sockets.sockets[k]
-					
+
+				io.sockets.sockets.forEach(socket => {
 					if (socket.handshake.session.hasOwnProperty('profile') && socket.handshake.session.profile.id === queuing_student.profile.id) {
 						socket.emit('notify', {
 							queue: queue.id,
@@ -159,7 +157,7 @@ module.exports = (socket, io) =>
 							sender: profile
 						})
 					}
-				}
+				})
 				
 				socket.emit('notify_status', {
 					success: true,
@@ -232,10 +230,8 @@ module.exports = (socket, io) =>
 				
 				queue.getAssistants().then(assistants => {
 					const recipients = assistants.map(a => a.id)
-					
-					for (const k of Object.keys(io.sockets.sockets)) {
-						const socket = io.sockets.sockets[k]
-						
+
+					io.sockets.sockets.forEach(socket => {
 						if (socket.handshake.session.hasOwnProperty('profile') && recipients.includes(socket.handshake.session.profile.id)) {
 							socket.emit('notify', {
 								queue: queue.id,
@@ -243,7 +239,7 @@ module.exports = (socket, io) =>
 								sender: profile
 							})
 						}
-					}
+					})
 					
 					socket.emit('notify_faculty_status', {
 						success: true,
