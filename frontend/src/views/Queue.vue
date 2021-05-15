@@ -585,12 +585,6 @@ export default {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ is_handling: is_handling })
-			}).then(res => {
-				if (res.status !== 200) {
-					res.json().then(j => {
-						console.log(j)
-					})
-				}
 			})
 		},
 		
@@ -599,12 +593,6 @@ export default {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ move_after: null })
-			}).then(res => {
-				if (res.status !== 200) {
-					res.json().then(j => {
-						console.log(j)
-					})
-				}
 			})
 		},
 		
@@ -623,12 +611,6 @@ export default {
 					method: 'PATCH',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ move_after: student_before.profile.id })
-				}).then(res => {
-					if (res.status !== 200) {
-						res.json().then(j => {
-							console.log(j)
-						})
-					}
 				})
 			}
 		},
@@ -666,12 +648,6 @@ export default {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ bad_location: !student.bad_location })
-			}).then(res => {
-				if (res.status !== 200) {
-					res.json().then(j => {
-						console.log(j)
-					})
-				}
 			})
 		},
 
@@ -763,12 +739,6 @@ export default {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ bad_location: !this.dialog_booking.bad_location })
-			}).then(res => {
-				if (res.status !== 200) {
-					res.json().then(j => {
-						console.log(j)
-					})
-				}
 			})
 		},
 
@@ -777,12 +747,6 @@ export default {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ is_handling: this.dialog_booking.handlers.findIndex(x => x.id === this.$store.state.profile.id) === -1 })
-			}).then(res => {
-				if (res.status !== 200) {
-					res.json().then(j => {
-						console.log(j)
-					})
-				}
 			})
 		},
 

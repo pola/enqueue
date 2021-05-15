@@ -514,12 +514,6 @@ export default {
 			if (this.queue.rooms.map(r => r.id).includes(room_id)) {
 				fetch('/api/queues/'+ this.queue.name +'/rooms/' + room_id, {
 					method: 'DELETE'
-				}).then(res => {
-					if (res.status !== 200) {
-						res.json().then(j => {
-							console.log(j)
-						})
-					}
 				})
 			}
 
@@ -528,14 +522,7 @@ export default {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ room_id: room_id })
-				}).then(res => {
-					if (res.status !== 201) {
-						res.json().then(j => {
-							console.log(j)
-						})
-					}
 				})
-
 			}
 		},
 		
@@ -561,12 +548,7 @@ export default {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ name: this.action_name, color: this.action_color })
 			}).then(res => {
-				if (res.status !== 201) {
-					res.json().then(j => {
-						console.log(j)
-					})
-				}
-				else {
+				if (res.status === 201) {
 					this.action_name = null
 					this.action_color = null
 				}
@@ -658,12 +640,6 @@ export default {
 		remove_assistant (assistant){
 			fetch('/api/queues/' + this.queue.id + '/assistants/' + assistant.id, {
 				method: 'DELETE'
-			}).then(res => {
-				if (res.status !== 200) {
-					res.json().then(j => {
-						console.log(j)
-					})
-				}
 			})
 		},
 
@@ -673,26 +649,15 @@ export default {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ user_name: this.user_name_student }) // mpola, jark etc.
 			}).then(res => {
-				if (res.status !== 201) {
-					res.json().then(j => {
-						console.log(j)
-					})
-				} else {
+				if (res.status === 201) {
 					this.user_name_student = ''
 				}
 			})
-
 		},
 
 		remove_student (student) {
 			fetch('/api/queues/' + this.queue.id + '/students/' + student.id, {
 				method: 'DELETE'
-			}).then(res => {
-				if (res.status !== 200) {
-					res.json().then(j => {
-						console.log(j)
-					})
-				}
 			})
 		},
 
@@ -704,27 +669,15 @@ export default {
 					name: this.action_name,
 					color: this.action_color
 				})
-			}).then(res => {
+			}).then(() => {
 				this.action_name = null
 				this.action_color = null
-				
-				if (res.status !== 201) {
-					res.json().then(j => {
-						console.log(j)
-					})
-				}
 			})
 		},
 
 		remove_action(action) {
 			fetch('/api/queues/'+ this.queue.id +'/actions/' + action.id, {
 				method: 'DELETE'
-			}).then(res => {
-				if (res.status !== 200) {
-					res.json().then(j => {
-						console.log(j)
-					})
-				}
 			})
 		},
 
@@ -740,10 +693,6 @@ export default {
 			}).then(res => {
 				if (res.status === 201) {
 					this.task_type = null
-				} else {
-					res.json().then(j => {
-						console.log(j)
-					})
 				}
 			})
 		},
@@ -751,12 +700,6 @@ export default {
 		remove_task(task) {
 			fetch('/api/queues/'+ this.queue.id +'/tasks/' + task.id, {
 				method: 'DELETE'
-			}).then(res => {
-				if (res.status !== 200) {
-					res.json().then(j => {
-						console.log(j)
-					})
-				}
 			})
 		},
 
