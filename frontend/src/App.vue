@@ -31,15 +31,15 @@
     
     <md-app-content>
       <router-view />
-    </md-app-content>
 
-    <md-snackbar
-      md-position="center"
-      :md-active="!$store.state.socket_connected"
-      md-persistent
-    >
-      <span>Enqueue är inte ansluten till nätverket. Försöker återansluta...</span>
-    </md-snackbar>
+      <md-snackbar
+        md-position="center"
+        :md-active="!$store.state.socket_connected"
+        md-persistent
+      >
+        <span>Enqueue är inte ansluten till nätverket. Försöker återansluta...</span>
+      </md-snackbar>
+    </md-app-content>
   </md-app>
 </template>
 
