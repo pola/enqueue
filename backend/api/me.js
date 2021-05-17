@@ -8,7 +8,7 @@ const router = express.Router()
 
 // hämta profilen för den inloggade användaren
 router.get('/', async (req, res) => {
-	const location = await model.get_computer(req.connection.remoteAddress)
+	const location = await model.get_computer(req)
 
 	let profile = null
 	let assisting_in = []
@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
 		profile,
 		assisting_in,
 		location,
-		is_kthlan: model.is_kthlan(req.connection.remoteAddress)
+		is_kthlan: model.is_kthlan(req)
 	})
 })
 

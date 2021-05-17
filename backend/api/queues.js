@@ -209,7 +209,7 @@ router.post('/:name/queuing', (req, res) => {
 			return
 		}
 
-		model.get_computer(req.connection.remoteAddress).then(computer => {
+		model.get_computer(req).then(computer => {
 			// blir antingen en sträng eller en datorplats ({id: ..., name: ...})
 			var location
 
@@ -263,7 +263,7 @@ router.post('/:name/queuing', (req, res) => {
 			}
 
 			// om man har en fritextplacering kan det ibland vara så att man behöver sitta på KTHLAN
-			if (typeof location === 'string' && queue.force_kthlan && !model.is_kthlan(req.connection.remoteAddress)) {
+			if (typeof location === 'string' && queue.force_kthlan && !model.is_kthlan(req)) {
 				res.status(400)
 				res.json({
 					error: 'NO_KTHLAN',
@@ -649,7 +649,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 			if (key === 'location') {
 				keys.shift()
 
-				model.get_computer(req.connection.remoteAddress).then(computer => {
+				model.get_computer(req).then(computer => {
 					// blir antingen en sträng eller en datorplats ({id: ..., name: ...})
 					var location
 
@@ -703,7 +703,7 @@ const update_student = (queue, student, changes, req, res, keys) => {
 					}
 
 					// om man har en fritextplacering kan det ibland vara så att man behöver sitta på KTHLAN
-					if (typeof location === 'string' && queue.force_kthlan && !model.is_kthlan(req.connection.remoteAddress)) {
+					if (typeof location === 'string' && queue.force_kthlan && !model.is_kthlan(req)) {
 						res.status(400)
 						res.json({
 							error: 'NO_KTHLAN',

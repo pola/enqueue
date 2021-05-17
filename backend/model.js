@@ -16,11 +16,15 @@ var queuing = {}
 var bookings_vinfo = {}
 var timeouts = {}
 
+const req2ip = req => req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.ip
+
 exports.setIo = i => {
 	io = i
 }
 
-exports.is_kthlan = ip => {
+exports.is_kthlan = req => {
+	const ip = req2ip(req)
+
 	const split_ip = ip => {
 		const ip_parts = ip.split('.')
 		return (parseInt(ip_parts[0]) * Math.pow(2, 24)) + (parseInt(ip_parts[1]) * Math.pow(2, 16)) + (parseInt(ip_parts[2]) * Math.pow(2, 8)) + parseInt(ip_parts[3])
@@ -636,8 +640,8 @@ exports.delete_booking = booking => new Promise((resolve, reject) => {
 	})
 })
 
-exports.get_computer = ip => Computer.findOne({
-	where: { ip: ip },
+exports.get_computer = req => Computer.findOne({
+	where: { ip: req2ip(req) },
 	include: [{
 		model: Room,
 		as: Room.rooms
