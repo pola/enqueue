@@ -4,14 +4,16 @@ const path = require('path')
 const expressSession = require('express-session')
 const sharedSession = require('express-socket.io-session')
 const express = require('express')
+const cookieParser = require('cookie-parser')
+const bodyParser = require('body-parser')
 const http = require('http')
 const history = require('connect-history-api-fallback')
 const Sequelize = require('sequelize')
 
 const config = require('./config')
-const kth = require('./kth-data-fetcher')
 const model = require('./model')
 const socket_controller = require('./socket_controller')
+const { auth } = require('express-openid-connect')
 
 const app = express()
 
@@ -69,45 +71,43 @@ const session = expressSession({
 app.use(session)
 io.use(sharedSession(session))
 
-app.use((req, res, next) => {
-	if (!req.session.hasOwnProperty('cas_user') || req.session.hasOwnProperty('profile')) {
-		next()
-	} else {
-		kth.from_id(req.session.cas_user).then(result => {
-			if (result !== null) {
-				finalize_login(req, res, result.id, result.user_name, result.name, next)
-			} else {
-				finalize_login(req, res, req.session.cas_user, null, null, next)
-			}
-		})
+app.use(
+	auth({
+		authRequired: false,
+    issuerBaseURL: 'https://login.ug.kth.se/adfs',
+    baseURL: config.hostname,
+    clientID: config.kthlogin.clientId,
+    secret: config.kthlogin.clientSecret,
+    idpLogout: true,
+  })
+)
+
+app.use(async (req, res, next) => {
+	if (req.oidc.user && !req.session.profile) {
+		const id = req.oidc.user.kthid
+		const username = req.oidc.user.username
+		const name = req.oidc.user.unique_name[0]
+
+		console.log('middleware', id, username, name)
+
+		req.session.profile = await model.get_or_create_profile(id, username, name)
 	}
+
+	if (!req.oidc.user && req.session.profile) {
+		delete req.session.profile
+	}
+
+	next()
 })
 
-const finalize_login = (req, res, id, user_name, name, next) => {
-	model.get_or_create_profile(id, user_name, name).then(profile => {
-		req.session.profile = profile
+app.use(cookieParser())
+app.use(bodyParser.urlencoded({ extended : true }))
 
-		// när man är inloggad via REST, se till att eventuella (ska finnas!) websockets med samma cas_user också får sitt profilobjekt
-		io.sockets.sockets.forEach(socket => {
-			const session = socket.handshake.session
-
-			if (session.hasOwnProperty('cas_user') && session.cas_user === profile.id) {
-				session.profile = profile
-				socket.emit('profile', profile)
-			}
-		})
-
-		next()
-	})
-}
-
-app.use('/api/authenticate', require('./api/authenticate'))
 app.use('/api/colors', require('./api/colors'))
 app.use('/api/me', require('./api/me'))
 app.use('/api/queues', require('./api/queues'))
 app.use('/api/rooms', require('./api/rooms'))
 app.use('/api/teachers', require('./api/teachers'))
-app.use('/', require('./api/cas'))
 
 io.on('connection', socket => {
 	socket_controller(socket, io)

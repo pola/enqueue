@@ -11,6 +11,10 @@ module.exports = {
 		password: '',
 		database: '',
 	},
+	kthlogin: {
+		clientId: '',
+		clientSecret: '',
+	},
 	kthlan: [
 		'130.229.128.0/18',
 		'130.237.0.0/18',

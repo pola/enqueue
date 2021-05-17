@@ -14,14 +14,14 @@
       
       <div class="md-toolbar-section-end">
         <md-button
-          @click="$root.redirect_login()"
+          @click="triggerLogin()"
           v-if="$store.state.profile === null"
         >
           <md-icon>face</md-icon> Logga in
         </md-button>
 
         <md-button
-          @click="set_location('/logout')"
+          @click="triggerLogout()"
           v-if="$store.state.profile !== null"
         >
           <md-icon>exit_to_app</md-icon> Logga ut
@@ -69,6 +69,14 @@ export default {
       })
 
       this.$store.state.socket.connect()
+    },
+
+    triggerLogin() {
+      document.location = '/login'
+    },
+
+    triggerLogout() {
+      document.location = '/logout'
     },
   },
 

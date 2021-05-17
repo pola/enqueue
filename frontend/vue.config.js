@@ -13,11 +13,15 @@ module.exports = {
         target: process.env.VUE_APP_API,
       },
       
-      '/sockjs-node': {
+      '/logout': {
         target: process.env.VUE_APP_API,
       },
       
       '/socket.io': {
+        target: process.env.VUE_APP_API,
+      },
+      
+      '/callback': {
         target: process.env.VUE_APP_API,
       },
     },
