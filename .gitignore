@@ -1,4 +1,5 @@
 node_modules
+frontend/dist
 backend/config.js
 .DS_Store
 .expo
