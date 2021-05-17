@@ -88,8 +88,6 @@ app.use(async (req, res, next) => {
 		const username = req.oidc.user.username
 		const name = req.oidc.user.unique_name[0]
 
-		console.log('middleware', id, username, name)
-
 		req.session.profile = await model.get_or_create_profile(id, username, name)
 	}
 
