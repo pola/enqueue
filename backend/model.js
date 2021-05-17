@@ -56,9 +56,10 @@ exports.setConnection = (c) => {
 		name : Sequelize.STRING,
 		description: Sequelize.TEXT,
 		open: Sequelize.BOOLEAN,
+		show_openings: Sequelize.BOOLEAN,
 		force_kthlan: Sequelize.BOOLEAN,
 		force_comment: Sequelize.BOOLEAN,
-		force_action: Sequelize.BOOLEAN
+		force_action: Sequelize.BOOLEAN,
 	})
 
 	Room = connection.define('room', {

@@ -206,6 +206,18 @@
         <p style="white-space: pre-line;">
           {{ queue.description }}
         </p>
+
+        <div v-if="queue.openings.length > 0">
+          Kommande öppningar:
+
+          <span
+            style="background: #eeeeee; padding: 5px; margin: 0 3px;"
+            v-for="opening in queue.openings"
+            :key="opening"
+          >
+            {{ unix_to_datetime(opening) }}
+          </span>
+        </div>
 				
         <md-table v-if="queue.bookings.length > 0">
           <md-table-row>

@@ -53,6 +53,12 @@
     <md-card>
       <md-card-content>
         <md-switch
+          v-model="queue.show_openings"
+          @change="update_force();"
+        >
+          Visa kommande öppningar
+        </md-switch>
+        <md-switch
           v-model="queue.force_action"
           @change="update_force();"
         >
@@ -497,6 +503,7 @@ export default {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
+					show_openings: this.queue.show_openings,
 					force_kthlan: this.queue.force_kthlan,
 					force_action: this.queue.force_action,
 					force_comment: this.queue.force_comment

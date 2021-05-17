@@ -53,7 +53,7 @@ router.get('/:name', (req, res) => {
 
 		model.get_bookings(queue).then(bookings => {
 			model.get_actions(queue).then(actions => {
-				model.has_permission(queue, req.session.hasOwnProperty('profile') ? req.session.profile.id : null).then(has_permission => {
+				model.has_permission(queue, req.session.hasOwnProperty('profile') ? req.session.profile.id : null).then(async has_permission => {
 					if (!has_permission) {
 						queue.Students = queue.Students.map(s => {
 							if (req.session.hasOwnProperty('profile') && req.session.profile.id === s.id) {
@@ -89,12 +89,21 @@ router.get('/:name', (req, res) => {
 							}))
 						}
 					}
+
+					let openings
+
+					if (queue.show_openings) {
+						openings = (await model.get_tasks(queue)).filter(x => x.type === 'OPEN' && x.deadline > Date.now()).map(x => x.deadline)
+					} else {
+						openings = []
+					}
 					
 					res.json({
 						id: queue.id,
 						name: queue.name,
 						description: queue.description,
 						open: queue.open,
+						show_openings: has_permission ? queue.show_openings : undefined,
 						force_kthlan: queue.force_kthlan,
 						force_comment: queue.force_comment,
 						force_action: queue.force_action,
@@ -118,7 +127,8 @@ router.get('/:name', (req, res) => {
 							user_name: a.user_name,
 							name: a.name
 						})),
-						bookings: bookings
+						bookings: bookings,
+						openings,
 					})
 				})
 			})
@@ -513,6 +523,12 @@ const update_queue = (queue, changes, req, res, keys) => {
 			keys.shift()
 
 			changes.open = req.body.open
+
+			update_queue(queue, changes, req, res, keys)
+		} else if (key === 'show_openings' && typeof req.body.show_openings === 'boolean') {
+			keys.shift()
+
+			changes.show_openings = req.body.show_openings
 
 			update_queue(queue, changes, req, res, keys)
 		} else if (key === 'force_kthlan' && typeof req.body.force_kthlan === 'boolean') {
