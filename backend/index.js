@@ -91,7 +91,7 @@ app.use(async (req, res, next) => {
 		req.session.profile = await model.get_or_create_profile(id, username, name)
 	}
 
-	if (!req.oidc.user && req.session.profile) {
+	if (!req.oidc.user && req.session.profile && !req.session.apiAuthentication) {
 		delete req.session.profile
 	}
 
@@ -101,6 +101,7 @@ app.use(async (req, res, next) => {
 app.use(cookieParser())
 app.use(bodyParser.urlencoded({ extended : true }))
 
+app.use('/api/authenticate', require('./api/authenticate'))
 app.use('/api/colors', require('./api/colors'))
 app.use('/api/me', require('./api/me'))
 app.use('/api/queues', require('./api/queues'))

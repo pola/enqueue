@@ -17,6 +17,7 @@ router.get('/', (req, res) => {
 				})
 			} else {
 				req.session.profile = result.profile
+				req.session.apiAuthentication = true
 				
 				res.json({
 					authenticated: true,
