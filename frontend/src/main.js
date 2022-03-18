@@ -14,7 +14,7 @@ Vue.use(VueMaterial)
 Vue.config.productionTip = false
 
 const moment = require('moment')
- 
+
 Vue.use(require('vue-moment'), {
   moment,
 })

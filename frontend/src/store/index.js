@@ -13,7 +13,7 @@ export default new Vuex.Store({
     socket_connected: false,
     socket: io(),
   },
-  
+
   mutations: {
     setProfile(store, profile) {
       store.profile = profile

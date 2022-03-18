@@ -1,42 +1,21 @@
 <template>
   <md-app>
     <md-app-toolbar class="md-primary">
-      <md-button to="/queues">
-        <md-icon>list</md-icon> Alla köer
-      </md-button>
+      <md-button to="/queues"> <md-icon>list</md-icon> Alla köer </md-button>
 
-      <md-button
-        to="/admin"
-        v-if="$store.state.profile !== null && $store.state.profile.teacher"
-      >
-        <md-icon>build</md-icon> Administration
-      </md-button>
-      
+      <md-button v-if="$store.state.profile !== null && $store.state.profile.teacher" to="/admin"> <md-icon>build</md-icon> Administration </md-button>
+
       <div class="md-toolbar-section-end">
-        <md-button
-          @click="triggerLogin()"
-          v-if="$store.state.profile === null"
-        >
-          <md-icon>face</md-icon> Logga in
-        </md-button>
+        <md-button v-if="$store.state.profile === null" @click="triggerLogin()"> <md-icon>face</md-icon> Logga in </md-button>
 
-        <md-button
-          @click="triggerLogout()"
-          v-if="$store.state.profile !== null"
-        >
-          <md-icon>exit_to_app</md-icon> Logga ut
-        </md-button>
+        <md-button v-if="$store.state.profile !== null" @click="triggerLogout()"> <md-icon>exit_to_app</md-icon> Logga ut </md-button>
       </div>
     </md-app-toolbar>
-    
+
     <md-app-content>
       <router-view />
 
-      <md-snackbar
-        md-position="center"
-        :md-active="!$store.state.socket_connected"
-        md-persistent
-      >
+      <md-snackbar md-position="center" :md-active="!$store.state.socket_connected" md-persistent>
         <span>Enqueue är inte ansluten till nätverket. Försöker återansluta...</span>
       </md-snackbar>
     </md-app-content>
@@ -47,6 +26,9 @@
 import axios from 'axios'
 
 export default {
+  created() {
+    this.handleSocket()
+  },
   methods: {
     handleSocket() {
       this.$store.state.socket.on('connect', async () => {
@@ -78,10 +60,6 @@ export default {
     triggerLogout() {
       document.location = '/logout'
     },
-  },
-
-  created() {
-    this.handleSocket()
   },
 }
 </script>

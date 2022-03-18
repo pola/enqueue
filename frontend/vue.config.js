@@ -8,19 +8,19 @@ module.exports = {
       '/api': {
         target: process.env.VUE_APP_API,
       },
-      
+
       '/login': {
         target: process.env.VUE_APP_API,
       },
-      
+
       '/logout': {
         target: process.env.VUE_APP_API,
       },
-      
+
       '/socket.io': {
         target: process.env.VUE_APP_API,
       },
-      
+
       '/callback': {
         target: process.env.VUE_APP_API,
       },
