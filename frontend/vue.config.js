@@ -3,7 +3,6 @@ module.exports = {
     devtool: 'source-map',
   },
   devServer: {
-    disableHostCheck: true,
     proxy: {
       '/api': {
         target: process.env.VUE_APP_API,
