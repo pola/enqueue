@@ -21,9 +21,9 @@
         {{ unix_to_datetime(dialog_queuing.entered_at) }}
         <br />
 
-        <strong>Plats:</strong>
+        <strong>Plats:&nbsp;</strong>
 
-        <span :class="[{ badLocation: dialog_queuing.bad_location }]"> {{ nice_location(dialog_queuing.location) }} </span>
+        <span :class="[{ badLocation: dialog_queuing.bad_location }]"><Location :location="dialog_queuing.location" /></span>
 
         <br />
 
@@ -64,11 +64,11 @@
           <br />
         </template>
 
-        <strong>Plats:</strong>
+        <strong>Plats:&nbsp;</strong>
 
         <span v-if="dialog_booking.location === null" class="noLocation">ingen plats angiven</span>
 
-        <span v-else :class="[{ badLocation: dialog_booking.bad_location }]">{{ dialog_booking.location }}</span>
+        <span v-else :class="[{ badLocation: dialog_booking.bad_location }]"><Location :location="dialog_booking.location" /></span>
 
         <br />
 
@@ -187,7 +187,7 @@
 
                 <div v-if="user.profile.name !== null" style="white-space: nowrap">{{ index + 1 }}. {{ user.profile.name }}</div>
 
-                <span :class="[{ badLocation: user.bad_location }]">{{ nice_location(user.location) }} </span>
+                <span :class="[{ badLocation: user.bad_location }]"><Location :location="user.location" /></span>
               </md-table-cell>
 
               <md-table-cell>{{ unix_to_datetime(user.entered_at) }} </md-table-cell>
@@ -341,8 +341,14 @@
 </template>
 
 <script>
+import Location from '../components/Location.vue'
+
 export default {
   name: 'Queue',
+
+  components: {
+    Location,
+  },
 
   data: () => ({
     queue: null,
@@ -623,10 +629,6 @@ export default {
       }
 
       return date + ', ' + time
-    },
-
-    nice_location(location) {
-      return typeof location === 'string' ? location : location.name
     },
 
     purge() {
