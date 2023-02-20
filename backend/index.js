@@ -71,16 +71,29 @@ const session = expressSession({
 app.use(session)
 io.use(sharedSession(session))
 
-app.use(
-	auth({
-		authRequired: false,
-    issuerBaseURL: 'https://login.ug.kth.se/adfs',
-    baseURL: config.hostname,
-    clientID: config.kthlogin.clientId,
-    secret: config.kthlogin.clientSecret,
-    idpLogout: true,
-  })
-)
+if (config.kthlogin.clientId && config.kthlogin.clientSecret) {
+	app.use(
+		auth({
+			authRequired: false,
+			issuerBaseURL: 'https://login.ug.kth.se/adfs',
+			baseURL: config.hostname,
+			clientID: config.kthlogin.clientId,
+			secret: config.kthlogin.clientSecret,
+			idpLogout: true,
+		})
+	)
+} else {
+	/*
+		This hack lets you use the application even without data in the kthlogin
+		section of the configuration file. You cannot, however, sign in if you
+		don't have the kthlogin section of the configuration file filled out
+		properly.
+	*/
+	app.use((req, res, next) => {
+		req.oidc = {}
+		next()
+	})
+}
 
 app.use(async (req, res, next) => {
 	if (req.oidc.user && !req.session.profile) {
