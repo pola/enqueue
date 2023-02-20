@@ -6,10 +6,10 @@ Det här är ett elektroniskt kösystem för att hantera handledning och redovis
 - MariaDB (eller MySQL)
 
 # Installation
-1. Se till att installera Node och MariaDB på din dator. På Ubuntu kan du använda paketen `nodejs` och `mariadb-server`.
+1. Se till att installera Node, NPM och MariaDB på din dator. På Ubuntu kan du använda paketen `nodejs`, `npm` och `mariadb-server`.
 ```
 # apt update
-# apt install nodejs mariadb-server
+# apt install nodejs npm mariadb-server
 # mysql_secure_installation
 ```
 2. Skapa en databas och ett användarkonto i MariaDB-servern. Ge användarkontot läs- och skrivrättigheter till databasen.
