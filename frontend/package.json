@@ -2,9 +2,9 @@
   "name": "enqueue-frontend",
   "version": "1.0.0",
   "scripts": {
-    "start": "vue-cli-service serve",
-    "build:prod": "vue-cli-service build",
-    "build:dev": "vue-cli-service build --mode development",
+    "start": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service serve",
+    "build:prod": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service build",
+    "build:dev": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service build --mode development",
     "build": "npm run build:dev",
     "lint": "vue-cli-service lint",
     "lint:fix": "vue-cli-service lint --fix"
