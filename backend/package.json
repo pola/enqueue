@@ -16,7 +16,7 @@
     "mysql2": "^1.6.5",
     "node-fetch": "^2.6.7",
     "safe-timers": "^1.1.0",
-    "sequelize": "^5.21.7",
+    "sequelize": "^6.28.2",
     "socket.io": "^4.1.1"
   }
 }
