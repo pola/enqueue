@@ -18,7 +18,7 @@
     "vue-moment": "^4.1.0",
     "vue-router": "^3.5.1",
     "vuex": "^3.6.2",
-    "webpack": "^5.70.0"
+    "webpack": "^5.76.0"
   },
   "author": "Martin Pola & Sandra Järkeborn",
   "repository": "https://github.com/pola/enqueue",
