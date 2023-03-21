@@ -428,16 +428,18 @@ exports.get_profile_by_user_name = user_name => new Promise((resolve, reject) =>
 	})
 })
 
-exports.get_or_create_profile = (id, user_name, name) => new Promise((resolve, reject) => {
-	Profile.findOrCreate({
-		where: { id: id },
-		defaults: {
-			id: id,
-			user_name: user_name === null ? id : user_name,
-			name: name === null ? id : name,
-			teacher: false
-		}
-	}).spread((profile, created) => {
+exports.get_or_create_profile = (id, user_name, name) => new Promise(async (resolve, reject) => {
+	try {
+		const [profile, created] = await Profile.findOrCreate({
+			where: { id: id },
+			defaults: {
+				id: id,
+				user_name: user_name === null ? id : user_name,
+				name: name === null ? id : name,
+				teacher: false
+			}
+		})
+
 		var changed = false
 		
 		if (!created) {
@@ -459,7 +461,9 @@ exports.get_or_create_profile = (id, user_name, name) => new Promise((resolve, r
 		} else {
 			resolve(profile)
 		}
-	})
+	} catch (error) {
+		reject(error)
+	}
 })
 
 exports.save_event = (queue_id, user_id, type, data) => Event.create({
@@ -587,18 +591,20 @@ exports.set_booking_handlers = (booking, handlers) => {
 	}
 }
 
-exports.get_or_create_queue = (name) => new Promise((resolve, reject) => {
-	Queue.findOrCreate({
-		where: { name: name },
-		defaults: {
-			name : name,
-			description: null,
-			open: false,
-			force_kthlan: false,
-			force_comment: true,
-			force_action: true
-		}
-	}).spread((queue, created) => {
+exports.get_or_create_queue = (name) => new Promise(async (resolve, reject) => {
+	try {
+		const [queue, created] = await Queue.findOrCreate({
+			where: { name: name },
+			defaults: {
+				name : name,
+				description: null,
+				open: false,
+				force_kthlan: false,
+				force_comment: true,
+				force_action: true
+			}
+		})
+
 		if (created) {
 			queuing[queue.id] = []
 
@@ -616,7 +622,9 @@ exports.get_or_create_queue = (name) => new Promise((resolve, reject) => {
 		} else {
 			resolve(queue)
 		}
-	})
+	} catch (error) {
+		reject(error)
+	}
 })
 
 exports.delete_queue = queue => new Promise((resolve, reject) => {
