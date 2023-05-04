@@ -17,6 +17,6 @@
     "node-fetch": "^2.6.7",
     "safe-timers": "^1.1.0",
     "sequelize": "^6.31.0",
-    "socket.io": "^4.1.1"
+    "socket.io": "^4.6.1"
   }
 }
