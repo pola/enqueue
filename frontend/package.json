@@ -10,10 +10,10 @@
     "lint:fix": "vue-cli-service lint --fix"
   },
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^1.4.0",
     "core-js": "^3.12.1",
     "socket.io-client": "^4.1.1",
-    "vue": "^2.6.12",
+    "vue": "^2.7.14",
     "vue-material": "^1.0.0-beta-15",
     "vue-moment": "^4.1.0",
     "vue-router": "^3.5.1",
@@ -23,23 +23,23 @@
   "author": "Martin Pola & Sandra Järkeborn",
   "repository": "https://github.com/pola/enqueue",
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^5.0.3",
-    "@vue/cli-plugin-eslint": "^5.0.3",
-    "@vue/cli-plugin-router": "^5.0.3",
-    "@vue/cli-plugin-vuex": "^5.0.3",
-    "@vue/cli-service": "^5.0.3",
+    "@vue/cli-plugin-babel": "^5.0.8",
+    "@vue/cli-plugin-eslint": "^5.0.8",
+    "@vue/cli-plugin-router": "^5.0.8",
+    "@vue/cli-plugin-vuex": "^5.0.8",
+    "@vue/cli-service": "^5.0.8",
     "babel-eslint": "^10.1.0",
     "deepmerge": "^4.2.2",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^3.4.1",
     "eslint-plugin-prettier-vue": "^3.1.0",
-    "eslint-plugin-vue": "^7.17.0",
+    "eslint-plugin-vue": "^9.15.1",
     "fibers": "^5.0.0",
     "prettier": "^2.6.0",
     "sass": "^1.26.10",
     "sass-loader": "^9.0.2",
-    "vue-template-compiler": "^2.6.12"
+    "vue-template-compiler": "^2.7.14"
   },
   "prettier": {
     "trailingComma": "es5",

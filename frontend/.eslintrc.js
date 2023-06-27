@@ -20,6 +20,7 @@ module.exports = {
       },
     ],
     'max-len': 'off',
+    'vue/multi-word-component-names': 'off',
   },
   parserOptions: {
     parser: 'babel-eslint',
